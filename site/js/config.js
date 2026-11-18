@@ -1,6 +1,6 @@
 // Edit these values to customise the hub.
 export const CONFIG = {
-  version: '8',
+  version: '9',
   siteName: 'Orbit Network Hub',
   serverIp: 'Orbitnetwork.net',
   javaPort: 25565,

@@ -5,7 +5,10 @@ import { audio } from './audio.js';
 const STATUS = ['Initializing systems', 'Calibrating star charts', 'Pinging Orbitnetwork.net', 'Charging arcade cores', 'Ready for launch'];
 const COLORS = ['#a5f3fc', '#c4b5fd', '#f9a8d4', '#ffffff', '#67e8f9'];
 
-export function runIntro({ onReveal } = {}) {
+// `ready` (optional promise): the launch waits for it (the 3D scene finishing its build), up to MAX_WAIT ms after page load.
+const MAX_WAIT = 7500;
+
+export function runIntro({ onReveal, ready = null } = {}) {
   const el = document.getElementById('intro');
   if (!el) {
     document.body.classList.remove('intro-active');
@@ -21,9 +24,14 @@ export function runIntro({ onReveal } = {}) {
     const status = el.querySelector('.intro-status');
     const bar = el.querySelector('.intro-bar i');
     let launched = false, finished = false, raf = 0;
+    let isReady = !ready;
+    ready?.then(() => { isReady = true; }, () => { isReady = true; });
 
-    // Hyperspace streaks
-    el.querySelector('.intro-warp').innerHTML = Array.from({ length: 110 }, () => {
+    // Hyperspace streaks (fewer on phones and low-power devices)
+    const lite = document.documentElement.classList.contains('lite');
+    // Lite: the title's glow filter switches on once its letters have finished writing
+    later(Math.max(0, 3700 - performance.now()), () => el.querySelector('.wordmark')?.classList.add('wm-done'));
+    el.querySelector('.intro-warp').innerHTML = Array.from({ length: lite ? 44 : 110 }, () => {
       const a = Math.round(Math.random() * 360);
       const d = (Math.random() * 0.3).toFixed(2);
       const l = Math.round(40 + Math.random() * 180);
@@ -36,11 +44,12 @@ export function runIntro({ onReveal } = {}) {
     const DURATION = 2700;
     const tick = (now) => {
       const p = Math.min(1, Math.max(0, (now - start - 500) / DURATION));
-      const eased = 1 - Math.pow(1 - p, 2.2);
+      // Hold just short of 100% until the scene is actually ready
+      const eased = Math.min(isReady ? 1 : 0.92, 1 - Math.pow(1 - p, 2.2));
       pct.textContent = `${Math.round(eased * 100)}%`;
       bar.style.transform = `scaleX(${eased})`;
       status.textContent = `${STATUS[Math.min(STATUS.length - 1, Math.floor(eased * (STATUS.length - 0.01)))]}${eased < 1 ? '…' : ''}`;
-      if (p < 1 && !launched) raf = requestAnimationFrame(tick);
+      if ((p < 1 || eased < 1) && !launched) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
 
@@ -81,6 +90,11 @@ export function runIntro({ onReveal } = {}) {
     window.addEventListener('keydown', onKey, true);
     el.addEventListener('pointerdown', () => launch(true, true));
 
-    later(Math.max(500, 3600 - performance.now()), () => launch());
+    const tryLaunch = () => {
+      if (isReady || performance.now() > MAX_WAIT) { launch(); return; }
+      ready.then(() => later(250, () => launch()), () => launch());
+      later(Math.max(0, MAX_WAIT - performance.now()), () => launch());
+    };
+    later(Math.max(500, 3600 - performance.now()), tryLaunch);
   });
 }

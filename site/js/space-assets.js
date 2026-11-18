@@ -231,7 +231,20 @@ void main(){
 }
 `;
 
-export function createSkyCube(renderer, { size = 1024, seed = 7 } = {}) {
+export function createSkyCube(renderer, opts = {}) {
+  const job = skyCubeJob(renderer, opts);
+  while (!job.step());
+  return job.texture;
+}
+
+/** Bakes the sky cube one face per call to `pause()` (an async function, e.g. wait for the next frame). */
+export async function createSkyCubeAsync(renderer, opts = {}, pause = () => Promise.resolve()) {
+  const job = skyCubeJob(renderer, opts);
+  while (!job.step()) await pause();
+  return job.texture;
+}
+
+function skyCubeJob(renderer, { size = 1024, seed = 7 } = {}) {
   const rt = new THREE.WebGLCubeRenderTarget(size, {
     colorSpace: THREE.SRGBColorSpace, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter,
   });
@@ -248,13 +261,31 @@ export function createSkyCube(renderer, { size = 1024, seed = 7 } = {}) {
   const scene = new THREE.Scene();
   scene.add(sphere);
   const cubeCamera = new THREE.CubeCamera(0.1, 100, rt);
-  const prevTone = renderer.toneMapping;
-  renderer.toneMapping = THREE.NoToneMapping;
-  cubeCamera.update(renderer, scene);
-  renderer.toneMapping = prevTone;
-  material.dispose();
-  sphere.geometry.dispose();
-  return rt.texture;
+  cubeCamera.coordinateSystem = renderer.coordinateSystem;
+  cubeCamera.updateCoordinateSystem();
+  cubeCamera.updateMatrixWorld();
+  const cams = cubeCamera.children;
+  const mips = rt.texture.generateMipmaps;
+  let face = 0;
+  return {
+    texture: rt.texture,
+    // Renders the next face; returns true once all six are done.
+    step() {
+      const prevTarget = renderer.getRenderTarget(), prevFace = renderer.getActiveCubeFace(), prevLevel = renderer.getActiveMipmapLevel();
+      const prevTone = renderer.toneMapping;
+      renderer.toneMapping = THREE.NoToneMapping;
+      rt.texture.generateMipmaps = face === 5 ? mips : false; // mipmaps once every face is drawn
+      renderer.setRenderTarget(rt, face);
+      renderer.render(scene, cams[face]);
+      renderer.toneMapping = prevTone;
+      renderer.setRenderTarget(prevTarget, prevFace, prevLevel);
+      face++;
+      if (face < 6) return false;
+      material.dispose();
+      sphere.geometry.dispose();
+      return true;
+    },
+  };
 }
 
 /* ------------------------------------------------------------------ planet surfaces */

@@ -31,11 +31,12 @@ export function stillIcon(el, id, size = 112) {
     if (!art) return done();
     setTimeout(() => {
       try {
-        if (el.isConnected && el.dataset.still !== id) {
+        const url = el.isConnected && el.dataset.still !== id ? art.snapshot(id, size) : null;
+        if (url) {
           const img = new Image();
           img.className = 'gi-still';
           img.alt = '';
-          img.src = art.snapshot(id, size);
+          img.src = url;
           el.querySelector('.gi-still')?.remove();
           el.appendChild(img);
           el.dataset.still = id;
@@ -63,12 +64,30 @@ export class Arcade {
     this.token = 0;
 
     this.art = null;
-    document.addEventListener('modal:change', (e) => { if (e.detail.id === 'modal-arcade' && e.detail.open) this.activate3D(); });
+    document.addEventListener('modal:change', (e) => { if (e.detail.id === 'modal-arcade' && e.detail.open) { this.watchReveal(); this.activate3D(); } });
     $('#game-restart').addEventListener('click', () => this.restart());
     $('#game-to-arcade').addEventListener('click', () => this.backToArcade());
     $('#game-to-space').addEventListener('click', () => this.backToSpace());
     Store.subscribe(() => this.renderGrid());
     this.renderGrid();
+  }
+
+  // Card text animates in as each card scrolls into view (and again each time the arcade opens).
+  watchReveal() {
+    const modal = $('#modal-arcade');
+    if (!this.revealIO) {
+      this.revealIO = new IntersectionObserver((entries) => entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('in-view');
+        this.revealIO.unobserve(e.target);
+      }), { threshold: 0.18 });
+      modal.classList.add('reveal-ready');
+    }
+    modal.querySelectorAll('.full-card, .game-card').forEach((c) => {
+      c.classList.remove('in-view');
+      this.revealIO.unobserve(c);
+      this.revealIO.observe(c);
+    });
   }
 
   // Bring the card art to life in 3D (first arcade visit); SVG art stays as the fallback.
@@ -85,15 +104,16 @@ export class Arcade {
       <button type="button" class="game-card group" data-game="${g.id}" style="--card-accent:${g.color};--i:${i}">
         <span class="game-card-icon" aria-hidden="true">${gameIcon(g.id)}${icon3d(g.id)}</span>
         <span class="flex-1 min-w-0 text-left">
-          <span class="block font-display text-sm sm:text-base font-bold tracking-wide text-white">${escapeHTML(g.title)}</span>
-          <span class="block text-xs text-slate-400 mt-0.5 leading-snug">${escapeHTML(g.desc)}</span>
-          <span class="mt-2 flex items-center gap-2 text-[11px] uppercase tracking-wider">
+          <span class="gc-title rv block font-display text-sm sm:text-base font-bold tracking-wide">${escapeHTML(g.title)}</span>
+          <span class="gc-desc rv block text-xs mt-0.5 leading-snug">${escapeHTML(g.desc)}</span>
+          <span class="gc-meta rv mt-2 flex items-center gap-2 text-[11px] uppercase tracking-wider">
             <span class="game-tag">${escapeHTML(g.tag)}</span>
             <span class="text-slate-400">Best <b class="text-neon-cyan">${fmt(Store.getBest(g.id))}</b></span>
           </span>
         </span>
       </button>`).join(''); });
     this.art?.scan(grid);
+    if (this.revealIO) grid.querySelectorAll('.game-card').forEach((c) => { c.classList.add('in-view'); });
     grid.querySelectorAll('[data-game]').forEach((b) => {
       b.addEventListener('click', () => this.launch(b.dataset.game));
       b.addEventListener('pointerenter', () => audio.hover());
@@ -124,15 +144,15 @@ export class Arcade {
         </button>
         <div class="full-body">
           <div class="flex items-center gap-3">
-            <span class="full-icon" aria-hidden="true">${gameIcon(g.id)}${icon3d(g.id)}</span>
+            <span class="full-icon rv" aria-hidden="true">${gameIcon(g.id)}${icon3d(g.id)}</span>
             <div class="min-w-0">
-              <h3 class="full-title">${escapeHTML(g.title)}</h3>
-              <p class="full-progress">${escapeHTML(g.progress(save))}</p>
+              <h3 class="full-title rv">${escapeHTML(g.title)}</h3>
+              <p class="full-progress rv">${escapeHTML(g.progress(save))}</p>
             </div>
           </div>
-          <p class="full-desc">${escapeHTML(g.desc)}</p>
-          <ul class="full-features">${g.features.map((f) => `<li>${icon('check')}<span>${escapeHTML(f)}</span></li>`).join('')}</ul>
-          <div class="full-actions">
+          <p class="full-desc rv">${escapeHTML(g.desc)}</p>
+          <ul class="full-features">${g.features.map((f, k) => `<li class="rv" style="--k:${k}">${icon('check')}<span>${escapeHTML(f)}</span></li>`).join('')}</ul>
+          <div class="full-actions rv">
             <button type="button" class="btn-neon flex-1" data-game="${g.id}">${started ? 'Continue' : 'Play'}</button>
             <span class="full-best">Best <b>${fmt(Store.getBest(g.id))}</b></span>
           </div>
@@ -140,6 +160,7 @@ export class Arcade {
       </article>`;
     }).join(''); });
     this.art?.scan(host);
+    if (this.revealIO) host.querySelectorAll('.full-card').forEach((c) => { c.classList.add('in-view'); });
     host.querySelectorAll('[data-game]').forEach((b) => {
       b.addEventListener('click', () => this.launch(b.dataset.game));
       b.addEventListener('pointerenter', () => audio.hover());

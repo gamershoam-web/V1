@@ -414,20 +414,29 @@ const COVERS = {
 class Art3D {
   constructor() {
     this.canvas = document.createElement('canvas');
-    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+    this.lite = document.documentElement.classList.contains('lite');
+    // preserveDrawingBuffer: the pixels must still be there when they are copied into each card's canvas
+    this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: !this.lite, alpha: true, preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(1);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.setScissorTest(true);
     this.buf = { w: 1, h: 1 };
-    const pmrem = new THREE.PMREMGenerator(this.renderer);
-    this.env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    pmrem.dispose();
+    this.gl = this.renderer.getContext();
     this.glowTex = glowTexture();
+    this.resetGPU();
+    // Phones can drop the WebGL context (memory pressure, app switching). Keep the last good images,
+    // and rebuild everything once the context comes back.
+    this.canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); this.lost = true; }, false);
+    this.canvas.addEventListener('webglcontextrestored', () => {
+      this.lost = false;
+      this.buf = { w: 1, h: 1 };
+      this.resetGPU();
+      this.kick();
+    }, false);
     this.views = new Map();
-    this.scenes = new Map();
     this.snapshots = new Map();
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.dpr = Math.min(window.devicePixelRatio || 1, this.lite ? 1.5 : 2);
     this.io = new IntersectionObserver((entries) => {
       entries.forEach((e) => { const v = this.views.get(e.target); if (v) v.visible = e.isIntersecting; });
       this.kick();
@@ -435,6 +444,17 @@ class Art3D {
     this.t0 = performance.now();
     this.last = 0;
     this.running = false;
+  }
+
+  // GPU-side resources (rebuilt after a lost context)
+  resetGPU() {
+    this.scenes = new Map();
+    this._sky = null;
+    this._skyEnv = null;
+    this.building = false;
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    this.env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    pmrem.dispose();
   }
 
   sky() { return this._sky || (this._sky = createSkyCube(this.renderer, { size: 512, seed: 23 })); }
@@ -552,7 +572,8 @@ class Art3D {
 
   draw(view, t, dt) {
     const c = view.canvas;
-    const dpr = view.cover ? Math.min(this.dpr, 1.5) : this.dpr;
+    if (this.lost || this.gl.isContextLost()) return;
+    const dpr = view.cover ? Math.min(this.dpr, this.lite ? 1.15 : 1.5) : this.dpr;
     const w = Math.max(1, Math.round(c.clientWidth * dpr)), h = Math.max(1, Math.round(c.clientHeight * dpr));
     if (w < 4 || h < 4) return;
     let s;
@@ -569,9 +590,36 @@ class Art3D {
     this.renderer.setScissor(0, 0, w, h);
     this.renderer.clear();
     this.renderer.render(s.scene, s.camera);
+    if (this.gl.isContextLost()) return; // keep the last good image
     view.ctx.clearRect(0, 0, w, h);
     view.ctx.drawImage(this.canvas, 0, this.buf.h - h, w, h, 0, 0, w, h);
-    if (!view.ready) { view.ready = true; c.classList.add('ready'); c.parentElement?.classList.add('has-3d'); }
+    if (!view.ready) {
+      // Only swap out the SVG art once a frame with real content has arrived
+      if (!this.hasContent(view, w, h)) {
+        view.blank = (view.blank || 0) + 1;
+        if (view.blank >= 4) { view.failed = true; console.warn('3D art: blank frames for', view.id, '- keeping the 2D art'); }
+        return;
+      }
+      view.ready = true;
+      c.classList.add('ready');
+      c.parentElement?.classList.add('has-3d');
+    }
+  }
+
+  // Samples the copied frame: icons need some opaque pixels, covers need some light.
+  hasContent(view, w, h) {
+    try {
+      const d = view.ctx.getImageData(0, 0, w, h).data;
+      const step = 4 * 7;
+      let lit = 0;
+      for (let i = 0; i < d.length; i += step) {
+        if (view.cover ? d[i] + d[i + 1] + d[i + 2] > 60 : d[i + 3] > 40) lit++;
+        if (lit > 12) return true;
+      }
+      return false;
+    } catch {
+      return true; // can't read pixels (privacy settings): trust the render
+    }
   }
 
   frame(now) {
@@ -600,6 +648,7 @@ class Art3D {
     const out = document.createElement('canvas');
     out.width = out.height = size;
     out.getContext('2d').drawImage(this.canvas, 0, this.buf.h - size, size, size, 0, 0, size, size);
+    if (this.gl.isContextLost()) return null;
     const url = out.toDataURL('image/png');
     this.snapshots.set(key, url);
     return url;

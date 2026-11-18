@@ -5,7 +5,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import {
-  createSkyCube, makePlanet, makeSun, makeAsteroidBelt, makeAtmosphere, glowTexture, makeGlowSprite, canvasTexture, seededRandom,
+  createSkyCubeAsync, makePlanet, makeSun, makeAsteroidBelt, makeAtmosphere, glowTexture, makeGlowSprite, canvasTexture, seededRandom,
 } from './space-assets.js';
 
 const TAU = Math.PI * 2;
@@ -70,10 +70,14 @@ export class SpaceScene {
     this.onSelect = onSelect;
     this.onHover = onHover;
     this.paused = false;
+    this.built = false;
+    this.covered = intro; // the opening sequence hides the scene: build it, but don't render frames yet
     this.coarse = window.matchMedia('(pointer: coarse)').matches;
+    // Phones and low-power devices get lighter textures and fewer asteroids.
+    this.lite = this.coarse || document.documentElement.classList.contains('lite');
 
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.coarse ? 1.5 : 1.75));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, this.lite ? 1.35 : 1.75));
     this.renderer.setClearColor(0x000000, 1);
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.05;
@@ -97,32 +101,93 @@ export class SpaceScene {
     this.mouse = new THREE.Vector2(); this.mouseSmooth = new THREE.Vector2();
     this.hovered = null;
 
-    this.buildSky();
-    this.buildSun();
-    this.buildBackdrop();
-    this.buildBelt();
-    this.buildStation();
-    this.buildMinecraftPlanet();
-    this.buildArcadePlanet();
-    this.buildCommsPlanet();
-    this.buildLabels();
-    this.bindControls();
-    this.buildComposer();
-
-    this._onResize = () => this.resize();
-    window.addEventListener('resize', this._onResize);
-    this.resize();
     this._loop = this._loop.bind(this);
-    this._raf = requestAnimationFrame(this._loop);
+    this._onResize = () => this.resize();
+    this.progress = 0;
+    this.onProgress = null;
+    // Built in small steps across frames so the page (and the intro animation) never freezes.
+    this.ready = this.build();
   }
 
   /* ---------- construction ---------- */
-  buildSky() {
-    const sky = createSkyCube(this.renderer, { size: this.coarse ? 1024 : 1536 });
+  async build() {
+    // Between steps, wait for the next frame and for the GPU to finish the previous step's work (texture bakes),
+    // so GPU jobs never pile up into one long stall that freezes the page.
+    const gl = this.renderer.getContext();
+    const fences = typeof WebGL2RenderingContext !== 'undefined' && gl instanceof WebGL2RenderingContext;
+    const raf = () => new Promise((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+    const nextFrame = async () => {
+      const sync = fences ? gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0) : null;
+      if (sync) gl.flush();
+      await raf();
+      if (!sync) return;
+      const t0 = performance.now();
+      while (gl.getSyncParameter(sync, gl.SYNC_STATUS) !== gl.SIGNALED && performance.now() - t0 < 4000) await raf();
+      gl.deleteSync(sync);
+    };
+    const report = (p) => { this.progress = p; this.onProgress?.(p); };
+    // Step timings (ms), shown in the ?diag panel
+    this.buildLog = [];
+    const timed = (name, fn) => { const t0 = performance.now(); const out = fn(); this.buildLog.push([name, Math.round(performance.now() - t0), Math.round(t0)]); return out; };
+    this._timed = timed;
+    const t0 = performance.now();
+    await this.buildSky(nextFrame);
+    this.buildLog.push(['sky (total)', Math.round(performance.now() - t0)]);
+    report(0.4);
+    const steps = [
+      ['sun', () => this.buildSun()], ['backdrop', () => this.buildBackdrop()], ['belt', () => this.buildBelt()], ['station', () => this.buildStation()],
+      ['minecraft', () => this.buildMinecraftPlanet()], ['arcade', () => this.buildArcadePlanet()], ['comms', () => this.buildCommsPlanet()],
+      ['ui', () => { this.buildLabels(); this.bindControls(); this.buildComposer(); }],
+    ];
+    for (let i = 0; i < steps.length; i++) {
+      await nextFrame();
+      timed(steps[i][0], steps[i][1]);
+      report(0.4 + 0.45 * ((i + 1) / steps.length));
+    }
+    window.addEventListener('resize', this._onResize);
+    this.resize();
+    await nextFrame();
+    // Compile every shader before the first visible frame (in the background where the browser supports it).
+    const tc = performance.now();
+    try {
+      if (this.renderer.extensions.has('KHR_parallel_shader_compile')) await this.renderer.compileAsync(this.scene, this.camera);
+      else this.renderer.compile(this.scene, this.camera);
+    } catch (e) { console.warn(e); }
+    this.buildLog.push(['shaders', Math.round(performance.now() - tc)]);
+    await nextFrame();
+    // Warm up one group per frame (drawn into a single pixel): shader set-up and geometry/texture uploads
+    // happen in small pieces while the intro still covers the screen, instead of one long first frame.
+    this.update(0, 0);
+    const r = this.renderer, kids = this.scene.children.slice(), shown = kids.map((k) => k.visible), bg = this.scene.background;
+    r.setScissorTest(true);
+    r.setScissor(0, 0, 1, 1);
+    for (let i = 0; i < kids.length; i++) {
+      kids.forEach((k, j) => { k.visible = j === i && shown[j]; });
+      this.scene.background = i === 0 ? bg : null;
+      if (!shown[i]) continue;
+      timed(`warm ${i}`, () => r.render(this.scene, this.camera));
+      if (i % 3 === 2) await nextFrame();
+    }
+    kids.forEach((k, j) => { k.visible = shown[j]; });
+    this.scene.background = bg;
+    r.setScissorTest(false);
+    await nextFrame();
+    timed('first frame', () => this.renderFrame());
+    report(1);
+    this.built = true;
+    this.clock.getDelta();
+    if (!this.paused) this._raf = requestAnimationFrame(this._loop);
+  }
+
+  async buildSky(nextFrame) {
+    const sky = await createSkyCubeAsync(this.renderer, { size: this.lite ? 768 : 1536 }, nextFrame);
+    await nextFrame();
     this.scene.background = sky;
-    const pmrem = new THREE.PMREMGenerator(this.renderer);
-    this.scene.environment = pmrem.fromCubemap(sky).texture;
-    pmrem.dispose();
+    this._timed('sky reflections', () => {
+      const pmrem = new THREE.PMREMGenerator(this.renderer);
+      this.scene.environment = pmrem.fromCubemap(sky).texture;
+      pmrem.dispose();
+    });
 
     // A sparse layer of the brightest stars as crisp points, with a very gentle shimmer.
     const rand = seededRandom(42);
@@ -181,19 +246,19 @@ export class SpaceScene {
   buildBackdrop() {
     const earth = makePlanet(this.renderer, {
       type: 'earth', radius: 70, seed: 3, sunDir: SUN_DIR, segments: 128,
-      atmosphere: { color: 0x5aa8ff, intensity: 1.6, power: 2.6, scale: 1.035 }, size: this.coarse ? 1024 : 2048,
+      atmosphere: { color: 0x5aa8ff, intensity: 1.6, power: 2.6, scale: 1.035 }, size: this.lite ? 768 : 2048,
     });
     earth.group.position.set(-330, -90, -520);
     earth.group.rotation.z = 0.41;
     this.scene.add(earth.group);
-    const moon = makePlanet(this.renderer, { type: 'rock', radius: 13, seed: 8, tint: '#a3a09a', size: 1024 });
+    const moon = makePlanet(this.renderer, { type: 'rock', radius: 13, seed: 8, tint: '#a3a09a', size: this.lite ? 512 : 1024 });
     moon.group.position.set(-205, -40, -455);
     this.scene.add(moon.group);
     this.backdrop = { earth, moon };
   }
 
   buildBelt() {
-    this.belt = makeAsteroidBelt({ count: this.coarse ? 500 : 1100, inner: 100, outer: 128, thickness: 5, sizeMax: 1.1 });
+    this.belt = makeAsteroidBelt({ count: this.lite ? 380 : 1100, inner: 100, outer: 128, thickness: 5, sizeMax: 1.1 });
     this.belt.rotation.x = 0.04;
     this.scene.add(this.belt);
   }
@@ -347,7 +412,7 @@ export class SpaceScene {
 
   buildArcadePlanet() {
     const g = new THREE.Group();
-    const giant = makePlanet(this.renderer, { type: 'gas', radius: 5.2, seed: 21, palette: 'saturn', rings: true, sunDir: SUN_DIR, atmosphere: { color: 0xffe2b0, intensity: 0.5, power: 3.5, scale: 1.03 }, size: 1024 });
+    const giant = makePlanet(this.renderer, { type: 'gas', radius: 5.2, seed: 21, palette: 'saturn', rings: true, sunDir: SUN_DIR, atmosphere: { color: 0xffe2b0, intensity: 0.5, power: 3.5, scale: 1.03 }, size: this.lite ? 512 : 1024 });
     giant.group.rotation.set(0.5, 0, 0.32);
     g.add(giant.group);
     const moons = [];
@@ -369,7 +434,7 @@ export class SpaceScene {
 
   buildCommsPlanet() {
     const g = new THREE.Group();
-    const ice = makePlanet(this.renderer, { type: 'ice', radius: 3.4, seed: 77, sunDir: SUN_DIR, atmosphere: { color: 0x7fd4ff, intensity: 1.4, power: 2.6, scale: 1.06 }, size: 1024 });
+    const ice = makePlanet(this.renderer, { type: 'ice', radius: 3.4, seed: 77, sunDir: SUN_DIR, atmosphere: { color: 0x7fd4ff, intensity: 1.4, power: 2.6, scale: 1.06 }, size: this.lite ? 512 : 1024 });
     g.add(ice.group);
     // Relay satellite in orbit
     const satPivot = new THREE.Group();
@@ -393,7 +458,7 @@ export class SpaceScene {
   }
 
   buildComposer() {
-    this.useBloom = !this.coarse;
+    this.useBloom = !this.lite;
     if (!this.useBloom) return;
     const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: 4 });
     this.composer = new EffectComposer(this.renderer, rt);
@@ -564,7 +629,7 @@ export class SpaceScene {
     } else {
       this.clock.getDelta();
       this.labelsEl?.classList.remove('paused');
-      this._raf = requestAnimationFrame(this._loop);
+      if (this.built) this._raf = requestAnimationFrame(this._loop);
     }
   }
 
@@ -588,6 +653,7 @@ export class SpaceScene {
 
   // Cinematic fly-in from deep space (called when the intro overlay lifts).
   reveal() {
+    this.covered = false;
     if (!this.holding) return;
     this.holding = false;
     const rig = this.rig;
@@ -603,11 +669,16 @@ export class SpaceScene {
 
   /* ---------- frame loop ---------- */
   _loop() {
-    if (this.paused) return;
+    if (this.paused || !this.built) return;
     this._raf = requestAnimationFrame(this._loop);
     const dt = Math.min(0.05, this.clock.getDelta());
+    if (this.covered) return; // hidden behind the opening sequence
     this.time += dt;
     this.update(dt, this.time);
+    this.renderFrame(dt);
+  }
+
+  renderFrame(dt = 0) {
     if (this.composer) this.composer.render(dt);
     else this.renderer.render(this.scene, this.camera);
   }

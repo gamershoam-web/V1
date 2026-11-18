@@ -77,6 +77,10 @@ export function wordmarkSVG(text, { cls = '', label = text, waves = true, begin 
 /** (Re)plays a wordmark's animation. */
 export function playWordmark(svg) {
   if (!svg) return;
+  clearTimeout(svg._wmDone);
+  svg.classList.remove('wm-done');
+  // the glow filter comes back once the letters stop moving (cheap to keep on a still image)
+  svg._wmDone = setTimeout(() => svg.classList.add('wm-done'), 2700);
   svg.classList.remove('wm-play');
   void svg.getBoundingClientRect();
   svg.classList.add('wm-play');

@@ -37,7 +37,9 @@ const portal = new MinecraftPortal();
 async function initScene() {
   try {
     const probe = document.createElement('canvas');
-    if (!(probe.getContext('webgl2') || probe.getContext('webgl'))) throw new Error('WebGL unavailable');
+    const gl = probe.getContext('webgl2') || probe.getContext('webgl');
+    if (!gl) throw new Error('WebGL unavailable');
+    gl.getExtension('WEBGL_lose_context')?.loseContext(); // free the test context right away
     const { SpaceScene } = await import('./scene.js');
     scene = new SpaceScene($('#space'), {
       labelsEl: $('#labels'),
@@ -49,6 +51,7 @@ async function initScene() {
     });
     // Keep the 3D system centred in the free space as the server card changes size.
     new ResizeObserver(() => scene.resize()).observe($('#hero-card'));
+    await scene.ready;
     document.body.classList.add('scene-ready');
   } catch (err) {
     console.warn('3D scene disabled:', err);
@@ -267,7 +270,8 @@ function showDiagnostics() {
       <div>Animations: <b>${Motion.mode}</b> (setting: ${Motion.setting})</div>
       <div>Device asks for reduced motion: ${Motion.osReduce ? '<span class="bad">yes</span>' : '<span class="ok">no</span>'}</div>
       <div>Running animations: ${document.getAnimations ? document.getAnimations().length : 'n/a'}</div>
-      <div>3D scene (WebGL): ${webgl}</div>
+      <div>3D scene (WebGL): ${webgl}${scene?.buildLog?.length ? ` · built in ${scene.buildLog.reduce((a, s) => a + s[1], 0)} ms` : ''}</div>
+      <div>Rendering: ${document.documentElement.classList.contains('lite') ? 'lite (phone / low-power)' : 'full'}</div>
       <div>Fonts loaded: ${yes(document.fonts?.check('700 16px "Exo 2"'))}</div>
       <div>CSS color-mix: ${yes(window.CSS?.supports?.('color', 'color-mix(in srgb, red 50%, blue)'))} · @property: ${yes(typeof window.CSS?.registerProperty === 'function')}</div>
       <div>Viewport: ${innerWidth}×${innerHeight} @${devicePixelRatio}x</div>
@@ -308,6 +312,6 @@ renderHUD();
 renderSound();
 setSector('hub');
 portal.start();
-runIntro({ onReveal: () => { introRunning = false; scene?.reveal(); } });
-initScene();
+const sceneReady = initScene();
+runIntro({ ready: sceneReady, onReveal: () => { introRunning = false; scene?.reveal(); } });
 showDiagnostics();

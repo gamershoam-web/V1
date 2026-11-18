@@ -639,7 +639,7 @@ button.hud-chip:hover { border-color: rgba(34, 211, 238, .55); box-shadow: 0 0 2
 .il-orbit.o1 { stroke: rgba(34, 211, 238, .55); animation-delay: .35s; }
 .il-orbit.o2 { stroke: rgba(168, 85, 247, .55); stroke-dasharray: 2 3; stroke-dashoffset: 0; opacity: 0; animation: intro-fade-in .8s ease .7s forwards, gi-spin 30s linear .7s infinite; }
 @keyframes draw-stroke { to { stroke-dashoffset: 0; } }
-.il-glow circle { fill: #a855f7; filter: blur(18px); opacity: 0; animation: glow-in 1s ease .6s forwards, glow-breathe 3s ease-in-out 1.6s infinite; }
+.il-glow circle { fill: url(#introGlow); opacity: 0; animation: glow-in 1s ease .6s forwards, glow-breathe 3s ease-in-out 1.6s infinite; }
 @keyframes glow-in { to { opacity: .55; } }
 @keyframes glow-breathe { 50% { opacity: .85; } }
 .il-planet { animation: planet-in 1s cubic-bezier(.2, 1.6, .4, 1) .6s backwards; }
@@ -1114,3 +1114,88 @@ body { font-feature-settings: "tnum" 0; }
 .game-card-icon.has-3d::after { opacity: .7; }
 
 .deck-icon .gi-still, .game-head-icon .gi-still { inset: -6%; width: 112%; height: 112%; }
+
+/* =====================================================================
+   Lite rendering (phones, tablets, low-power devices; class set in <head>)
+   Same look, without the effects that are slow on mobile GPUs: live
+   backdrop blurs over the moving 3D scene, SVG filters on animating text,
+   and blurred layers in the intro.
+   ===================================================================== */
+.lite .glass, .lite #dock, .lite .space-label, .lite .toast, .lite .full-tag, .lite .bg-overlay,
+.lite .sf-chip, .lite .sf-bars, .lite .sf-weapons, .lite .sf-station { backdrop-filter: none; -webkit-backdrop-filter: none; }
+.lite .glass { background: rgba(13, 10, 34, .9); }
+.lite .modal-panel.glass { background: rgba(11, 8, 29, .96); }
+.lite #dock { background: linear-gradient(180deg, rgba(16, 18, 40, .97), rgba(6, 7, 18, .98)); }
+.lite .space-label { background: rgba(8, 6, 26, .82); }
+.lite .bg-overlay { background: rgba(3, 4, 12, .88); }
+/* Intro */
+.lite .intro-stars { inset: -8%; }
+.lite .intro-stars.s3 { display: none; }
+.lite .intro-script .wordmark { filter: none; }
+.lite .il-sat circle { filter: none; }
+.lite .intro.launch .intro-stars { animation-name: stars-jump-lite; }
+.lite .intro.launch .intro-core { animation-name: core-out-lite; }
+.lite .intro-sub { animation-name: sub-in-lite; }
+@keyframes stars-jump-lite { to { transform: scale(4); opacity: 0; } }
+@keyframes core-out-lite { to { transform: scale(2.6); opacity: 0; } }
+@keyframes sub-in-lite { from { opacity: 0; transform: scale(1.18); } }
+/* Wordmarks: no live displacement/glow filters while the letters animate; the glow returns once written */
+.lite .wm-threads { filter: none; }
+.lite .wordmark:not(.wm-done) .wm-ink { filter: none; }
+.lite .wm-play .wm-ink { animation: none; }
+
+/* =====================================================================
+   Card text: blended colours and reveal animations
+   The cover melts into the card, titles carry the card's colour with a
+   light sweep, and every line glides in as the card scrolls into view.
+   ===================================================================== */
+.full-cover { background: transparent; }
+.full-cover > .cover-art, .full-cover > .art3d-cover { -webkit-mask-image: linear-gradient(180deg, #000 68%, transparent 99%); mask-image: linear-gradient(180deg, #000 68%, transparent 99%); }
+.full-cover::after { background: radial-gradient(120% 80% at 50% 120%, color-mix(in srgb, var(--card-accent) 22%, transparent), transparent 60%); }
+.full-body { position: relative; margin-top: -8px; }
+.full-body::before { content: ""; position: absolute; left: -10%; right: -10%; top: -30px; height: 140px; pointer-events: none; z-index: -1;
+  background: radial-gradient(60% 70% at 30% 30%, color-mix(in srgb, var(--card-accent) 16%, transparent), transparent 70%); }
+.full-card { isolation: isolate; }
+
+.full-title, .gc-title { color: #fff;
+  background: linear-gradient(100deg, #ffffff 0%, #ffffff 38%, color-mix(in srgb, var(--card-accent) 55%, #fff) 48%, #ffffff 58%, color-mix(in srgb, var(--card-accent) 22%, #fff) 100%);
+  background-size: 250% 100%; background-position: 100% 0; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  transition: background-position 1s ease; }
+.full-card:hover .full-title, .game-card:hover .gc-title { background-position: 0 0; }
+.full-title { font-size: 18px; letter-spacing: .01em; }
+.full-progress { display: flex; align-items: center; gap: 7px; font-weight: 600; letter-spacing: .02em; }
+.full-progress::before { content: ""; width: 7px; height: 7px; flex: none; border-radius: 50%; background: var(--card-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--card-accent) 22%, transparent), 0 0 10px var(--card-accent); animation: prog-dot 2.2s ease-in-out infinite; }
+@keyframes prog-dot { 50% { transform: scale(.7); opacity: .6; } }
+.full-desc { color: color-mix(in srgb, var(--card-accent) 14%, #cbd5e1); }
+.full-features { gap: 7px; }
+.full-features li { color: color-mix(in srgb, var(--card-accent) 10%, #e9eef6); }
+.full-features .ico { width: 20px; height: 20px; padding: 3px; flex: none; border-radius: 50%; color: var(--card-accent);
+  background: color-mix(in srgb, var(--card-accent) 16%, transparent); box-shadow: 0 0 10px color-mix(in srgb, var(--card-accent) 30%, transparent); }
+.full-features .ico path { stroke-dasharray: 24; stroke-dashoffset: 0; }
+.full-best { color: color-mix(in srgb, var(--card-accent) 25%, #94a3b8); }
+.gc-desc { color: color-mix(in srgb, var(--card-accent) 14%, #94a3b8); }
+
+/* Reveal: hidden only once the observer is running (no JS = always visible) */
+.reveal-ready .full-card:not(.in-view) .rv, .reveal-ready .game-card:not(.in-view) .rv { opacity: 0; }
+.full-card.in-view .rv { animation: rv-up .6s cubic-bezier(.2, .8, .2, 1) backwards; }
+.full-card.in-view .full-icon { animation: rv-pop .7s cubic-bezier(.2, 1.5, .4, 1) .05s backwards; }
+.full-card.in-view .full-title { animation: rv-up .6s cubic-bezier(.2, .8, .2, 1) .12s backwards, title-sweep 1.4s ease .45s backwards; }
+.full-card.in-view .full-progress { animation-delay: .2s; }
+.full-card.in-view .full-desc { animation-delay: .28s; }
+.full-card.in-view .full-features li { animation: rv-side .5s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(.38s + var(--k) * 90ms); }
+.full-card.in-view .full-features li .ico path { animation: check-draw .5s ease-out backwards; animation-delay: calc(.5s + var(--k) * 90ms); }
+.full-card.in-view .full-actions { animation-delay: .62s; }
+.game-card.in-view .gc-title { animation: rv-up .5s cubic-bezier(.2, .8, .2, 1) calc(var(--i) * 35ms + .08s) backwards, title-sweep 1.3s ease calc(var(--i) * 35ms + .3s) backwards; }
+.game-card.in-view .gc-desc { animation: rv-up .5s cubic-bezier(.2, .8, .2, 1) calc(var(--i) * 35ms + .16s) backwards; }
+.game-card.in-view .gc-meta { animation: rv-up .5s cubic-bezier(.2, .8, .2, 1) calc(var(--i) * 35ms + .24s) backwards; }
+@keyframes rv-up { from { opacity: 0; transform: translateY(12px); } }
+@keyframes rv-side { from { opacity: 0; transform: translateX(-12px); } }
+@keyframes rv-pop { from { opacity: 0; transform: scale(.4) rotate(-25deg); } }
+@keyframes title-sweep { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@keyframes check-draw { from { stroke-dashoffset: 24; } }
+/* Calm mode: gentle fades only */
+.motion-calm .full-card.in-view .rv, .motion-calm .full-card.in-view .full-features li,
+.motion-calm .game-card.in-view .rv { animation: rv-fade .5s ease backwards !important; }
+.motion-calm .full-progress::before { animation: none; }
+@keyframes rv-fade { from { opacity: 0; } }
