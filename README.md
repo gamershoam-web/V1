@@ -15,6 +15,7 @@ A 3D space-themed gaming portal for the **Orbitnetwork.net** Minecraft server, w
   - *Orbit Colony* — persistent mining-colony builder with research, trade, expeditions, events, prestige warps and offline progress.
 - **Mini games**: AstroWordle, Nebula Sketch, Asteroid Dodger, Black Hole Pong, Laser Typing Defense, Quantum 2048, Lunar Lander, Orbital Brick Breaker, Starlight Memory Matrix, Cosmic Minesweeper, Galactic Invaders Blitz and Wormhole Trivia. Each game is loaded only when opened, and the 3D render loop pauses while a game is open.
 - **Icons**: a custom animated SVG icon set (`site/js/icons.js`); each game icon is tinted with its card's accent colour.
+- **3D card art** (`site/js/art3d.js`): in the Arcade Sector the full-game covers are live 3D scenes (the fighter over a planet with raiders and the station, fleets flying between faction worlds, the mining colony under a ringed giant) that tilt toward the cursor, and every game icon is a small spinning glossy 3D model (it spins faster on hover). The Command Deck list and the game header use still 3D renders of the same icons. One shared WebGL renderer draws every view, only while it is on screen and at about 30 fps. Scenes are built one per frame with shaders compiled in the background, and on phones the hub pauses while the arcade is open. Without WebGL the SVG art is shown instead.
 - **Audio**: all sound effects are synthesized with the Web Audio API (no audio files).
 - **Fonts**: self-hosted in `site/fonts` (no third-party requests): Exo 2 for the interface and Inter for body text.
 - **Cursive wordmarks**: the logo, intro title and panel titles are drawn in the Sacramento script as animated SVG: wavy coloured lines weave together into the word, a neon pen writes it, then the ink glows in. Letter shapes are converted to SVG paths at build time (`scripts/build-wordmarks.mjs`); add a new text to `TEXTS` there and run `npm run build:wordmarks`.
@@ -49,7 +50,8 @@ site/                 static site served by nginx (no build needed on the server
   js/games/*.js       mini games; registry (full + mini) in games/index.js
   js/games/big/       full games: starfighter.js, conquest.js, colony.js
   js/space-assets.js  procedural sky, planets, sun, asteroids (shared by hub and Starfighter)
-  js/covers.js        animated cover art for the full games
+  js/covers.js        animated SVG cover art for the full games (fallback for the 3D covers)
+  js/art3d.js         live 3D covers and icons (one shared renderer; models in games/big/models.js)
   js/wordmark.js      animated cursive wordmarks (paths in js/wordmark-data.js, generated)
 src/tailwind.css      Tailwind entry file
 deploy/               nginx config and VPS deploy script

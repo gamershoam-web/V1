@@ -38,6 +38,7 @@ export const Modals = {
     el.classList.add('open');
     this.stack.push(id);
     document.body.classList.add('modal-open');
+    document.dispatchEvent(new CustomEvent('modal:change', { detail: { id, open: true } }));
     el.querySelectorAll('.wm-title').forEach((svg) => playWordmark(svg));
     const focusable = el.querySelector('[autofocus], .modal-panel button, .modal-panel [tabindex]');
     focusable?.focus({ preventScroll: true });
@@ -48,6 +49,7 @@ export const Modals = {
     el.classList.remove('open');
     setTimeout(() => { if (!this.isOpen(id)) el.classList.add('hidden'); }, 220);
     this.stack = this.stack.filter((m) => m !== id);
+    document.dispatchEvent(new CustomEvent('modal:change', { detail: { id, open: false } }));
     if (!this.stack.length) {
       document.body.classList.remove('modal-open');
       if (!silent) this.onEmpty?.();

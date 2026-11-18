@@ -12,6 +12,42 @@ export function loadSave(id) {
 }
 import { Motion } from './motion.js';
 
+/* ---- 3D art (loaded on demand the first time the arcade opens) ---- */
+let art3dLoad = null;
+export function loadArt3D() {
+  return (art3dLoad ||= import('./art3d.js').then((m) => m.getArt3D()).catch((e) => { console.warn('3D art unavailable', e); return false; }));
+}
+const art3dKey = (c) => (c.dataset.cover3d ? `c:${c.dataset.cover3d}` : `i:${c.dataset.icon3d}`);
+// Re-render a list without losing the live 3D canvases already drawn in it.
+function keep3D(host, render) {
+  const old = new Map([...host.querySelectorAll('canvas.art3d.ready')].map((c) => [art3dKey(c), c]));
+  render();
+  if (old.size) host.querySelectorAll('canvas.art3d').forEach((c) => { const o = old.get(art3dKey(c)); if (o) c.replaceWith(o); });
+}
+let stillChain = Promise.resolve();
+/** Swap a small SVG game icon for a still 3D render (game header, Command Deck list). */
+export function stillIcon(el, id, size = 112) {
+  stillChain = stillChain.then(() => loadArt3D()).then((art) => new Promise((done) => {
+    if (!art) return done();
+    setTimeout(() => {
+      try {
+        if (el.isConnected && el.dataset.still !== id) {
+          const img = new Image();
+          img.className = 'gi-still';
+          img.alt = '';
+          img.src = art.snapshot(id, size);
+          el.querySelector('.gi-still')?.remove();
+          el.appendChild(img);
+          el.dataset.still = id;
+          el.classList.add('has-3d');
+        }
+      } catch (e) { console.warn('3D icon failed', e); }
+      done();
+    }, 16);
+  }));
+}
+const icon3d = (id) => `<canvas class="art3d art3d-icon" data-icon3d="${id}" aria-hidden="true"></canvas>`;
+
 export class Arcade {
   constructor({ onGameOpen, onGameClose, onBackToSpace }) {
     this.onGameOpen = onGameOpen;
@@ -26,6 +62,8 @@ export class Arcade {
     this.titleEl = $('#game-title');
     this.token = 0;
 
+    this.art = null;
+    document.addEventListener('modal:change', (e) => { if (e.detail.id === 'modal-arcade' && e.detail.open) this.activate3D(); });
     $('#game-restart').addEventListener('click', () => this.restart());
     $('#game-to-arcade').addEventListener('click', () => this.backToArcade());
     $('#game-to-space').addEventListener('click', () => this.backToSpace());
@@ -33,13 +71,19 @@ export class Arcade {
     this.renderGrid();
   }
 
+  // Bring the card art to life in 3D (first arcade visit); SVG art stays as the fallback.
+  activate3D() {
+    if (this.art) { this.art.scan($('#modal-arcade')); return; }
+    loadArt3D().then((art) => { this.art = art; if (art) art.scan($('#modal-arcade')); });
+  }
+
   renderGrid() {
     this.renderFull();
     const grid = $('#arcade-grid');
     if (!grid) return;
-    grid.innerHTML = GAMES.map((g, i) => `
+    keep3D(grid, () => { grid.innerHTML = GAMES.map((g, i) => `
       <button type="button" class="game-card group" data-game="${g.id}" style="--card-accent:${g.color};--i:${i}">
-        <span class="game-card-icon" aria-hidden="true">${gameIcon(g.id)}</span>
+        <span class="game-card-icon" aria-hidden="true">${gameIcon(g.id)}${icon3d(g.id)}</span>
         <span class="flex-1 min-w-0 text-left">
           <span class="block font-display text-sm sm:text-base font-bold tracking-wide text-white">${escapeHTML(g.title)}</span>
           <span class="block text-xs text-slate-400 mt-0.5 leading-snug">${escapeHTML(g.desc)}</span>
@@ -48,7 +92,8 @@ export class Arcade {
             <span class="text-slate-400">Best <b class="text-neon-cyan">${fmt(Store.getBest(g.id))}</b></span>
           </span>
         </span>
-      </button>`).join('');
+      </button>`).join(''); });
+    this.art?.scan(grid);
     grid.querySelectorAll('[data-game]').forEach((b) => {
       b.addEventListener('click', () => this.launch(b.dataset.game));
       b.addEventListener('pointerenter', () => audio.hover());
@@ -66,19 +111,20 @@ export class Arcade {
   renderFull() {
     const host = $('#full-games');
     if (!host) return;
-    host.innerHTML = FULL_GAMES.map((g, i) => {
+    keep3D(host, () => { host.innerHTML = FULL_GAMES.map((g, i) => {
       const save = loadSave(g.id);
       const started = g.id === 'colony' ? !!save?.started : false;
       return `
       <article class="full-card" style="--card-accent:${g.color};--i:${i}">
         <button type="button" class="full-cover" data-game="${g.id}" aria-label="Play ${escapeHTML(g.title)}">
           ${gameCover(g.id)}
+          <canvas class="art3d art3d-cover" data-cover3d="${g.id}" aria-hidden="true"></canvas>
           <span class="full-tag">${escapeHTML(g.tag)}</span>
           <span class="full-play" aria-hidden="true">${icon('arrowRight')}</span>
         </button>
         <div class="full-body">
           <div class="flex items-center gap-3">
-            <span class="full-icon" aria-hidden="true">${gameIcon(g.id)}</span>
+            <span class="full-icon" aria-hidden="true">${gameIcon(g.id)}${icon3d(g.id)}</span>
             <div class="min-w-0">
               <h3 class="full-title">${escapeHTML(g.title)}</h3>
               <p class="full-progress">${escapeHTML(g.progress(save))}</p>
@@ -92,7 +138,8 @@ export class Arcade {
           </div>
         </div>
       </article>`;
-    }).join('');
+    }).join(''); });
+    this.art?.scan(host);
     host.querySelectorAll('[data-game]').forEach((b) => {
       b.addEventListener('click', () => this.launch(b.dataset.game));
       b.addEventListener('pointerenter', () => audio.hover());
@@ -112,8 +159,12 @@ export class Arcade {
     this.onGameOpen?.();
     this.warp();
     this.titleEl.textContent = meta.title;
-    $('#game-icon').innerHTML = gameIcon(meta.id);
-    $('#game-icon').style.setProperty('--card-accent', meta.color);
+    const head = $('#game-icon');
+    head.innerHTML = gameIcon(meta.id);
+    head.classList.toggle('has-3d', false);
+    delete head.dataset.still;
+    head.style.setProperty('--card-accent', meta.color);
+    stillIcon(head, meta.id, 96);
     this.setScore(0);
     this.setInfo('');
     this.bestEl.textContent = fmt(Store.getBest(id));

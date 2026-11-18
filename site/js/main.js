@@ -4,7 +4,7 @@ import { Store } from './storage.js';
 import { audio } from './audio.js';
 import { $, $$, Modals, toast, initTabs, fmt, escapeHTML } from './ui.js';
 import { MinecraftPortal } from './minecraft.js';
-import { Arcade } from './arcade.js';
+import { Arcade, stillIcon } from './arcade.js';
 import { ALL_GAMES } from './games/index.js';
 import { gameIcon, icon } from './icons.js';
 import { runIntro } from './intro.js';
@@ -149,6 +149,7 @@ function renderDeck() {
       <b class="font-display text-neon-cyan text-sm">${fmt(Store.getBest(g.id))}</b>
       <button type="button" class="btn-mini" data-play="${g.id}">Play</button>
     </li>`).join('');
+  $$('#deck-scores .deck-icon').forEach((el, i) => stillIcon(el, ALL_GAMES[i].id, 80));
   $$('#deck-scores [data-play]').forEach((b) => b.addEventListener('click', () => {
     Modals.closeAll({ silent: true });
     openArcadeGame(b.dataset.play);
@@ -166,6 +167,11 @@ const arcade = new Arcade({
   onGameOpen: () => { scene?.setPaused(true); document.body.classList.add('game-active'); },
   onGameClose: () => { scene?.setPaused(false); document.body.classList.remove('game-active'); },
   onBackToSpace: () => { Modals.closeAll({ silent: true }); setSector('hub'); scene?.flyHome(); },
+});
+// Phones: the arcade panel covers most of the hub, so pause it and give the GPU to the 3D card art.
+const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+document.addEventListener('modal:change', (e) => {
+  if (coarsePointer && e.detail.id === 'modal-arcade' && !arcade.isPlaying) scene?.setPaused(e.detail.open);
 });
 
 /* ---------- wiring ---------- */

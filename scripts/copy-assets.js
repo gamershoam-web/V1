@@ -17,7 +17,7 @@ copy('node_modules/@fontsource-variable/exo-2/files/exo-2-latin-wght-normal.woff
 const ADDONS = [
   'postprocessing/EffectComposer.js', 'postprocessing/RenderPass.js', 'postprocessing/UnrealBloomPass.js',
   'postprocessing/OutputPass.js', 'postprocessing/ShaderPass.js', 'postprocessing/MaskPass.js', 'postprocessing/Pass.js',
-  'objects/Lensflare.js', 'shaders/CopyShader.js', 'shaders/LuminosityHighPassShader.js', 'shaders/OutputShader.js',
+  'objects/Lensflare.js', 'environments/RoomEnvironment.js', 'geometries/RoundedBoxGeometry.js', 'shaders/CopyShader.js', 'shaders/LuminosityHighPassShader.js', 'shaders/OutputShader.js',
 ];
 for (const f of ADDONS) copy(`node_modules/three/examples/jsm/${f}`, `site/vendor/addons/${f}`);
 
