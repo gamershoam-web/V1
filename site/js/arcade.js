@@ -1,9 +1,15 @@
 // Arcade engine: holographic game grid, game modal lifecycle, scoring, XP and high scores.
-import { GAMES } from './games/index.js';
+import { GAMES, FULL_GAMES, ALL_GAMES } from './games/index.js';
 import { Store } from './storage.js';
 import { audio } from './audio.js';
 import { $, Modals, toast, fmt, escapeHTML } from './ui.js';
 import { gameIcon, icon } from './icons.js';
+import { gameCover } from './covers.js';
+
+const saveKey = (id) => `orbitHub.game.${id}`;
+export function loadSave(id) {
+  try { return JSON.parse(localStorage.getItem(saveKey(id))) || null; } catch { return null; }
+}
 import { Motion } from './motion.js';
 
 export class Arcade {
@@ -28,6 +34,7 @@ export class Arcade {
   }
 
   renderGrid() {
+    this.renderFull();
     const grid = $('#arcade-grid');
     if (!grid) return;
     grid.innerHTML = GAMES.map((g, i) => `
@@ -56,13 +63,51 @@ export class Arcade {
     });
   }
 
+  renderFull() {
+    const host = $('#full-games');
+    if (!host) return;
+    host.innerHTML = FULL_GAMES.map((g, i) => {
+      const save = loadSave(g.id);
+      const started = g.id === 'colony' ? !!save?.started : false;
+      return `
+      <article class="full-card" style="--card-accent:${g.color};--i:${i}">
+        <button type="button" class="full-cover" data-game="${g.id}" aria-label="Play ${escapeHTML(g.title)}">
+          ${gameCover(g.id)}
+          <span class="full-tag">${escapeHTML(g.tag)}</span>
+          <span class="full-play" aria-hidden="true">${icon('arrowRight')}</span>
+        </button>
+        <div class="full-body">
+          <div class="flex items-center gap-3">
+            <span class="full-icon" aria-hidden="true">${gameIcon(g.id)}</span>
+            <div class="min-w-0">
+              <h3 class="full-title">${escapeHTML(g.title)}</h3>
+              <p class="full-progress">${escapeHTML(g.progress(save))}</p>
+            </div>
+          </div>
+          <p class="full-desc">${escapeHTML(g.desc)}</p>
+          <ul class="full-features">${g.features.map((f) => `<li>${icon('check')}<span>${escapeHTML(f)}</span></li>`).join('')}</ul>
+          <div class="full-actions">
+            <button type="button" class="btn-neon flex-1" data-game="${g.id}">${started ? 'Continue' : 'Play'}</button>
+            <span class="full-best">Best <b>${fmt(Store.getBest(g.id))}</b></span>
+          </div>
+        </div>
+      </article>`;
+    }).join('');
+    host.querySelectorAll('[data-game]').forEach((b) => {
+      b.addEventListener('click', () => this.launch(b.dataset.game));
+      b.addEventListener('pointerenter', () => audio.hover());
+    });
+  }
+
   async launch(id) {
-    const meta = GAMES.find((g) => g.id === id);
+    const meta = ALL_GAMES.find((g) => g.id === id);
     if (!meta) return;
     this.destroyCurrent();
     this.meta = meta;
     const token = ++this.token;
     Modals.close('modal-arcade', { silent: true });
+    $('#modal-game').classList.toggle('big', !!meta.big);
+    $('#game-restart').classList.toggle('hidden', meta.restart === false);
     Modals.open('modal-game');
     this.onGameOpen?.();
     this.warp();
@@ -93,6 +138,23 @@ export class Arcade {
       setScore: (n) => this.setScore(n),
       setInfo: (t) => this.setInfo(t),
       gameOver: (score, opts) => this.gameOver(score, opts),
+      // Save a best score without ending the session (long games report progress as they go).
+      reportScore: (score) => {
+        const { best } = Store.submitScore(meta.id, Math.max(0, Math.round(score || 0)));
+        this.bestEl.textContent = fmt(best);
+        return best;
+      },
+      awardXP: (n, reason) => {
+        const { leveledUp, level } = Store.addXP(n);
+        if (reason) toast(`${reason} (+${Math.round(n)} XP)`, { icon: 'star' });
+        if (leveledUp) setTimeout(() => toast(`Level up! You reached level ${level}`, { type: 'success', icon: 'levelUp' }), 600);
+      },
+      storage: {
+        load: () => loadSave(meta.id),
+        save: (data) => { try { localStorage.setItem(saveKey(meta.id), JSON.stringify(data)); } catch { /* storage full or blocked */ } },
+        clear: () => { try { localStorage.removeItem(saveKey(meta.id)); } catch { /* ignore */ } },
+      },
+      get calm() { return Motion.calm; },
     };
   }
 
@@ -185,6 +247,7 @@ export class Arcade {
 
   backToArcade() {
     this.close();
+    this.renderFull();
     Modals.open('modal-arcade');
   }
 
@@ -194,4 +257,9 @@ export class Arcade {
   }
 
   get isPlaying() { return !!this.meta; }
+
+  // Lets a game intercept Escape (e.g. to open its pause menu). Returns true if handled.
+  handleEscape() {
+    try { return !!this.current?.onEscape?.(); } catch { return false; }
+  }
 }

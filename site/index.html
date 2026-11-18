@@ -305,16 +305,25 @@
 <!-- ============ Arcade grid ============ -->
 <div id="modal-arcade" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="arcade-title">
   <div class="modal-backdrop" data-close></div>
-  <div class="modal-panel glass max-w-5xl holo">
+  <div class="modal-panel glass max-w-6xl holo">
     <div class="modal-head">
       <div>
-        <p class="text-[10px] tracking-[0.3em] text-neon-pink font-display">HOLOGRAPHIC SIMULATIONS</p>
+        <p class="text-[10px] tracking-[0.3em] text-neon-pink font-display">GAMES</p>
         <h2 id="arcade-title" class="font-display font-black text-xl sm:text-2xl">Arcade Sector</h2>
       </div>
       <button type="button" class="close-btn" data-close aria-label="Close"><span data-icon="close"></span></button>
     </div>
     <div class="modal-body">
-      <div id="arcade-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+      <div data-tabs id="arcade-tabs">
+        <div class="tablist" role="tablist" data-tablist>
+          <button type="button" role="tab" class="tab" data-tab="full">Full Games</button>
+          <button type="button" role="tab" class="tab" data-tab="mini">Mini Games</button>
+        </div>
+        <div data-panels>
+          <div data-panel="full" class="pt-4" role="tabpanel"><div id="full-games" class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"></div></div>
+          <div data-panel="mini" class="pt-4 hidden" role="tabpanel"><div id="arcade-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

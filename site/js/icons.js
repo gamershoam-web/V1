@@ -44,6 +44,7 @@ const LINE = {
   right: '<path d="m9 5 7 7-7 7"/>',
   trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0Z"/><path d="M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11M17 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5M12 14v4M8 21h8M9.5 18h5"/>',
   arrowRight: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  pause: '<path d="M8 5v14M16 5v14"/>',
 };
 
 export function icon(name, cls = 'ico') {
@@ -168,6 +169,32 @@ const GAME = {
       <rect x="15.9" y="18.8" width="3.2" height="3.2" class="fk"/><rect x="28.7" y="18.8" width="3.2" height="3.2" class="fk"/>
     </g>
     <rect class="gi-shot fw" x="23" y="38" width="2" height="6" rx="1"/>`,
+
+  starfighter: (G) => `
+    <g class="gi-hover">
+      <path d="M44 24c-4-1.6-14-3-27-3l-7 3 7 3c13 0 23-1.4 27-3Z" fill="${G}"/>
+      <path d="M34 20.5 23 9.5h-5l6 11.5ZM34 27.5 23 38.5h-5l6-11.5Z" class="fa-d"/>
+      <path d="M28 22c-3-.8-6-.8-8 0l2 2-2 2c2 .8 5 .8 8 0Z" class="fk"/>
+      <ellipse class="gi-flame fa-l" cx="45.5" cy="24" rx="3" ry="1.6"/>
+    </g>
+    <path class="gi-laser sa-l" d="M10 17h7M10 31h7" stroke-width="2" stroke-linecap="round"/>
+    <path class="gi-twinkle fw" transform="translate(7 41) scale(.5)" d="${STAR4}"/>`,
+
+  conquest: (G) => `
+    <path d="M12 34 Q24 10 37 16" fill="none" class="sa-l gi-swirl" stroke-width="1.6" stroke-dasharray="3 3"/>
+    <circle cx="12" cy="35" r="7" fill="${G}"/><circle cx="12" cy="35" r="9.5" fill="none" class="sa" stroke-width="1"/>
+    <circle cx="37" cy="15" r="6" class="fa-d"/><circle cx="37" cy="15" r="8.2" fill="none" class="sa-f" stroke-width="1"/>
+    <circle cx="36" cy="38" r="4" class="fw" opacity=".55"/>
+    <path d="M-2.4-1.6 2.4 0-2.4 1.6Z" class="fw"><animateMotion dur="2.2s" repeatCount="indefinite" rotate="auto" path="M12 34 Q24 10 37 16"/></path>`,
+
+  colony: (G) => `
+    <path d="M6 40l5-9 12-3 13 1 7 6 2 7H5Z" class="fa-d"/>
+    <path d="M14 30a6 6 0 0 1 12 0Z" class="fw"/>
+    <rect x="29" y="16" width="2.6" height="13" class="fa"/><rect x="26.8" y="14.5" width="7" height="2.6" rx="1" fill="${G}"/>
+    <circle class="gi-blink fa-l" cx="30.3" cy="12.5" r="1.4"/>
+    <path d="M30 14 Q38 6 42 12" fill="none" class="sa-f" stroke-width="1" stroke-dasharray="1.5 2"/>
+    <path d="M40 10l2.5-2 3 1 .5 2.5-2 2-3-1Z" class="fa-l"/>
+    <circle r="1.6" class="fw"><animateMotion dur="2.4s" repeatCount="indefinite" keyPoints="0;1;0" keyTimes="0;.5;1" calcMode="linear" path="M30 14 Q38 6 42 12"/></circle>`,
 
   trivia: (G) => `
     <g class="gi-spin"><circle cx="24" cy="24" r="19" fill="none" stroke="${G}" stroke-width="2.2" stroke-dasharray="14 8" stroke-linecap="round"/></g>

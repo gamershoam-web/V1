@@ -5,7 +5,7 @@ import { audio } from './audio.js';
 import { $, $$, Modals, toast, initTabs, fmt, escapeHTML } from './ui.js';
 import { MinecraftPortal } from './minecraft.js';
 import { Arcade } from './arcade.js';
-import { GAMES } from './games/index.js';
+import { ALL_GAMES } from './games/index.js';
 import { gameIcon, icon } from './icons.js';
 import { runIntro } from './intro.js';
 import { Motion } from './motion.js';
@@ -120,7 +120,7 @@ function renderDeck() {
   $('#deck-xpbar').style.width = `${Math.round(info.progress * 100)}%`;
   $('#deck-next').textContent = `${fmt(info.next - info.xp)} XP to level ${info.level + 1}`;
   $('#deck-total').textContent = fmt(Store.totalBest());
-  $('#deck-scores').innerHTML = GAMES.map((g) => `
+  $('#deck-scores').innerHTML = ALL_GAMES.map((g) => `
     <li class="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
       <span class="deck-icon" style="--card-accent:${g.color}" aria-hidden="true">${gameIcon(g.id)}</span>
       <span class="flex-1 min-w-0 text-sm leading-tight">${escapeHTML(g.title)}</span>
@@ -187,7 +187,7 @@ function bindUI() {
     if (e.key !== 'Escape') return;
     const top = Modals.top();
     if (!top) return;
-    if (top === 'modal-game') arcade.backToArcade();
+    if (top === 'modal-game') { if (!arcade.handleEscape()) arcade.backToArcade(); }
     else Modals.close(top);
   });
 
@@ -229,7 +229,7 @@ function bindMotion() {
 /* ---------- diagnostics: open the site with ?diag ---------- */
 function showDiagnostics() {
   if (!new URLSearchParams(location.search).has('diag')) return;
-  window.orbitHub = { get scene() { return scene; } };
+  window.orbitHub = { get scene() { return scene; }, arcade };
   const yes = (v) => (v ? '<span class="ok">yes</span>' : '<span class="bad">no</span>');
   const render = () => {
     const box = $('#diag') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'diag', className: 'diag' }));
