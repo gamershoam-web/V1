@@ -23,9 +23,12 @@
 <link rel="preload" href="fonts/orbitron-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <!-- Component styles first so Tailwind utilities (e.g. .hidden) take precedence. -->
-<link rel="stylesheet" href="css/app.css?v=4">
-<link rel="stylesheet" href="css/tailwind.css?v=4">
-<script type="module" src="js/main.js?v=4"></script>
+<link rel="stylesheet" href="css/app.css?v=5">
+<link rel="stylesheet" href="css/tailwind.css?v=5">
+<script type="importmap">
+  { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
+</script>
+<script type="module" src="js/main.js?v=5"></script>
 <script>
   setTimeout(function () {
     var i = document.getElementById('intro');

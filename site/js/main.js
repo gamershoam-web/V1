@@ -229,6 +229,7 @@ function bindMotion() {
 /* ---------- diagnostics: open the site with ?diag ---------- */
 function showDiagnostics() {
   if (!new URLSearchParams(location.search).has('diag')) return;
+  window.orbitHub = { get scene() { return scene; } };
   const yes = (v) => (v ? '<span class="ok">yes</span>' : '<span class="bad">no</span>');
   const render = () => {
     const box = $('#diag') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'diag', className: 'diag' }));
