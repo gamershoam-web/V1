@@ -67,6 +67,7 @@ export class Arcade {
     this.warp();
     this.titleEl.textContent = meta.title;
     $('#game-icon').innerHTML = gameIcon(meta.id);
+    $('#game-icon').style.setProperty('--card-accent', meta.color);
     this.setScore(0);
     this.setInfo('');
     this.bestEl.textContent = fmt(Store.getBest(id));

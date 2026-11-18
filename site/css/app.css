@@ -1,4 +1,18 @@
 /* Orbit Network Hub — custom sci-fi styles (Tailwind handles utilities). */
+
+/* Self-hosted fonts */
+@font-face { font-family: Orbitron; font-style: normal; font-weight: 500; font-display: swap; src: url(../fonts/orbitron-latin-500-normal.woff2) format('woff2'); }
+@font-face { font-family: Orbitron; font-style: normal; font-weight: 700; font-display: swap; src: url(../fonts/orbitron-latin-700-normal.woff2) format('woff2'); }
+@font-face { font-family: Orbitron; font-style: normal; font-weight: 900; font-display: swap; src: url(../fonts/orbitron-latin-900-normal.woff2) format('woff2'); }
+@font-face { font-family: Inter; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/inter-latin-400-normal.woff2) format('woff2'); }
+@font-face { font-family: Inter; font-style: normal; font-weight: 500; font-display: swap; src: url(../fonts/inter-latin-500-normal.woff2) format('woff2'); }
+@font-face { font-family: Inter; font-style: normal; font-weight: 600; font-display: swap; src: url(../fonts/inter-latin-600-normal.woff2) format('woff2'); }
+@font-face { font-family: Inter; font-style: normal; font-weight: 700; font-display: swap; src: url(../fonts/inter-latin-700-normal.woff2) format('woff2'); }
+/* Orbitron's slashed zero reads like a missing-glyph box at small sizes, so digits use Inter.
+   (Declared after the Orbitron faces: later faces win for characters in their unicode-range.) */
+@font-face { font-family: Orbitron; font-style: normal; font-weight: 500; font-display: swap; src: url(../fonts/inter-latin-600-normal.woff2) format('woff2'); unicode-range: U+0030-0039; }
+@font-face { font-family: Orbitron; font-style: normal; font-weight: 700; font-display: swap; src: url(../fonts/inter-latin-700-normal.woff2) format('woff2'); unicode-range: U+0030-0039; }
+@font-face { font-family: Orbitron; font-style: normal; font-weight: 900; font-display: swap; src: url(../fonts/inter-latin-800-normal.woff2) format('woff2'); unicode-range: U+0030-0039; }
 :root {
   --cyan: #22d3ee;
   --purple: #a855f7;
@@ -524,3 +538,175 @@ button.hud-chip:hover { border-color: rgba(34, 211, 238, .55); box-shadow: 0 0 2
 .streak { display: inline-flex; align-items: center; gap: 3px; color: #fb923c; font-weight: 700; }
 .streak .ico { width: 14px; height: 14px; animation: gi-pulse .8s ease-in-out infinite; }
 [data-status] .ico { width: 16px; height: 16px; vertical-align: -3px; }
+
+/* =====================================================================
+   Responsive fit fixes (titles never overflow)
+   ===================================================================== */
+.brand-chip { display: flex; align-items: center; min-width: 0; padding: 8px 14px 8px 10px; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; text-align: left; }
+.brand-name { display: flex; font-family: Orbitron, sans-serif; font-weight: 900; font-size: 14px; letter-spacing: .16em; white-space: nowrap; }
+.brand-sector { margin-top: 4px; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 270px; }
+.hud-xp { width: 200px; }
+@media (max-width: 639px) {
+  .brand-chip { padding: 7px 10px 7px 8px; }
+  .brand { gap: 8px; }
+  .brand-name { flex-direction: column; font-size: clamp(10px, 3.2vw, 12.5px); letter-spacing: .14em; line-height: 1.12; }
+  .brand-sector { display: none; }
+  .logo-orb { width: 24px; height: 24px; }
+  .logo-orb::after { left: -6px; right: -6px; height: 8px; margin-top: -4px; }
+  .hud-xp { width: 66px; }
+}
+
+.fit-title { font-size: clamp(16px, 5.2vw, 24px); line-height: 1.15; overflow-wrap: anywhere; }
+@media (max-width: 400px) {
+  .modal { padding-left: 8px; padding-right: 8px; }
+  .modal-head { padding: 12px 12px; gap: 10px; }
+  .modal-head .voxel-icon { width: 36px; height: 36px; border-radius: 8px; }
+  .modal-body { padding: 14px 12px; }
+  .hero-actions .btn-neon { font-size: 13px; padding: 10px 12px; gap: 6px; }
+  .hero-actions .btn-ghost { padding: 10px 12px; }
+}
+.btn-ghost { white-space: normal; text-align: center; }
+
+.game-head > div:first-child { flex: 1; min-width: 0; }
+.game-title { min-width: 0; font-family: Orbitron, sans-serif; font-weight: 700; font-size: 18px; line-height: 1.15; letter-spacing: .02em;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+@media (max-width: 639px) {
+  .game-title { font-family: Inter, sans-serif; font-size: 15px; font-weight: 800; letter-spacing: 0; }
+  .btn-back { padding: 8px; }
+  .btn-back .ico { width: 18px; height: 18px; }
+  .game-head-icon { width: 28px; height: 28px; }
+  .score-box b { font-size: 14px; }
+}
+
+/* =====================================================================
+   Accent-matched game icons (blend with their card)
+   ===================================================================== */
+.gi { --a: var(--card-accent, #22d3ee); --a-l: color-mix(in srgb, var(--a) 45%, #ffffff); --a-d: color-mix(in srgb, var(--a) 55%, #0b0820);
+  filter: drop-shadow(0 0 2.5px color-mix(in srgb, var(--a) 70%, transparent)); transition: filter .3s; }
+.gi .fa { fill: var(--a); } .gi .fa-l { fill: var(--a-l); } .gi .fa-d { fill: var(--a-d); }
+.gi .fw { fill: #f8fafc; } .gi .fk { fill: #0a0718; }
+.gi .sa { stroke: var(--a); } .gi .sa-l { stroke: var(--a-l); } .gi .sa-f { stroke: color-mix(in srgb, var(--a) 45%, transparent); } .gi .sw { stroke: #f1f5f9; }
+.gi .st-l { stop-color: var(--a-l); } .gi .st-a { stop-color: var(--a); }
+.gi-letter { fill: #fff; } .gi-letter-dark { fill: #05030f; }
+
+.game-card-icon { width: 66px; height: 66px; padding: 5px; border: 0; border-radius: 50%; overflow: visible; box-shadow: none;
+  background: radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--card-accent) 30%, transparent) 0%, color-mix(in srgb, var(--card-accent) 10%, transparent) 52%, transparent 71%); }
+.game-card-icon::after { content: ""; position: absolute; inset: 1px; border-radius: 50%; background: none; pointer-events: none;
+  border: 1px dashed color-mix(in srgb, var(--card-accent) 38%, transparent); animation: gi-spin 24s linear infinite; }
+.game-card-icon::before { content: ""; position: absolute; width: 5px; height: 5px; border-radius: 50%; top: 50%; left: 50%; margin: -2.5px; pointer-events: none;
+  background: var(--card-accent); box-shadow: 0 0 6px var(--card-accent); transform: rotate(0deg) translateX(32px); animation: orbit-dot 6s linear infinite; }
+@keyframes orbit-dot { to { transform: rotate(360deg) translateX(32px); } }
+.game-card:hover .game-card-icon { transform: translateZ(30px) scale(1.1); box-shadow: none; }
+.game-card:hover .gi { filter: drop-shadow(0 0 6px color-mix(in srgb, var(--a) 85%, transparent)); }
+
+.deck-icon { padding: 2px; border: 0; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--card-accent) 28%, transparent), transparent 70%); }
+.game-head-icon { padding: 1px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--card-accent, #22d3ee) 30%, transparent), transparent 70%); }
+
+/* =====================================================================
+   Opening sequence
+   ===================================================================== */
+.intro { position: fixed; inset: 0; z-index: 100; overflow: hidden; display: grid; place-items: center; cursor: pointer;
+  background: radial-gradient(ellipse at 50% 55%, #120a33 0%, #05030f 60%, #020108 100%);
+  animation: intro-failsafe .6s ease 9s forwards; }
+@keyframes intro-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+.intro-active { overflow: hidden; }
+.intro-active .hud-top > *, .intro-active #dock, .intro-active .hero-card, .intro-active #nav-hint { animation-play-state: paused !important; }
+.intro-active #nav-hint { opacity: 0; }
+
+/* Star layers drift toward the viewer, then stretch into hyperspace on launch */
+.intro-stars { position: absolute; inset: -25%; opacity: 0; pointer-events: none; will-change: transform;
+  animation: intro-fade-in 1.2s ease .15s forwards, stars-drift 9s linear forwards; }
+.intro-stars.s1 { background-image: radial-gradient(1.2px 1.2px at 20px 30px, #fff, transparent), radial-gradient(1px 1px at 90px 120px, #cfe8ff, transparent), radial-gradient(1.4px 1.4px at 160px 60px, #fff, transparent); background-size: 190px 170px; }
+.intro-stars.s2 { background-image: radial-gradient(1.6px 1.6px at 50px 80px, #e9d5ff, transparent), radial-gradient(1.2px 1.2px at 200px 20px, #fff, transparent); background-size: 260px 230px; animation-duration: 1.2s, 7s; }
+.intro-stars.s3 { background-image: radial-gradient(2px 2px at 120px 140px, #a5f3fc, transparent), radial-gradient(1.8px 1.8px at 300px 40px, #fbcfe8, transparent); background-size: 380px 330px; animation-duration: 1.2s, 5.5s; }
+@keyframes intro-fade-in { to { opacity: 1; } }
+@keyframes stars-drift { from { transform: scale(1) rotate(0deg); } to { transform: scale(1.35) rotate(4deg); } }
+.intro-nebula { position: absolute; inset: 0; pointer-events: none; opacity: 0; animation: intro-fade-in 2s ease .3s forwards;
+  background: radial-gradient(ellipse 45% 35% at 30% 35%, rgba(124, 58, 237, .32), transparent 70%), radial-gradient(ellipse 40% 30% at 72% 68%, rgba(34, 211, 238, .2), transparent 70%), radial-gradient(ellipse 30% 25% at 70% 25%, rgba(219, 39, 119, .18), transparent 70%); }
+
+/* Power-on boot line */
+.intro-boot { position: absolute; left: 0; right: 0; top: 50%; height: 2px; margin-top: -1px; pointer-events: none; transform: scaleX(0); opacity: 0;
+  background: linear-gradient(90deg, transparent, #67e8f9 20%, #fff 50%, #c084fc 80%, transparent); box-shadow: 0 0 18px #22d3ee, 0 0 40px #a855f7;
+  animation: boot-line .9s cubic-bezier(.6, 0, .2, 1) .05s forwards; }
+@keyframes boot-line { 0% { transform: scaleX(0); opacity: 1; } 45% { transform: scaleX(1) scaleY(1); opacity: 1; } 100% { transform: scaleX(1) scaleY(60); opacity: 0; } }
+
+/* Logo + title block */
+.intro-core { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 16px; width: 100%; max-width: 1100px; will-change: transform, opacity; }
+.intro-logo { width: clamp(150px, 28vmin, 240px); height: auto; overflow: visible; }
+.intro-logo * { transform-box: fill-box; transform-origin: center; }
+.il-orbit { fill: none; stroke-width: 1.2; stroke-dasharray: 100; stroke-dashoffset: 100; animation: draw-stroke 1.3s cubic-bezier(.6, 0, .2, 1) forwards; }
+.il-orbit.o1 { stroke: rgba(34, 211, 238, .55); animation-delay: .35s; }
+.il-orbit.o2 { stroke: rgba(168, 85, 247, .55); stroke-dasharray: 2 3; stroke-dashoffset: 0; opacity: 0; animation: intro-fade-in .8s ease .7s forwards, gi-spin 30s linear .7s infinite; }
+@keyframes draw-stroke { to { stroke-dashoffset: 0; } }
+.il-glow circle { fill: #a855f7; filter: blur(18px); opacity: 0; animation: glow-in 1s ease .6s forwards, glow-breathe 3s ease-in-out 1.6s infinite; }
+@keyframes glow-in { to { opacity: .55; } }
+@keyframes glow-breathe { 50% { opacity: .85; } }
+.il-planet { animation: planet-in 1s cubic-bezier(.2, 1.6, .4, 1) .6s backwards; }
+@keyframes planet-in { from { transform: scale(0) rotate(-40deg); opacity: 0; } }
+.il-ring { fill: none; stroke: url(#introRing); stroke-width: 4; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; animation: draw-stroke .9s ease-out 1.05s forwards; }
+.il-ring.back { stroke-opacity: .45; }
+.il-sat { transform-box: view-box; transform-origin: 120px 120px; opacity: 0; }
+.il-sat.s1 circle { fill: #22d3ee; filter: drop-shadow(0 0 6px #22d3ee); }
+.il-sat.s2 circle { fill: #f472b6; filter: drop-shadow(0 0 6px #f472b6); }
+.il-sat.s1 { animation: intro-fade-in .4s ease 1.3s forwards, gi-spin 5s linear 1.3s infinite; }
+.il-sat.s2 { animation: intro-fade-in .4s ease 1.45s forwards, gi-spin 3.6s linear 1.45s infinite reverse; }
+
+.intro-title { margin-top: clamp(14px, 3vh, 26px); display: flex; justify-content: center; gap: .32em; font-family: Orbitron, sans-serif; font-weight: 900;
+  font-size: clamp(28px, 6.2vw, 78px); letter-spacing: .1em; line-height: 1.05; white-space: nowrap; position: relative; }
+.intro-title span { display: inline-flex; }
+.intro-title i { font-style: normal; display: inline-block; color: #fff; text-shadow: 0 0 18px rgba(168, 85, 247, .65);
+  animation: letter-in .75s cubic-bezier(.2, .9, .3, 1.15) calc(1.15s + var(--i) * 55ms) backwards; }
+.intro-title .w2 i { color: #67e8f9; text-shadow: 0 0 18px rgba(34, 211, 238, .75); }
+@keyframes letter-in { 0% { opacity: 0; transform: translateY(-36px) scale(2.4); filter: blur(12px); } 60% { opacity: 1; filter: blur(0); } 100% { opacity: 1; transform: none; } }
+.intro-title i { animation: letter-in .75s cubic-bezier(.2, .9, .3, 1.15) calc(1.15s + var(--i) * 55ms) backwards, letter-shine .7s ease calc(2.2s + var(--i) * 45ms); }
+@keyframes letter-shine { 45% { color: #fff; text-shadow: 0 0 6px #fff, 0 0 28px #a5f3fc, 0 0 48px #c084fc; transform: translateY(-3px); } }
+@media (max-width: 639px) {
+  .intro-title { flex-direction: column; align-items: center; gap: .08em; font-size: clamp(30px, 11vw, 58px); }
+}
+.intro-sub { margin-top: 12px; font-family: Orbitron, sans-serif; font-weight: 500; font-size: clamp(9px, 1.5vw, 14px); letter-spacing: .45em; text-transform: uppercase; color: #c4b5fd;
+  padding-left: .45em; white-space: nowrap; animation: sub-in 1s ease 1.95s backwards; }
+@keyframes sub-in { from { opacity: 0; transform: scale(1.18); filter: blur(6px); } }
+@media (max-width: 639px) { .intro-sub { font-size: clamp(8.5px, 2.6vw, 12px); letter-spacing: .26em; padding-left: .26em; } }
+
+.intro-load { margin-top: clamp(22px, 5vh, 44px); width: min(340px, 78vw); animation: intro-fade-up .6s ease .6s backwards; }
+@keyframes intro-fade-up { from { opacity: 0; transform: translateY(10px); } }
+.intro-bar { height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.intro-bar i { display: block; height: 100%; transform: scaleX(0); transform-origin: left; border-radius: inherit;
+  background: linear-gradient(90deg, #22d3ee, #a855f7, #f472b6); box-shadow: 0 0 12px rgba(34, 211, 238, .8); }
+.intro-meta { display: flex; justify-content: space-between; gap: 12px; margin-top: 9px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #94a3b8; }
+.intro-pct { font-family: Orbitron, sans-serif; color: #67e8f9; font-weight: 700; }
+.intro-skip { position: absolute; bottom: max(22px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 3; white-space: nowrap;
+  font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: rgba(203, 213, 225, .55); animation: intro-fade-in .6s ease 1s backwards; opacity: 0; animation-fill-mode: forwards; }
+
+/* Hyperspace jump */
+.intro-warp { position: absolute; left: 50%; top: 50%; width: 0; height: 0; z-index: 1; pointer-events: none; }
+.intro-warp i { position: absolute; left: 0; top: 0; width: var(--l); height: 2.5px; box-shadow: 0 0 6px var(--c); border-radius: 2px; opacity: 0; transform-origin: 0 50%;
+  background: linear-gradient(90deg, transparent, var(--c)); transform: rotate(var(--a)) translateX(12px) scaleX(.05); }
+.intro.launch .intro-warp i { animation: warp-out calc(1.1s * var(--sp, 1)) cubic-bezier(.5, 0, .9, .5) calc(var(--d) * var(--sp, 1)) forwards; }
+@keyframes warp-out { 0% { opacity: 0; transform: rotate(var(--a)) translateX(20px) scaleX(.05); } 15% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a)) translateX(calc(75vmax * var(--s))) scaleX(2.2); } }
+.intro.launch .intro-core { animation: core-out calc(.9s * var(--sp, 1)) cubic-bezier(.6, 0, .9, .4) forwards; }
+@keyframes core-out { to { transform: scale(2.6); opacity: 0; filter: blur(8px); } }
+.intro.launch .intro-stars { animation: stars-jump calc(1.1s * var(--sp, 1)) cubic-bezier(.6, 0, .9, .4) forwards; opacity: 1; }
+@keyframes stars-jump { to { transform: scale(4); opacity: 0; filter: blur(2px); } }
+.intro.launch .intro-skip, .intro.launch .intro-boot { opacity: 0; transition: opacity .2s; }
+.intro-flash { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .95), rgba(165, 243, 252, .55) 35%, rgba(168, 85, 247, 0) 70%); }
+.intro.launch .intro-flash { animation: flash calc(.9s * var(--sp, 1)) ease calc(.38s * var(--sp, 1)) forwards; }
+@keyframes flash { 0% { opacity: 0; } 35% { opacity: .9; } 100% { opacity: 0; } }
+.intro.reveal { pointer-events: none; animation: intro-out calc(1s * var(--sp, 1)) ease forwards; }
+@keyframes intro-out { to { background-color: transparent; background: transparent; opacity: 0; } }
+.intro.fast { --sp: .55; }
+.intro.reduced * { animation-duration: .01ms !important; animation-delay: 0s !important; }
+
+/* Notifications sit at the very top so they never cover panel titles */
+#toasts { top: max(10px, env(safe-area-inset-top)); z-index: 70; }
+@media (max-width: 359px) {
+  .brand-name { font-size: 10px; letter-spacing: .1em; }
+  .logo-orb { width: 20px; height: 20px; }
+  .brand { gap: 7px; }
+  .hud-xp { width: 56px; }
+  #hud-scores { padding-left: 8px; padding-right: 8px; }
+}

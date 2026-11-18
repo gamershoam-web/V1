@@ -7,6 +7,7 @@ import { MinecraftPortal } from './minecraft.js';
 import { Arcade } from './arcade.js';
 import { GAMES } from './games/index.js';
 import { gameIcon, icon } from './icons.js';
+import { runIntro } from './intro.js';
 
 const SECTORS = {
   hub: { label: 'Deep Space' },
@@ -17,6 +18,16 @@ const SECTORS = {
 };
 
 let scene = null;
+let introRunning = true;
+
+// Screen space covered by HUD panels, so the 3D system can be centred in the open area.
+function viewInsets() {
+  const dock = $('#dock').getBoundingClientRect();
+  const bottom = Math.max(0, window.innerHeight - dock.top);
+  const mobile = window.innerWidth < 640;
+  const top = mobile ? $('#hero-card').getBoundingClientRect().bottom : $('.hud-top').getBoundingClientRect().bottom;
+  return { top: Math.max(0, top), bottom };
+}
 let sectorTimer = 0;
 const portal = new MinecraftPortal();
 
@@ -30,7 +41,11 @@ async function initScene() {
       labelsEl: $('#labels'),
       onSelect: (id) => goSector(id),
       onHover: () => audio.hover(),
+      viewInsets,
+      intro: introRunning,
     });
+    // Keep the 3D system centred in the free space as the server card changes size.
+    new ResizeObserver(() => scene.resize()).observe($('#hero-card'));
     document.body.classList.add('scene-ready');
   } catch (err) {
     console.warn('3D scene disabled:', err);
@@ -67,6 +82,9 @@ Modals.onEmpty = () => {
 };
 
 /* ---------- HUD ---------- */
+const compactFmt = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
+const compact = (n) => (n < 10000 ? fmt(n) : compactFmt.format(n));
+
 let lastLevel = Store.levelInfo().level;
 function renderHUD() {
   const info = Store.levelInfo();
@@ -79,7 +97,7 @@ function renderHUD() {
   $('#hud-rank').textContent = info.rank;
   $('#hud-xp').textContent = `${fmt(info.xp - info.floor)} / ${fmt(info.next - info.floor)} XP`;
   $('#hud-xpbar').style.width = `${Math.round(info.progress * 100)}%`;
-  $('#hud-highscore').textContent = fmt(Store.totalBest());
+  $('#hud-highscore').textContent = compact(Store.totalBest());
   if (Modals.isOpen('modal-deck')) renderDeck();
 }
 
@@ -102,8 +120,8 @@ function renderDeck() {
   $('#deck-total').textContent = fmt(Store.totalBest());
   $('#deck-scores').innerHTML = GAMES.map((g) => `
     <li class="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
-      <span class="deck-icon" aria-hidden="true">${gameIcon(g.id)}</span>
-      <span class="flex-1 min-w-0 truncate text-sm">${escapeHTML(g.title)}</span>
+      <span class="deck-icon" style="--card-accent:${g.color}" aria-hidden="true">${gameIcon(g.id)}</span>
+      <span class="flex-1 min-w-0 text-sm leading-tight">${escapeHTML(g.title)}</span>
       <b class="font-display text-neon-cyan text-sm">${fmt(Store.getBest(g.id))}</b>
       <button type="button" class="btn-mini" data-play="${g.id}">Play</button>
     </li>`).join('');
@@ -187,4 +205,5 @@ renderHUD();
 renderSound();
 setSector('hub');
 portal.start();
+runIntro({ onReveal: () => { introRunning = false; scene?.reveal(); } });
 initScene();

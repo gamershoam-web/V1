@@ -15,7 +15,7 @@ export const GAMES = [
     desc: 'Type the words to blast descending alien ships.', load: () => import('./typing.js') },
   { id: 'q2048', title: 'Quantum 2048', tag: 'Puzzle', color: '#facc15', xp: 0.02,
     desc: 'Merge space dust all the way to a supernova.', load: () => import('./q2048.js') },
-  { id: 'lander', title: 'Lunar Lander', tag: 'Physics', color: '#e2e8f0', xp: 0.08,
+  { id: 'lander', title: 'Lunar Lander', tag: 'Physics', color: '#a5b4fc', xp: 0.08,
     desc: 'Burn fuel wisely and touch down softly on a pad.', load: () => import('./lander.js') },
   { id: 'breaker', title: 'Orbital Brick Breaker', tag: 'Arcade', color: '#38bdf8', xp: 0.03,
     desc: 'Smash alien shield bricks with a plasma core.', load: () => import('./breaker.js') },

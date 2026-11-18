@@ -9,15 +9,59 @@
 <meta property="og:title" content="Orbit Network Hub">
 <meta property="og:description" content="Join the Orbitnetwork.net Minecraft server and play 12 space arcade games.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='14' fill='%23a855f7'/%3E%3Cellipse cx='32' cy='32' rx='28' ry='9' fill='none' stroke='%2322d3ee' stroke-width='4' transform='rotate(-20 32 32)'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/orbitron-latin-900-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/orbitron-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <!-- Component styles first so Tailwind utilities (e.g. .hidden) take precedence. -->
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="css/tailwind.css">
 <script type="module" src="js/main.js"></script>
+<script>
+  setTimeout(function () {
+    var i = document.getElementById('intro');
+    if (i) i.remove();
+    document.body.classList.remove('intro-active');
+  }, 9000);
+</script>
 </head>
-<body class="bg-space-950 text-slate-100 font-body antialiased">
+<body class="intro-active bg-space-950 text-slate-100 font-body antialiased">
+
+<!-- ============ Opening sequence (see js/intro.js) ============ -->
+<div id="intro" class="intro" aria-hidden="true">
+  <div class="intro-stars s1"></div>
+  <div class="intro-stars s2"></div>
+  <div class="intro-stars s3"></div>
+  <div class="intro-nebula"></div>
+  <div class="intro-boot"></div>
+  <div class="intro-warp"></div>
+  <div class="intro-core">
+    <svg class="intro-logo" viewBox="0 0 240 240">
+      <defs>
+        <radialGradient id="introPlanet" cx="36%" cy="30%" r="78%"><stop offset="0" stop-color="#f5d0fe"/><stop offset=".42" stop-color="#a855f7"/><stop offset="1" stop-color="#1e0b4b"/></radialGradient>
+        <linearGradient id="introRing" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#22d3ee"/><stop offset=".55" stop-color="#a855f7"/><stop offset="1" stop-color="#f472b6"/></linearGradient>
+      </defs>
+      <circle class="il-orbit o1" cx="120" cy="120" r="110" pathLength="100"/>
+      <circle class="il-orbit o2" cx="120" cy="120" r="88" pathLength="100"/>
+      <g class="il-glow"><circle cx="120" cy="120" r="58"/></g>
+      <g transform="rotate(-20 120 120)"><path class="il-ring back" d="M42 120a78 21 0 0 1 156 0" pathLength="100"/></g>
+      <g class="il-planet"><circle cx="120" cy="120" r="42" fill="url(#introPlanet)"/><path d="M84 112c22 8 50 8 72 0M82 126c24 8 52 8 76 0" fill="none" stroke="#f0abfc" stroke-opacity=".35" stroke-width="3"/></g>
+      <g transform="rotate(-20 120 120)"><path class="il-ring front" d="M42 120a78 21 0 0 0 156 0" pathLength="100"/></g>
+      <g class="il-sat s1"><circle cx="120" cy="10" r="5.5"/></g>
+      <g class="il-sat s2"><circle cx="120" cy="32" r="4"/></g>
+    </svg>
+    <h1 class="intro-title" aria-label="Orbit Network">
+      <span class="w1"><i style="--i:0">O</i><i style="--i:1">R</i><i style="--i:2">B</i><i style="--i:3">I</i><i style="--i:4">T</i></span>
+      <span class="w2"><i style="--i:5">N</i><i style="--i:6">E</i><i style="--i:7">T</i><i style="--i:8">W</i><i style="--i:9">O</i><i style="--i:10">R</i><i style="--i:11">K</i></span>
+    </h1>
+    <p class="intro-sub">Minecraft · Arcade · Community</p>
+    <div class="intro-load">
+      <div class="intro-bar"><i></i></div>
+      <div class="intro-meta"><span class="intro-status">Initializing systems…</span><b class="intro-pct">0%</b></div>
+    </div>
+  </div>
+  <div class="intro-flash"></div>
+  <span class="intro-skip">Tap or press any key to skip</span>
+</div>
 
 <!-- 3D viewport -->
 <canvas id="space" aria-label="Interactive 3D map of Orbit Network sectors"></canvas>
@@ -26,26 +70,26 @@
 
 <!-- ============ HUD ============ -->
 <header class="hud-top fixed top-0 inset-x-0 z-[42] flex items-start justify-between gap-2 px-3 sm:px-5 pt-3 sm:pt-4 pointer-events-none">
-  <div class="glass hud-chip pointer-events-auto flex items-center gap-3 px-3 py-2 min-w-0 shrink">
-    <button type="button" data-sector="hub" class="flex items-center gap-2.5 min-w-0" aria-label="Orbit Network Hub home">
+  <div class="glass hud-chip brand-chip pointer-events-auto">
+    <button type="button" data-sector="hub" class="brand" aria-label="Orbit Network Hub home">
       <span class="logo-orb" aria-hidden="true"></span>
-      <span class="text-left leading-tight min-w-0">
-        <span class="block font-display font-black tracking-[0.12em] sm:tracking-[0.18em] text-[12px] sm:text-sm whitespace-nowrap">ORBIT<span class="text-neon-cyan">NETWORK</span></span>
-        <span class="block truncate max-w-[118px] sm:max-w-[260px] text-[10px] sm:text-[11px] tracking-[0.18em] sm:tracking-[0.25em] text-slate-400 uppercase"><span class="hidden sm:inline">Sector · </span><span id="sector-name" class="text-neon-purple">Deep Space</span></span>
+      <span class="brand-text">
+        <span class="brand-name"><span>ORBIT</span><span class="text-neon-cyan">NETWORK</span></span>
+        <span class="brand-sector">Sector · <span id="sector-name" class="text-neon-purple">Deep Space</span></span>
       </span>
     </button>
   </div>
 
-  <div class="pointer-events-auto flex items-start gap-1.5 sm:gap-2 shrink-0">
+  <div class="hud-right pointer-events-auto flex items-start gap-1.5 sm:gap-2 shrink-0">
     <button type="button" data-open-modal="minecraft" class="glass hud-chip hidden md:flex items-center gap-2 px-3 py-2 text-xs" aria-label="Minecraft server status">
       <span class="status-dot" data-mc-dot data-state="checking"></span>
       <span class="font-semibold" data-mc-state>Scanning…</span>
       <span class="text-slate-400"><span data-mc-players>–</span>/<span data-mc-max>–</span></span>
     </button>
 
-    <div class="glass hud-chip px-2.5 sm:px-3 py-2 w-[78px] sm:w-[200px]">
+    <div class="glass hud-chip hud-xp px-2.5 sm:px-3 py-2">
       <div class="flex items-baseline justify-between text-[11px]">
-        <span class="font-display tracking-wider">LV <b id="hud-level" class="text-neon-cyan">1</b> <span id="hud-rank" class="hidden sm:inline text-slate-400 font-body">Cadet</span></span>
+        <span class="font-display tracking-wider whitespace-nowrap">LV <b id="hud-level" class="text-neon-cyan">1</b> <span id="hud-rank" class="hidden sm:inline text-slate-400 font-body">Cadet</span></span>
         <span id="hud-xp" class="text-slate-400 hidden sm:inline">0 / 100 XP</span>
       </div>
       <div class="xp-track mt-1.5"><div id="hud-xpbar" class="xp-fill" style="width:0%"></div></div>
@@ -80,8 +124,8 @@
   </div>
   <div class="hero-body">
     <p class="motd mt-3 hidden sm:block" data-mc-motd>Connecting to the server…</p>
-    <div class="flex gap-2 mt-3 sm:mt-4">
-      <button type="button" class="btn-neon flex-1" data-copy-ip>
+    <div class="hero-actions flex gap-2 mt-3 sm:mt-4">
+      <button type="button" class="btn-neon flex-1 min-w-0" data-copy-ip>
         <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
         Join Orbitnetwork.net
       </button>
@@ -91,7 +135,7 @@
 </aside>
 
 <p id="nav-hint" class="fixed z-20 left-1/2 -translate-x-1/2 bottom-[96px] sm:bottom-[104px] text-[11px] sm:text-xs tracking-widest text-slate-400 uppercase transition-opacity duration-700 pointer-events-none text-center px-4">
-  Drag to orbit · Scroll or pinch to zoom · Tap a planet
+  <span class="hidden sm:inline">Drag to orbit · Scroll or pinch to zoom · Click a planet</span><span class="sm:hidden">Drag to orbit · Tap a planet</span>
 </p>
 
 <!-- Quick-navigation dock -->
@@ -127,7 +171,7 @@
         <div class="voxel-icon" aria-hidden="true"><img data-mc-icon class="hidden w-full h-full rounded-md" alt=""></div>
         <div class="min-w-0">
           <p class="text-[10px] tracking-[0.3em] text-neon-green font-display">MINECRAFT SERVER PORTAL</p>
-          <h2 id="mc-title" class="font-display font-black text-xl sm:text-2xl truncate" data-ip>Orbitnetwork.net</h2>
+          <h2 id="mc-title" class="font-display font-black fit-title" data-ip>Orbitnetwork.net</h2>
         </div>
       </div>
       <button type="button" class="close-btn" data-close aria-label="Close"><span data-icon="close"></span></button>
@@ -267,12 +311,12 @@
   <div class="modal-panel glass holo game-panel">
     <div class="game-head">
       <div class="flex items-center gap-2 min-w-0">
-        <button type="button" id="game-to-space" class="btn-mini whitespace-nowrap" title="Back to Space"><span data-icon="back"></span><span class="hidden sm:inline">Back to Space</span><span class="sm:hidden">Space</span></button>
+        <button type="button" id="game-to-space" class="btn-mini btn-back whitespace-nowrap" title="Back to Space" aria-label="Back to Space"><span data-icon="back"></span><span class="hidden sm:inline">Back to Space</span></button>
         <button type="button" id="game-to-arcade" class="btn-mini hidden sm:inline-flex" title="Back to the arcade">Arcade</button>
-        <span id="game-icon" class="game-head-icon ml-1" aria-hidden="true"></span>
-        <h2 id="game-title" class="font-display font-bold text-sm sm:text-lg truncate">Game</h2>
+        <span id="game-icon" class="game-head-icon" aria-hidden="true"></span>
+        <h2 id="game-title" class="game-title">Game</h2>
       </div>
-      <div class="flex items-center gap-2 sm:gap-3">
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
         <span id="game-info" class="hidden lg:inline text-xs text-slate-300 max-w-[260px] truncate"></span>
         <div class="score-box"><span>Score</span><b id="game-score">0</b></div>
         <div class="score-box"><span>Best</span><b id="game-best">0</b></div>
@@ -335,7 +379,7 @@
         <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.4C.6 9 0 13.5.3 18a19.9 19.9 0 0 0 6 3l1.3-2a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2a19.8 19.8 0 0 0 6-3c.4-5.2-.7-9.6-3.8-13.6ZM8.5 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm7 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>
         Join our Discord
       </a>
-      <div class="grid grid-cols-2 gap-3 mt-4">
+      <div class="grid min-[420px]:grid-cols-2 gap-3 mt-4">
         <button type="button" class="btn-ghost" data-open-modal="minecraft"><span data-icon="pickaxe"></span>Minecraft portal</button>
         <button type="button" class="btn-ghost" data-open-modal="arcade"><span data-icon="gamepad"></span>Arcade Sector</button>
       </div>

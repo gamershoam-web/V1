@@ -4,6 +4,30 @@ export const rand = (a, b) => a + Math.random() * (b - a);
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+// Largest font size (<= max) at which `text` fits in `width`. Leaves g.font set to it.
+export function fitFont(g, text, { weight = 700, family = 'Orbitron', max = 16, min = 9, width }) {
+  let size = max;
+  g.font = `${weight} ${size}px ${family}, sans-serif`;
+  while (size > min && g.measureText(text).width > width) {
+    size -= 1;
+    g.font = `${weight} ${size}px ${family}, sans-serif`;
+  }
+  return size;
+}
+
+// Word-wraps `text` to lines no wider than `width` using the current g.font.
+export function wrapText(g, text, width) {
+  const words = String(text).split(' ');
+  const lines = [];
+  let line = '';
+  for (const w of words) {
+    const test = line ? `${line} ${w}` : w;
+    if (line && g.measureText(test).width > width) { lines.push(line); line = w; } else line = test;
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 const isTypingTarget = (t) => t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
 
 export function makeStars(n, W, H) {
@@ -54,6 +78,7 @@ export class CanvasGame {
     this.state = 'ready';
     this.t = 0;
     this.readyText = ['READY', 'Press Space or tap to start'];
+    this.coarse = window.matchMedia('(pointer: coarse)').matches;
     this._listeners = [];
     this._timers = [];
 
@@ -138,23 +163,48 @@ export class CanvasGame {
 
   drawReady(g) {
     const [title, ...lines] = this.readyText;
+    const { W, H } = this;
+    const maxW = W * 0.88;
     g.save();
-    g.fillStyle = 'rgba(5,3,15,0.62)';
-    g.fillRect(0, 0, this.W, this.H);
+    g.fillStyle = 'rgba(5,3,15,0.66)';
+    g.fillRect(0, 0, W, H);
     g.textAlign = 'center';
     g.textBaseline = 'middle';
+
+    // Title: largest size that fits in at most two lines.
+    let size = Math.round(W / 12), titleLines = [title];
+    for (; size >= 14; size--) {
+      g.font = `900 ${size}px Orbitron, sans-serif`;
+      titleLines = wrapText(g, title, maxW);
+      if (titleLines.length <= 2 && titleLines.every((l) => g.measureText(l).width <= maxW)) break;
+    }
+    const titleLH = size * 1.12;
+
+    const bodySize = Math.max(13, Math.round(W / 40));
+    g.font = `500 ${bodySize}px Inter, sans-serif`;
+    const body = lines.flatMap((l) => wrapText(g, l, maxW));
+    const bodyLH = bodySize * 1.5;
+
+    const prompt = this.coarse ? 'TAP TO START' : 'TAP OR PRESS SPACE TO START';
+    const promptSize = fitFont(g, prompt, { weight: 700, max: Math.max(13, Math.round(W / 34)), width: maxW });
+
+    const total = titleLines.length * titleLH + 18 + body.length * bodyLH + 22 + promptSize;
+    let y = H / 2 - total / 2 + titleLH / 2;
+
+    g.font = `900 ${size}px Orbitron, sans-serif`;
     g.shadowColor = '#22d3ee'; g.shadowBlur = 18;
     g.fillStyle = '#fff';
-    g.font = `900 ${Math.round(this.W / 14)}px Orbitron, sans-serif`;
-    g.fillText(title, this.W / 2, this.H / 2 - 40);
+    titleLines.forEach((l) => { g.fillText(l, W / 2, y); y += titleLH; });
     g.shadowBlur = 0;
-    g.font = `500 ${Math.max(13, Math.round(this.W / 40))}px Inter, sans-serif`;
+    y += 18 - titleLH / 2 + bodyLH / 2;
+    g.font = `500 ${bodySize}px Inter, sans-serif`;
     g.fillStyle = '#cbd5e1';
-    lines.forEach((l, i) => g.fillText(l, this.W / 2, this.H / 2 + 10 + i * 24));
+    body.forEach((l) => { g.fillText(l, W / 2, y); y += bodyLH; });
+    y += 22 - bodyLH / 2 + promptSize / 2;
     const pulse = 0.5 + 0.5 * Math.sin(this.t * 4);
     g.fillStyle = `rgba(34,211,238,${0.5 + pulse * 0.5})`;
-    g.font = `700 ${Math.max(13, Math.round(this.W / 36))}px Orbitron, sans-serif`;
-    g.fillText('TAP OR PRESS SPACE TO START', this.W / 2, this.H / 2 + 30 + lines.length * 24 + 10);
+    g.font = `700 ${promptSize}px Orbitron, sans-serif`;
+    g.fillText(prompt, W / 2, y);
     g.restore();
   }
 
@@ -200,9 +250,10 @@ export class CanvasGame {
     return bar;
   }
 
-  text(g, str, x, y, { size = 16, color = '#fff', align = 'left', weight = 700, font = 'Orbitron', glow = null } = {}) {
+  text(g, str, x, y, { size = 16, color = '#fff', align = 'left', weight = 700, font = 'Orbitron', glow = null, maxWidth = this.W - 24 } = {}) {
     g.save();
-    g.font = `${weight} ${size}px ${font}, sans-serif`;
+    const fitted = fitFont(g, str, { weight, family: font, max: size, width: maxWidth });
+    g.font = `${weight} ${fitted}px ${font}, sans-serif`;
     g.textAlign = align;
     g.textBaseline = 'middle';
     if (glow) { g.shadowColor = glow; g.shadowBlur = 12; }

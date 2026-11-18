@@ -85,8 +85,10 @@ const ringTex = () => canvasTexture(512, 512, (g) => {
 });
 
 export class SpaceScene {
-  constructor(canvas, { labelsEl, onSelect, onHover } = {}) {
+  constructor(canvas, { labelsEl, onSelect, onHover, viewInsets, intro = false } = {}) {
     this.canvas = canvas;
+    this.viewInsets = viewInsets;
+    this.holding = intro;
     this.labelsEl = labelsEl;
     this.onSelect = onSelect;
     this.onHover = onHover;
@@ -108,7 +110,8 @@ export class SpaceScene {
 
     this.rig = {
       target: new THREE.Vector3(), targetGoal: new THREE.Vector3(),
-      r: 320, rGoal: 82, theta: 0.9, thetaGoal: 0.5, phi: 1.12, phiGoal: 1.12,
+      r: intro ? 760 : 320, rGoal: intro ? 760 : 82, theta: intro ? 2.6 : 0.9, thetaGoal: intro ? 2.6 : 0.5,
+      phi: intro ? 0.55 : 1.12, phiGoal: intro ? 0.55 : 1.12,
       focus: null, lastInteract: 0,
     };
     this.mouse = new THREE.Vector2(); this.mouseSmooth = new THREE.Vector2();
@@ -607,10 +610,23 @@ export class SpaceScene {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.fov = this.camera.aspect < 0.8 ? 68 : 55;
+    const ins = this.viewInsets?.() || { top: 0, bottom: 0 };
+    const shift = Math.round((ins.top - ins.bottom) / 2);
+    if (shift) this.camera.setViewOffset(w, h, 0, -shift, w, h); else this.camera.clearViewOffset();
     this.camera.updateProjectionMatrix();
     this.size = { w, h };
-    if (!this.rig.focus && this.time > 0.1) this.rig.rGoal = this.homeDistance();
-    if (this.time === 0) this.rig.rGoal = this.homeDistance();
+    if (this.holding) return;
+    if (!this.rig.focus) this.rig.rGoal = this.homeDistance();
+  }
+
+  // Cinematic fly-in from deep space (called when the intro overlay lifts).
+  reveal() {
+    if (!this.holding) return;
+    this.holding = false;
+    this.rig.rGoal = this.homeDistance();
+    this.rig.thetaGoal = 0.5;
+    this.rig.phiGoal = 1.12;
+    this.rig.lastInteract = this.time + 2;
   }
 
   /* ---------- frame loop ---------- */
@@ -664,6 +680,7 @@ export class SpaceScene {
     // Camera rig
     const rig = this.rig;
     if (rig.focus) rig.focus.object.getWorldPosition(rig.targetGoal);
+    else if (this.holding) rig.thetaGoal += dt * 0.05;
     else if (t - rig.lastInteract > 5) rig.thetaGoal += dt * 0.035;
     const kT = 1 - Math.exp(-dt * (rig.focus ? 3.2 : 2.2));
     const kR = 1 - Math.exp(-dt * 2.4);
@@ -692,6 +709,8 @@ export class SpaceScene {
 
   updateLabels() {
     if (!this.labelsEl || !this.size) return;
+    this._labelTick = (this._labelTick || 0) + 1;
+    const placed = [];
     const v = new THREE.Vector3();
     for (const n of this.nodes) {
       if (!n.labelEl) continue;
@@ -701,9 +720,27 @@ export class SpaceScene {
       const visible = v.z < 1 && Math.abs(v.x) < 1.15 && Math.abs(v.y) < 1.15;
       n.labelEl.classList.toggle('offscreen', !visible);
       if (!visible) continue;
-      const x = (v.x * 0.5 + 0.5) * this.size.w;
-      const y = (-v.y * 0.5 + 0.5) * this.size.h;
-      n.labelEl.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%)`;
+      let x = (v.x * 0.5 + 0.5) * this.size.w;
+      let y = (-v.y * 0.5 + 0.5) * this.size.h;
+      if (!n.labelSize || this._labelTick % 30 === 0) n.labelSize = [n.labelEl.offsetWidth, n.labelEl.offsetHeight];
+      const [lw, lh] = n.labelSize;
+      x = Math.min(Math.max(x, lw / 2 + 6), this.size.w - lw / 2 - 6);
+      y = Math.max(y, lh + 6);
+      n._rawY = y;
+      placed.push({ n, x, y, w: lw, h: lh });
+    }
+    // Resolve overlaps: push lower labels further down, then ease toward the target so nothing jumps.
+    placed.sort((a, b) => a.y - b.y);
+    for (let i = 0; i < placed.length; i++) {
+      const cur = placed[i];
+      for (let j = 0; j < i; j++) {
+        const o = placed[j];
+        if (Math.abs(cur.x - o.x) < (cur.w + o.w) / 2 + 4 && Math.abs(cur.y - o.y) < cur.h + 4) cur.y = o.y + cur.h + 4;
+      }
+      const off = cur.y - cur.n._rawY;
+      cur.n._off = (cur.n._off || 0) + (off - (cur.n._off || 0)) * 0.3;
+      const y = cur.n._rawY + cur.n._off;
+      cur.n.labelEl.style.transform = `translate3d(${cur.x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -100%)`;
     }
   }
 }

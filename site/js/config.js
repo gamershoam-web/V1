@@ -5,7 +5,7 @@ export const CONFIG = {
   javaPort: 25565,
   bedrockPort: 19132,
   // Paste your Discord invite here, e.g. 'https://discord.gg/abc123'. Leave empty to hide the link.
-  discordUrl: '',
+  discordUrl: 'https://discord.gg/wNrfteNG5',
   statusApi: 'https://api.mcsrvstat.us/3/',
   statusRefreshMs: 60000,
 };

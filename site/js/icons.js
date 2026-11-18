@@ -62,95 +62,131 @@ function pixels(rows, x0, y0, s, fill) {
 
 const STAR4 = 'M0-4.5 1.1-1.1 4.5 0 1.1 1.1 0 4.5-1.1 1.1-4.5 0-1.1-1.1Z';
 
-/* ---------------- Game icons (48x48, animated) ---------------- */
+/* ---------------- Game icons (48x48, animated) ----------------
+   Every icon is drawn only with its card's accent colour (--a) plus white/dark,
+   so it blends with the card it sits on. Paint classes:
+     fa = accent, fa-l = light accent, fa-d = deep accent, fw = white, fk = space-dark
+     sa / sa-l / sa-f = accent / light / faint strokes, sw = white stroke
+   G  = vertical gradient (light accent -> accent) per shape
+   GU = the same gradient across the whole icon (for pixel art / groups)       */
+let uid = 0;
+
 const GAME = {
-  wordle: () => `
-    <g class="gi-flip"><rect x="5" y="5" width="17" height="17" rx="3.5" fill="#16a34a"/><text x="13.5" y="18.4" class="gi-letter">O</text></g>
-    <g class="gi-flip d1"><rect x="26" y="5" width="17" height="17" rx="3.5" fill="#ca8a04"/><text x="34.5" y="18.4" class="gi-letter">R</text></g>
-    <g class="gi-flip d2"><rect x="5" y="26" width="17" height="17" rx="3.5" fill="#334155"/><text x="13.5" y="39.4" class="gi-letter">B</text></g>
-    <g class="gi-flip d3"><rect x="27" y="27" width="15" height="15" rx="3" fill="none" stroke="#22d3ee" stroke-width="2"/><rect class="gi-caret" x="33.5" y="31" width="2" height="7" rx="1" fill="#22d3ee"/></g>`,
+  wordle: (G) => `
+    <g class="gi-flip"><rect x="5" y="5" width="17" height="17" rx="4.5" fill="${G}"/><text x="13.5" y="18.3" class="gi-letter gi-letter-dark">O</text></g>
+    <g class="gi-flip d1"><rect x="26" y="5" width="17" height="17" rx="4.5" class="fa-d"/><text x="34.5" y="18.3" class="gi-letter">R</text></g>
+    <g class="gi-flip d2"><rect x="5" y="26" width="17" height="17" rx="4.5" class="fa-d"/><text x="13.5" y="39.3" class="gi-letter">B</text></g>
+    <g class="gi-flip d3"><rect x="27" y="27" width="15" height="15" rx="4" fill="none" class="sa" stroke-width="2"/><rect class="gi-caret fa-l" x="33.5" y="31" width="2" height="7" rx="1"/></g>`,
 
-  sketch: () => `
-    <path class="gi-draw" pathLength="100" d="M7 37c4-9 8-14 12-9s5 6 9-2 7-10 11-6" fill="none" stroke="#f472b6" stroke-width="3.2" stroke-linecap="round"/>
-    <g class="gi-bob"><path d="M28.5 6.5 39 17 25 31l-6 2 2-6Z" fill="#e2e8f0"/><path d="m28.5 6.5 3-3a2.1 2.1 0 0 1 3 0l4.5 4.5a2.1 2.1 0 0 1 0 3l-3 3" fill="#a855f7"/><path d="m19 33 2-6 4 4Z" fill="#f472b6"/></g>
-    <circle class="gi-twinkle" cx="9" cy="10" r="2.4" fill="#22d3ee"/><circle class="gi-twinkle d1" cx="16" cy="6" r="1.8" fill="#facc15"/><circle class="gi-twinkle d2" cx="41" cy="38" r="2" fill="#4ade80"/>`,
+  sketch: (G) => `
+    <path class="gi-draw" pathLength="100" d="M6.5 37.5c4-9 8-14 12-9s5 6 9-2 7-10 11-6" fill="none" stroke="${G}" stroke-width="3.4" stroke-linecap="round"/>
+    <g class="gi-bob">
+      <path d="M30 7 40 17 25.5 31.5l-6.5 2 2-6.5Z" class="fw"/>
+      <path d="m30 7 3-3a2.1 2.1 0 0 1 3 0l4 4a2.1 2.1 0 0 1 0 3l-3 3Z" class="fa-d"/>
+      <path d="m19 33.5 2-6.5 4.5 4.5Z" class="fa"/>
+      <path d="m26.5 14.5 6 6" class="sa-f" stroke-width="1.3"/>
+    </g>
+    <path class="gi-twinkle fa-l" transform="translate(10 11) scale(.85)" d="${STAR4}"/>
+    <path class="gi-twinkle d2 fa" transform="translate(41 39) scale(.6)" d="${STAR4}"/>`,
 
-  dodger: () => `
-    <path d="M18 4 8 44M30 4l10 40" stroke="#a855f7" stroke-opacity=".35" stroke-width="1.2"/>
-    <g transform="translate(15 0)"><g class="gi-fall"><path d="M0-5 4.5-2 4 3 -.5 5.5-4.5 2-4-3Z" fill="#fb923c"/><circle cx="1" cy="0" r="1.2" fill="#7c2d12"/></g></g>
-    <g transform="translate(32 0)"><g class="gi-fall d2"><path d="M0-4 3.5-1.5 3 2.5 -.5 4.5-3.5 1.5-3-2.5Z" fill="#fdba74"/></g></g>
-    <g transform="translate(24 0)"><g class="gi-fall d4"><circle r="3.2" fill="#38bdf8"/><circle r="1.4" fill="#e0f2fe"/></g></g>
-    <g class="gi-strafe"><path class="gi-flame" d="M21.5 42 24 47l2.5-5Z" fill="#22d3ee"/><path d="M24 29l8 13-8-3-8 3Z" fill="#e2e8f0"/><path d="M24 33l2 4h-4Z" fill="#a855f7"/></g>`,
+  dodger: (G) => `
+    <path d="M19 3 8.5 45M29 3l10.5 42" class="sa-f" stroke-width="1.2"/>
+    <g transform="translate(15 0)"><g class="gi-fall"><path d="M0-5 4.5-2 4 3-.5 5.5-4.5 2-4-3Z" class="fa-d"/><path d="M0-5 4.5-2 .5-.5-4-3Z" class="fa-l"/></g></g>
+    <g transform="translate(33 0)"><g class="gi-fall d2"><path d="M0-4 3.5-1.5 3 2.5-.5 4.5-3.5 1.5-3-2.5Z" class="fa"/></g></g>
+    <g transform="translate(24 0)"><g class="gi-fall d4"><circle r="2.8" class="fw"/><circle r="4.6" fill="none" class="sa-l" stroke-width="1.1"/></g></g>
+    <g class="gi-strafe"><path class="gi-flame fa-l" d="M21.5 42 24 47.5l2.5-5.5Z"/><path d="m24 28.5 8.5 13.5-8.5-3-8.5 3Z" fill="${G}"/><path d="m24 32.5 2 4.5h-4Z" class="fk"/></g>`,
 
-  pong: () => `
-    <ellipse cx="24" cy="24" rx="13" ry="5" fill="none" stroke="#c084fc" stroke-width="1.6" stroke-dasharray="6 4" class="gi-swirl" transform="rotate(-18 24 24)"/>
-    <circle cx="24" cy="24" r="6.5" fill="#05030f" stroke="#f472b6" stroke-width="1.6"/>
-    <rect class="gi-paddle" x="3" y="14" width="3.5" height="13" rx="1.75" fill="#22d3ee"/>
-    <rect class="gi-paddle d2" x="41.5" y="21" width="3.5" height="13" rx="1.75" fill="#f472b6"/>
-    <circle r="2.6" fill="#fde047"><animateMotion dur="2.6s" repeatCount="indefinite" path="M9 20C18 13 26 37 39 28 26 37 18 13 9 20Z"/></circle>`,
+  pong: (G) => `
+    <ellipse cx="24" cy="24" rx="14" ry="5.2" fill="none" stroke="${G}" stroke-width="2" stroke-dasharray="6 4" class="gi-swirl" transform="rotate(-18 24 24)"/>
+    <circle cx="24" cy="24" r="7.5" class="fa-d" opacity=".55"/>
+    <circle cx="24" cy="24" r="5.8" class="fk"/>
+    <circle cx="24" cy="24" r="5.8" fill="none" class="sa-l" stroke-width="1.2"/>
+    <rect class="gi-paddle" x="3" y="14" width="3.6" height="13" rx="1.8" fill="${G}"/>
+    <rect class="gi-paddle d2 fa-d" x="41.4" y="21" width="3.6" height="13" rx="1.8"/>
+    <circle r="2.7" class="fw"><animateMotion dur="2.6s" repeatCount="indefinite" path="M9 20C18 13 26 37 39 28 26 37 18 13 9 20Z"/></circle>`,
 
-  typing: () => `
-    <g class="gi-hover"><ellipse cx="24" cy="11" rx="11" ry="3.8" fill="#4ade80"/><path d="M18 10a6 5 0 0 1 12 0Z" fill="#bbf7d0"/><circle cx="17" cy="11.5" r=".9" fill="#052e16"/><circle cx="24" cy="12.5" r=".9" fill="#052e16"/><circle cx="31" cy="11.5" r=".9" fill="#052e16"/></g>
-    <path class="gi-beam" d="M24 37V15" stroke="#22d3ee" stroke-width="2.4" stroke-linecap="round"/>
-    <g fill="none" stroke="#94a3b8" stroke-width="1.6"><rect x="4" y="38" width="9" height="7" rx="1.8"/><rect x="35" y="38" width="9" height="7" rx="1.8"/></g>
-    <rect class="gi-key" x="16" y="38" width="16" height="7" rx="1.8" fill="#22d3ee" fill-opacity=".25" stroke="#22d3ee" stroke-width="1.6"/>`,
+  typing: (G) => `
+    <g class="gi-hover">
+      <ellipse cx="24" cy="11.5" rx="12" ry="4" fill="${G}"/>
+      <path d="M17.5 10.5a6.5 5.5 0 0 1 13 0Z" class="fa-l"/>
+      <circle cx="17" cy="12" r="1" class="fk"/><circle cx="24" cy="13" r="1" class="fk"/><circle cx="31" cy="12" r="1" class="fk"/>
+    </g>
+    <path class="gi-beam sa-l" d="M24 37V16" stroke-width="2.4" stroke-linecap="round"/>
+    <g fill="none" class="sa-f" stroke-width="1.6"><rect x="4" y="38.5" width="9" height="6.5" rx="1.8"/><rect x="35" y="38.5" width="9" height="6.5" rx="1.8"/></g>
+    <rect class="gi-key fa-d sa" x="16" y="38.5" width="16" height="6.5" rx="1.8" stroke-width="1.6"/>`,
 
-  q2048: () => `
-    <rect x="4" y="4" width="18" height="18" rx="4" fill="#1d4ed8"/><circle cx="13" cy="13" r="4.2" fill="#93c5fd"/><ellipse cx="13" cy="13.5" rx="7" ry="2" fill="none" stroke="#e0f2fe" stroke-width="1.2" transform="rotate(-15 13 13)"/>
-    <rect x="26" y="4" width="18" height="18" rx="4" fill="#ca8a04"/><path class="gi-twinkle" transform="translate(35 13) scale(1.3)" d="${STAR4}" fill="#fef9c3"/>
-    <rect x="4" y="26" width="18" height="18" rx="4" fill="#1e1b4b"/><g fill="#c4b5fd"><circle class="gi-twinkle" cx="9" cy="31" r="1.2"/><circle class="gi-twinkle d1" cx="16" cy="34" r="1"/><circle class="gi-twinkle d2" cx="11" cy="39" r="1.3"/><circle class="gi-twinkle d3" cx="18" cy="40" r=".9"/></g>
-    <g class="gi-merge"><rect x="26" y="26" width="18" height="18" rx="4" fill="#db2777"/><path d="M35 29l1.5 4 4-.8-2.6 3.2 2.6 3.2-4-.8L35 41.8l-1.5-4-4 .8 2.6-3.2-2.6-3.2 4 .8Z" fill="#fed7aa"/></g>`,
+  q2048: (G) => `
+    <rect x="4" y="4" width="18" height="18" rx="4.5" class="fa-d"/>
+    <circle cx="13" cy="13" r="4" class="fw"/><ellipse cx="13" cy="13.5" rx="7.2" ry="2" fill="none" class="sw" stroke-width="1.2" transform="rotate(-15 13 13)"/>
+    <rect x="26" y="4" width="18" height="18" rx="4.5" fill="${G}"/>
+    <path class="gi-twinkle fk" transform="translate(35 13) scale(1.25)" d="${STAR4}"/>
+    <rect x="4" y="26" width="18" height="18" rx="4.5" class="fk"/><rect x="4" y="26" width="18" height="18" rx="4.5" fill="none" class="sa-f" stroke-width="1.2"/>
+    <g class="fa-l"><circle class="gi-twinkle" cx="9" cy="31" r="1.3"/><circle class="gi-twinkle d1" cx="16" cy="34" r="1.1"/><circle class="gi-twinkle d2" cx="11" cy="39" r="1.4"/><circle class="gi-twinkle d3" cx="18" cy="40" r="1"/></g>
+    <g class="gi-merge"><rect x="26" y="26" width="18" height="18" rx="4.5" class="fa"/><path d="m35 28.8 1.5 4 4-.8-2.6 3.2 2.6 3.2-4-.8L35 41.8l-1.5-4.2-4 .8 2.6-3.2-2.6-3.2 4 .8Z" class="fw"/></g>`,
 
-  lander: () => `
-    <circle cx="39" cy="9" r="4" fill="#3b82f6"/><circle cx="37.6" cy="7.8" r="1.4" fill="#93c5fd"/>
-    <path d="M2 44l9-5 5 2.5h16l4-4 10 6.5" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linejoin="round"/>
-    <path class="gi-pad" d="M16 41.5h16" stroke="#4ade80" stroke-width="2.6" stroke-linecap="round"/>
+  lander: (G) => `
+    <path d="M40 4.5a5 5 0 1 0 3.5 8.6A4 4 0 0 1 40 4.5Z" class="fa-l"/>
+    <path d="m2 44 9-5 5 2.5h16l4-4 10 6.5" fill="none" class="sa-f" stroke-width="1.6" stroke-linejoin="round"/>
+    <path class="gi-pad sa" d="M16 41.5h16" stroke-width="2.6" stroke-linecap="round"/>
     <g class="gi-descend">
-      <path class="gi-flame" d="M21.5 30 24 37l2.5-7Z" fill="#fb923c"/>
-      <path d="M18.5 26.5 15.5 32M29.5 26.5l3 5.5M14 32h3.5M30.5 32H34" stroke="#e2e8f0" stroke-width="1.6" stroke-linecap="round"/>
-      <rect x="18" y="21" width="12" height="8" rx="1.5" fill="#cbd5e1"/><path d="M18.5 21a5.5 5.5 0 0 1 11 0Z" fill="#e2e8f0"/><circle cx="24" cy="19.5" r="2.2" fill="#22d3ee"/>
+      <path class="gi-flame fa-l" d="M21.5 30 24 37l2.5-7Z"/>
+      <path d="M18.5 26.5 15.5 32M29.5 26.5l3 5.5M14 32h3.5M30.5 32H34" class="sw" stroke-width="1.6" stroke-linecap="round"/>
+      <rect x="18" y="21" width="12" height="8" rx="2" fill="${G}"/>
+      <path d="M18.5 21a5.5 5.5 0 0 1 11 0Z" class="fw"/>
+      <circle cx="24" cy="19.7" r="2.1" class="fk"/>
     </g>`,
 
-  breaker: () => `
-    <g><rect x="4" y="6" width="9" height="5" rx="1.5" fill="#f472b6"/><rect x="14.5" y="6" width="9" height="5" rx="1.5" fill="#f472b6"/><rect class="gi-blink" x="25" y="6" width="9" height="5" rx="1.5" fill="#f472b6"/><rect x="35.5" y="6" width="9" height="5" rx="1.5" fill="#f472b6"/>
-    <rect x="4" y="12.5" width="9" height="5" rx="1.5" fill="#a855f7"/><rect class="gi-blink d2" x="14.5" y="12.5" width="9" height="5" rx="1.5" fill="#a855f7"/><rect x="25" y="12.5" width="9" height="5" rx="1.5" fill="#a855f7"/><rect x="35.5" y="12.5" width="9" height="5" rx="1.5" fill="#a855f7"/>
-    <rect x="4" y="19" width="9" height="5" rx="1.5" fill="#38bdf8"/><rect x="14.5" y="19" width="9" height="5" rx="1.5" fill="#38bdf8"/><rect x="35.5" y="19" width="9" height="5" rx="1.5" fill="#38bdf8"/></g>
-    <rect class="gi-strafe" x="15" y="40" width="18" height="4" rx="2" fill="#22d3ee"/>
-    <circle r="2.6" fill="#fde047"><animateMotion dur="2.2s" repeatCount="indefinite" path="M24 37 36 27 28 26 12 32 24 37Z"/></circle>`,
+  breaker: (G, GU) => `
+    <g class="fa-l"><rect x="4" y="6" width="9" height="5" rx="1.6"/><rect x="14.5" y="6" width="9" height="5" rx="1.6"/><rect class="gi-blink" x="25" y="6" width="9" height="5" rx="1.6"/><rect x="35.5" y="6" width="9" height="5" rx="1.6"/></g>
+    <g class="fa"><rect x="4" y="12.5" width="9" height="5" rx="1.6"/><rect class="gi-blink d2" x="14.5" y="12.5" width="9" height="5" rx="1.6"/><rect x="25" y="12.5" width="9" height="5" rx="1.6"/><rect x="35.5" y="12.5" width="9" height="5" rx="1.6"/></g>
+    <g class="fa-d"><rect x="4" y="19" width="9" height="5" rx="1.6"/><rect x="14.5" y="19" width="9" height="5" rx="1.6"/><rect x="35.5" y="19" width="9" height="5" rx="1.6"/></g>
+    <rect class="gi-strafe" x="15" y="40" width="18" height="4.2" rx="2.1" fill="${GU}"/>
+    <circle r="2.7" class="fw"><animateMotion dur="2.2s" repeatCount="indefinite" path="M24 37 36 27 28 26 12 32 24 37Z"/></circle>`,
 
   memory: () => `
-    <path d="M9 17 19 8l12 6 7 16-19 7Z" fill="none" stroke="#a78bfa" stroke-opacity=".55" stroke-width="1.2" stroke-dasharray="2 2"/>
-    <g transform="translate(9 17)"><path class="gi-seq" d="${STAR4}" fill="#22d3ee"/></g>
-    <g transform="translate(19 8)"><path class="gi-seq d1" d="${STAR4}" fill="#a855f7"/></g>
-    <g transform="translate(31 14)"><path class="gi-seq d2" d="${STAR4}" fill="#f472b6"/></g>
-    <g transform="translate(38 30)"><path class="gi-seq d3" d="${STAR4}" fill="#facc15"/></g>
-    <g transform="translate(19 37)"><path class="gi-seq d4" d="${STAR4}" fill="#4ade80"/></g>`,
+    <path d="M9 17 19 8l12 6 7 16-19 7Z" fill="none" class="sa-f" stroke-width="1.2" stroke-dasharray="2 2"/>
+    <circle cx="24" cy="22" r="11" class="fa" opacity=".12"/>
+    <g transform="translate(9 17)"><path class="gi-seq fw" d="${STAR4}"/></g>
+    <g transform="translate(19 8)"><path class="gi-seq d1 fa-l" d="${STAR4}"/></g>
+    <g transform="translate(31 14)"><path class="gi-seq d2 fa" d="${STAR4}"/></g>
+    <g transform="translate(38 30)"><path class="gi-seq d3 fw" d="${STAR4}"/></g>
+    <g transform="translate(19 37)"><path class="gi-seq d4 fa-l" d="${STAR4}"/></g>`,
 
   mines: () => `
-    <g fill="none" stroke="#fb7185" stroke-opacity=".5" stroke-width="1.2"><circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="12"/><circle cx="24" cy="24" r="5"/><path d="M24 4v40M4 24h40"/></g>
-    <path class="gi-sweep" d="M24 24V5a19 19 0 0 1 16.5 9.5Z" fill="#fb7185" fill-opacity=".35"/>
-    <circle class="gi-blip" cx="32" cy="16" r="2.4" fill="#fecdd3"/>
-    <circle class="gi-blip d2" cx="15" cy="31" r="2" fill="#fecdd3"/>
-    <circle class="gi-blip d3" cx="31" cy="34" r="1.6" fill="#fecdd3"/>`,
+    <circle cx="24" cy="24" r="19.5" class="fa" opacity=".1"/>
+    <g fill="none" class="sa-f" stroke-width="1.2"><circle cx="24" cy="24" r="19"/><circle cx="24" cy="24" r="12"/><circle cx="24" cy="24" r="5"/><path d="M24 4v40M4 24h40"/></g>
+    <path class="gi-sweep fa" d="M24 24V5a19 19 0 0 1 16.5 9.5Z" opacity=".45"/>
+    <circle cx="24" cy="24" r="2" class="fa-l"/>
+    <circle class="gi-blip fw" cx="32" cy="16" r="2.4"/>
+    <circle class="gi-blip d2 fa-l" cx="15" cy="31" r="2"/>
+    <circle class="gi-blip d3 fw" cx="31" cy="34" r="1.6"/>`,
 
-  invaders: () => `
+  invaders: (G, GU) => `
     <g class="gi-hover">
-      <g class="gi-frame-a">${pixels(['..X.....X..', '...X...X...', '..XXXXXXX..', '.XX.XXX.XX.', 'XXXXXXXXXXX', 'X.XXXXXXX.X', 'X.X.....X.X', '...XX.XX...'], 6.4, 6, 3.2, '#34d399')}</g>
-      <g class="gi-frame-b">${pixels(['..X.....X..', 'X..X...X..X', 'X.XXXXXXX.X', 'XXX.XXX.XXX', 'XXXXXXXXXXX', '.XXXXXXXXX.', '..X.....X..', '.X.......X.'], 6.4, 6, 3.2, '#34d399')}</g>
+      <g class="gi-frame-a">${pixels(['..X.....X..', '...X...X...', '..XXXXXXX..', '.XX.XXX.XX.', 'XXXXXXXXXXX', 'X.XXXXXXX.X', 'X.X.....X.X', '...XX.XX...'], 6.4, 6, 3.2, GU)}</g>
+      <g class="gi-frame-b">${pixels(['..X.....X..', 'X..X...X..X', 'X.XXXXXXX.X', 'XXX.XXX.XXX', 'XXXXXXXXXXX', '.XXXXXXXXX.', '..X.....X..', '.X.......X.'], 6.4, 6, 3.2, GU)}</g>
+      <rect x="15.9" y="18.8" width="3.2" height="3.2" class="fk"/><rect x="28.7" y="18.8" width="3.2" height="3.2" class="fk"/>
     </g>
-    <rect class="gi-shot" x="23" y="38" width="2" height="6" rx="1" fill="#22d3ee"/>`,
+    <rect class="gi-shot fw" x="23" y="38" width="2" height="6" rx="1"/>`,
 
-  trivia: () => `
-    <g class="gi-spin"><circle cx="24" cy="24" r="19" fill="none" stroke="#60a5fa" stroke-width="2" stroke-dasharray="14 8" stroke-linecap="round"/></g>
-    <g class="gi-spin-rev"><circle cx="24" cy="24" r="13.5" fill="none" stroke="#a855f7" stroke-width="2" stroke-dasharray="9 6" stroke-linecap="round"/></g>
-    <circle cx="24" cy="24" r="9" fill="#0b1a4a"/>
-    <path class="gi-pulse" d="M20.8 21a3.4 3.4 0 1 1 4.6 3.2c-1 .4-1.4 1.1-1.4 2.1v.7" fill="none" stroke="#e0f2fe" stroke-width="2.4" stroke-linecap="round"/><circle cx="24" cy="30.2" r="1.4" fill="#e0f2fe"/>
-    <circle class="gi-rise" cx="9" cy="40" r="1.6" fill="#93c5fd"/><circle class="gi-rise d2" cx="39" cy="42" r="1.2" fill="#93c5fd"/>`,
+  trivia: (G) => `
+    <g class="gi-spin"><circle cx="24" cy="24" r="19" fill="none" stroke="${G}" stroke-width="2.2" stroke-dasharray="14 8" stroke-linecap="round"/></g>
+    <g class="gi-spin-rev"><circle cx="24" cy="24" r="13.5" fill="none" class="sa-l" stroke-width="2" stroke-dasharray="9 6" stroke-linecap="round"/></g>
+    <circle cx="24" cy="24" r="9" class="fk"/>
+    <path class="gi-pulse sw" d="M20.8 21a3.4 3.4 0 1 1 4.6 3.2c-1 .4-1.4 1.1-1.4 2.1v.7" fill="none" stroke-width="2.4" stroke-linecap="round"/>
+    <circle cx="24" cy="30.2" r="1.4" class="fw"/>
+    <circle class="gi-rise fa-l" cx="9" cy="40" r="1.6"/><circle class="gi-rise d2 fa-l" cx="39" cy="42" r="1.2"/>`,
 };
 
 export function gameIcon(id, cls = 'gi') {
-  const body = GAME[id] ? GAME[id]() : GAME.memory();
-  return `<svg class="${cls} gi-${id}" viewBox="0 0 48 48" aria-hidden="true">${body}</svg>`;
+  const n = ++uid;
+  const G = `url(#gig${n})`, GU = `url(#giu${n})`;
+  const body = (GAME[id] || GAME.memory)(G, GU);
+  return `<svg class="${cls} gi-${id}" viewBox="0 0 48 48" aria-hidden="true">
+    <defs>
+      <linearGradient id="gig${n}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="st-l"/><stop offset="1" class="st-a"/></linearGradient>
+      <linearGradient id="giu${n}" gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="44"><stop offset="0" class="st-l"/><stop offset="1" class="st-a"/></linearGradient>
+    </defs>${body}</svg>`;
 }
 
 /* ---------------- Cosmic matter art for Quantum 2048 (40x40) ---------------- */
