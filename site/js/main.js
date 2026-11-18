@@ -59,6 +59,27 @@ async function initScene() {
 function setSector(id) {
   $('#sector-name').textContent = SECTORS[id]?.label || '';
   $$('[data-sector]').forEach((b) => b.classList.toggle('active', b.dataset.sector === id));
+  placeDockIndicator(true);
+}
+
+// Glowing pill that slides behind the active dock button.
+function placeDockIndicator(animate) {
+  const dock = $('#dock');
+  let ind = dock.querySelector('.dock-indicator');
+  if (!ind) {
+    ind = document.createElement('span');
+    ind.className = 'dock-indicator';
+    ind.setAttribute('aria-hidden', 'true');
+    dock.prepend(ind);
+    animate = false;
+  }
+  const b = dock.querySelector('.dock-btn.active');
+  if (!b) { ind.style.opacity = '0'; return; }
+  ind.classList.toggle('no-anim', !animate);
+  ind.style.opacity = '1';
+  ind.style.width = `${b.offsetWidth}px`;
+  ind.style.transform = `translateX(${b.offsetLeft}px)`;
+  ind.classList.toggle('mc', b.classList.contains('dock-mc'));
 }
 
 function goSector(id) {
@@ -240,7 +261,7 @@ function showDiagnostics() {
       <div>Device asks for reduced motion: ${Motion.osReduce ? '<span class="bad">yes</span>' : '<span class="ok">no</span>'}</div>
       <div>Running animations: ${document.getAnimations ? document.getAnimations().length : 'n/a'}</div>
       <div>3D scene (WebGL): ${webgl}</div>
-      <div>Fonts loaded: ${yes(document.fonts?.check('900 16px Orbitron'))}</div>
+      <div>Fonts loaded: ${yes(document.fonts?.check('700 16px "Exo 2"'))}</div>
       <div>CSS color-mix: ${yes(window.CSS?.supports?.('color', 'color-mix(in srgb, red 50%, blue)'))} · @property: ${yes(typeof window.CSS?.registerProperty === 'function')}</div>
       <div>Viewport: ${innerWidth}×${innerHeight} @${devicePixelRatio}x</div>
       <div style="word-break:break-all;opacity:.75;margin-top:6px">${escapeHTML(navigator.userAgent)}</div>`;
@@ -251,6 +272,8 @@ function showDiagnostics() {
 
 bindUI();
 bindMotion();
+window.addEventListener('resize', () => placeDockIndicator(false));
+document.fonts?.ready.then(() => placeDockIndicator(false));
 initTabs(document);
 Store.subscribe(renderHUD);
 renderHUD();

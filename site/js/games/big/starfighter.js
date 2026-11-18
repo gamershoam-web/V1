@@ -1313,12 +1313,13 @@ export default class Starfighter {
     if (!st.behind && st.x > 0 && st.x < w && st.y > 0 && st.y < h) {
       g.strokeStyle = this.stationHit > 0 ? '#fb7185' : 'rgba(103,232,249,0.7)';
       g.strokeRect(st.x - 14, st.y - 14, 28, 28);
-      g.fillStyle = 'rgba(103,232,249,0.85)'; g.font = '700 10px Orbitron, sans-serif'; g.textAlign = 'center';
+      g.fillStyle = 'rgba(103,232,249,0.85)'; g.font = '700 10px "Exo 2", sans-serif'; g.textAlign = 'center';
       g.fillText('STATION', st.x, st.y - 20);
     }
 
     // Radar
-    const rr = Math.min(70, w * 0.14), rx = w / 2, ry = h - rr - 18;
+    // On touch screens the bottom belongs to the stick and buttons, so the radar sits in the open sky below the top panels.
+    const rr = this.coarse ? Math.min(48, w * 0.12) : Math.min(70, w * 0.14), rx = w / 2, ry = this.coarse ? 150 + rr : h - rr - 18;
     g.fillStyle = 'rgba(5,10,25,0.55)'; g.strokeStyle = 'rgba(103,232,249,0.35)';
     g.beginPath(); g.arc(rx, ry, rr, 0, Math.PI * 2); g.fill(); g.stroke();
     g.beginPath(); g.arc(rx, ry, rr / 2, 0, Math.PI * 2); g.stroke();
@@ -1343,7 +1344,7 @@ export default class Starfighter {
     g.fillStyle = '#fff'; g.beginPath(); g.moveTo(rx, ry - 5); g.lineTo(rx + 4, ry + 4); g.lineTo(rx - 4, ry + 4); g.fill();
 
     if (this.outOfBounds) {
-      g.fillStyle = '#fbbf24'; g.font = '700 14px Orbitron, sans-serif'; g.textAlign = 'center';
+      g.fillStyle = '#fbbf24'; g.font = '700 14px "Exo 2", sans-serif'; g.textAlign = 'center';
       g.fillText('LEAVING COMBAT ZONE · TURNING BACK', cx, h * 0.28);
     }
   }

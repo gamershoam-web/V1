@@ -167,7 +167,7 @@ export default class LaserTyping extends CanvasGame {
       g.beginPath(); g.ellipse(0, -5, 9, 7, 0, Math.PI, 0); g.fill();
       g.restore();
       // Word label
-      g.font = '700 16px Orbitron, sans-serif';
+      g.font = '700 17px "Exo 2", sans-serif';
       const tw = g.measureText(s.word).width;
       const lx = s.x - tw / 2, ly = s.y + 26;
       g.fillStyle = locked ? 'rgba(34,211,238,0.2)' : 'rgba(5,3,15,0.7)';

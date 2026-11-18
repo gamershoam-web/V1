@@ -7,7 +7,7 @@ export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 // Largest font size (<= max) at which `text` fits in `width`. Leaves g.font set to it.
-export function fitFont(g, text, { weight = 700, family = 'Orbitron', max = 16, min = 9, width }) {
+export function fitFont(g, text, { weight = 700, family = '"Exo 2"', max = 16, min = 9, width }) {
   let size = max;
   g.font = `${weight} ${size}px ${family}, sans-serif`;
   while (size > min && g.measureText(text).width > width) {
@@ -177,7 +177,7 @@ export class CanvasGame {
     // Title: largest size that fits in at most two lines.
     let size = Math.round(W / 12), titleLines = [title];
     for (; size >= 14; size--) {
-      g.font = `900 ${size}px Orbitron, sans-serif`;
+      g.font = `900 ${size}px "Exo 2", sans-serif`;
       titleLines = wrapText(g, title, maxW);
       if (titleLines.length <= 2 && titleLines.every((l) => g.measureText(l).width <= maxW)) break;
     }
@@ -194,7 +194,7 @@ export class CanvasGame {
     const total = titleLines.length * titleLH + 18 + body.length * bodyLH + 22 + promptSize;
     let y = H / 2 - total / 2 + titleLH / 2;
 
-    g.font = `900 ${size}px Orbitron, sans-serif`;
+    g.font = `900 ${size}px "Exo 2", sans-serif`;
     g.shadowColor = '#22d3ee'; g.shadowBlur = 18;
     g.fillStyle = '#fff';
     titleLines.forEach((l) => { g.fillText(l, W / 2, y); y += titleLH; });
@@ -206,7 +206,7 @@ export class CanvasGame {
     y += 22 - bodyLH / 2 + promptSize / 2;
     const pulse = 0.5 + 0.5 * Math.sin(this.t * 4);
     g.fillStyle = `rgba(34,211,238,${0.5 + pulse * 0.5})`;
-    g.font = `700 ${promptSize}px Orbitron, sans-serif`;
+    g.font = `700 ${promptSize}px "Exo 2", sans-serif`;
     g.fillText(prompt, W / 2, y);
     g.restore();
   }
@@ -253,7 +253,7 @@ export class CanvasGame {
     return bar;
   }
 
-  text(g, str, x, y, { size = 16, color = '#fff', align = 'left', weight = 700, font = 'Orbitron', glow = null, maxWidth = this.W - 24 } = {}) {
+  text(g, str, x, y, { size = 16, color = '#fff', align = 'left', weight = 700, font = '"Exo 2"', glow = null, maxWidth = this.W - 24 } = {}) {
     g.save();
     const fitted = fitFont(g, str, { weight, family: font, max: size, width: maxWidth });
     g.font = `${weight} ${fitted}px ${font}, sans-serif`;

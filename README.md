@@ -6,13 +6,17 @@ A 3D space-themed gaming portal for the **Orbitnetwork.net** Minecraft server, w
 - **Animation modes**: Full or Calm (Command Deck > Settings). *Auto* picks Calm when the device asks for reduced motion
   (for example Windows with "Animation effects" turned off). Calm keeps everything animated but replaces the hyperspace
   jump, flashes, camera sweeps, parallax, screen shake and 3D tilt with gentle fades.
-- **3D hub** (Three.js): starfield, nebula, rotating space station and orbiting planets that act as navigation nodes. Drag to orbit, scroll or pinch to zoom, click a planet to fly to it.
+- **3D hub** (Three.js): realistic space generated on the GPU (Milky Way sky, sun with lens flare, Earth-like world with clouds and atmosphere, ringed gas giant, ice giant, asteroid belt) plus a wheel space station and the Minecraft voxel planet. Drag to orbit, scroll or pinch to zoom, click a planet to fly to it.
 - **HUD**: glassmorphism UI, sound toggle, quick-navigation dock, XP/level and high scores saved in `localStorage`.
 - **Minecraft portal**: live status from the mcsrvstat.us API, one-click IP copy, game-mode tabs, Java/Bedrock join guide and a Discord link.
-- **Arcade**: AstroWordle, Nebula Sketch, Asteroid Dodger, Black Hole Pong, Laser Typing Defense, Quantum 2048, Lunar Lander, Orbital Brick Breaker, Starlight Memory Matrix, Cosmic Minesweeper, Galactic Invaders Blitz and Wormhole Trivia. Each game is loaded only when opened, and the 3D render loop pauses while a game is open.
+- **Full games** (Arcade Sector > Full Games):
+  - *Starfighter: Void Siege* — 3D space combat defending Orbit Station over 10 waves with capital-ship bosses, missiles and hangar upgrades.
+  - *Galactic Conquest* — real-time planet-capture strategy against AI empires across a 12-sector campaign.
+  - *Orbit Colony* — persistent mining-colony builder with research, trade, expeditions, events, prestige warps and offline progress.
+- **Mini games**: AstroWordle, Nebula Sketch, Asteroid Dodger, Black Hole Pong, Laser Typing Defense, Quantum 2048, Lunar Lander, Orbital Brick Breaker, Starlight Memory Matrix, Cosmic Minesweeper, Galactic Invaders Blitz and Wormhole Trivia. Each game is loaded only when opened, and the 3D render loop pauses while a game is open.
 - **Icons**: a custom animated SVG icon set (`site/js/icons.js`); each game icon is tinted with its card's accent colour.
 - **Audio**: all sound effects are synthesized with the Web Audio API (no audio files).
-- **Fonts**: Orbitron and Inter are self-hosted in `site/fonts` (no third-party requests).
+- **Fonts**: self-hosted in `site/fonts` (no third-party requests): Exo 2 for the interface, Inter for body text, Orbitron for the logo.
 
 ## Customize
 
@@ -41,7 +45,10 @@ site/                 static site served by nginx (no build needed on the server
   js/scene.js         Three.js scene and camera rig
   js/minecraft.js     server status + IP copy
   js/arcade.js        arcade engine (game modal, scoring, XP)
-  js/games/*.js       one module per game; registry in games/index.js
+  js/games/*.js       mini games; registry (full + mini) in games/index.js
+  js/games/big/       full games: starfighter.js, conquest.js, colony.js
+  js/space-assets.js  procedural sky, planets, sun, asteroids (shared by hub and Starfighter)
+  js/covers.js        animated cover art for the full games
 src/tailwind.css      Tailwind entry file
 deploy/               nginx config and VPS deploy script
 ```
@@ -50,7 +57,7 @@ deploy/               nginx config and VPS deploy script
 
 ```bash
 npm install
-npm run build      # copies three.js + fonts and rebuilds css/tailwind.css
+npm run build      # copies three.js (+ add-ons) and fonts, rebuilds css/tailwind.css
 npm run serve      # http://localhost:8080
 ```
 

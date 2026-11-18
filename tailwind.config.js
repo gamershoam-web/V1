@@ -8,7 +8,7 @@ module.exports = {
         neon: { cyan: '#22d3ee', purple: '#a855f7', pink: '#f472b6', green: '#4ade80' },
       },
       fontFamily: {
-        display: ['Orbitron', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['"Exo 2"', 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         body: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
     },
