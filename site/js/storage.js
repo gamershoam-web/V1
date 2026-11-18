@@ -61,5 +61,16 @@ export const Store = {
     return true;
   },
   reset() { const { muted, motion } = state; state = { ...DEFAULTS, best: {}, visited: {}, muted, motion }; save(); },
+  // Progress that follows a player between devices (device settings like sound and motion stay local).
+  exportProgress() { return { xp: state.xp, best: { ...state.best }, visited: { ...state.visited } }; },
+  importProgress(p = {}) {
+    state = {
+      ...state,
+      xp: Math.max(0, Math.round(Number(p.xp) || 0)),
+      best: Object.fromEntries(Object.entries(p.best || {}).filter(([, v]) => Number.isFinite(v) && v >= 0)),
+      visited: { ...(p.visited || {}) },
+    };
+    save();
+  },
   subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 };

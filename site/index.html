@@ -27,12 +27,12 @@
 <link rel="preload" href="fonts/exo-2-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/inter-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
 <!-- Component styles first so Tailwind utilities (e.g. .hidden) take precedence. -->
-<link rel="stylesheet" href="css/app.css?v=9">
-<link rel="stylesheet" href="css/tailwind.css?v=9">
+<link rel="stylesheet" href="css/app.css?v=10">
+<link rel="stylesheet" href="css/tailwind.css?v=10">
 <script type="importmap">
   { "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }
 </script>
-<script type="module" src="js/main.js?v=9"></script>
+<script type="module" src="js/main.js?v=10"></script>
 <script>
   setTimeout(function () {
     var i = document.getElementById('intro');
@@ -385,6 +385,7 @@
         <span id="game-info" class="hidden lg:inline text-xs text-slate-300 max-w-[260px] truncate"></span>
         <div class="score-box"><span>Score</span><b id="game-score">0</b></div>
         <div class="score-box"><span>Best</span><b id="game-best">0</b></div>
+        <button type="button" id="game-cloud" class="btn-mini cloud-chip hidden" aria-label="Cloud save"></button>
         <button type="button" id="game-restart" class="btn-mini" title="Restart" aria-label="Restart game">
           <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
         </button>
@@ -464,6 +465,22 @@
     </div>
   </div>
 </div>
+
+<!-- ============ Pilot account (js/account-ui.js) ============ -->
+<div id="modal-account" class="modal modal-account hidden" role="dialog" aria-modal="true" aria-labelledby="account-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-panel glass max-w-md">
+    <div class="modal-head">
+      <div>
+        <p class="text-[10px] tracking-[0.3em] text-neon-cyan font-display">PILOT ACCOUNT</p>
+        <h2 id="account-title" class="font-display font-black text-xl sm:text-2xl">Save your progress</h2>
+      </div>
+      <button type="button" class="close-btn" data-close aria-label="Close"><span data-icon="close"></span></button>
+    </div>
+    <div class="modal-body" id="account-body"></div>
+  </div>
+</div>
+<div id="greeting" class="greeting" role="status" aria-live="polite" hidden></div>
 
 <div id="toasts" aria-live="polite"></div>
 

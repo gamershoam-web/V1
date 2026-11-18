@@ -11,6 +11,7 @@ export function loadSave(id) {
   try { return JSON.parse(localStorage.getItem(saveKey(id))) || null; } catch { return null; }
 }
 import { Motion } from './motion.js';
+import { Account } from './account.js';
 
 /* ---- 3D art (loaded on demand the first time the arcade opens) ---- */
 let art3dLoad = null;
@@ -65,6 +66,18 @@ export class Arcade {
 
     this.art = null;
     document.addEventListener('modal:change', (e) => { if (e.detail.id === 'modal-arcade' && e.detail.open) { this.watchReveal(); this.activate3D(); } });
+    // Progress loaded from the player's account (or cleared on sign-out): refresh cards, reload an open game
+    document.addEventListener('progress:replaced', (e) => {
+      const ids = e.detail?.games || [];
+      this.renderFull();
+      const id = this.meta?.id;
+      if (id && (ids.includes(id) || ids.includes('*'))) {
+        this.storageLock = id;
+        this.destroyCurrent();
+        this.storageLock = null;
+        this.launch(id);
+      }
+    });
     $('#game-restart').addEventListener('click', () => this.restart());
     $('#game-to-arcade').addEventListener('click', () => this.backToArcade());
     $('#game-to-space').addEventListener('click', () => this.backToSpace());
@@ -223,8 +236,16 @@ export class Arcade {
       },
       storage: {
         load: () => loadSave(meta.id),
-        save: (data) => { try { localStorage.setItem(saveKey(meta.id), JSON.stringify(data)); } catch { /* storage full or blocked */ } },
-        clear: () => { try { localStorage.removeItem(saveKey(meta.id)); } catch { /* ignore */ } },
+        save: (data) => {
+          if (this.storageLock === meta.id) return; // a newer save from the account is being loaded
+          try { localStorage.setItem(saveKey(meta.id), JSON.stringify(data)); } catch { /* storage full or blocked */ }
+          Account.noteGameSave(meta.id);
+        },
+        clear: () => {
+          if (this.storageLock === meta.id) return;
+          try { localStorage.removeItem(saveKey(meta.id)); } catch { /* ignore */ }
+          Account.noteGameSave(meta.id);
+        },
       },
       get calm() { return Motion.calm; },
     };
@@ -234,7 +255,10 @@ export class Arcade {
     const text = fmt(Math.round(n));
     if (text === this.scoreEl.textContent) return;
     this.scoreEl.textContent = text;
-    if (Math.round(n) > 0) {
+    // bump at most a little over once a second (games like Orbit Colony update the score constantly)
+    const now = performance.now();
+    if (Math.round(n) > 0 && now - (this.lastBump || 0) > 1100) {
+      this.lastBump = now;
       const box = this.scoreEl.parentElement;
       box.classList.remove('bump'); void box.offsetWidth; box.classList.add('bump');
     }

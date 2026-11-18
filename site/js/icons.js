@@ -58,6 +58,13 @@ const LINE = {
   build: '<path d="M14.5 6.5a4 4 0 0 0 5 5L12 19a2.1 2.1 0 0 1-3-3l7.5-7.5"/><path d="m3 21 4-4"/>',
   chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   dish: '<path d="M4 10a8 8 0 0 0 10 10Z"/><path d="m9 15 6-6M15 9l3-3M18 4v2h2"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  cloudOk: '<path d="M7 18a4 4 0 0 1-.6-7.95A6 6 0 0 1 17.8 9.3 4.4 4.4 0 0 1 17.5 18Z"/><path d="m9.5 13.5 2 2 3.5-3.5"/>',
+  cloudUp: '<path d="M7 18a4 4 0 0 1-.6-7.95A6 6 0 0 1 17.8 9.3 4.4 4.4 0 0 1 17.5 18Z"/><path d="M12 16v-5M9.8 13.2 12 11l2.2 2.2"/>',
+  cloudOff: '<path d="M7 18a4 4 0 0 1-.6-7.95 6 6 0 0 1 2.1-1.9M11 6.1A6 6 0 0 1 17.8 9.3 4.4 4.4 0 0 1 19.6 17"/><path d="m3 3 18 18"/>',
+  logout: '<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17 5 12l5-5M5 12h11"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  sync: '<path d="M20 11a8 8 0 0 0-14.3-4.3L4 9"/><path d="M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14.3 4.3L20 15"/><path d="M20 20v-5h-5"/>',
 };
 
 export function icon(name, cls = 'ico') {

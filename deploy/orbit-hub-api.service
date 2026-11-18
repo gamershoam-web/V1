@@ -1,0 +1,31 @@
+[Unit]
+Description=Orbit Network Hub account API (sign in + cloud saves)
+After=network.target
+
+[Service]
+Type=simple
+User=orbit-hub
+Group=orbit-hub
+ExecStart=/usr/bin/python3 /opt/orbit-hub/orbit_api.py --host 127.0.0.1 --port 8787 --db /var/lib/orbit-hub/hub.db
+Restart=always
+RestartSec=2
+# Accounts database lives in /var/lib/orbit-hub (created and owned by the service user)
+StateDirectory=orbit-hub
+StateDirectoryMode=0700
+UMask=0077
+# Hardening: the service can only write its own database folder
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

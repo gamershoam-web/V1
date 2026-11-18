@@ -112,7 +112,6 @@ export default class Colony {
             <div class="col-level" data-level></div>
             <div class="col-events" data-events></div>
             <div class="col-log" data-log></div>
-            <p class="col-tip">Tap the asteroid to mine by hand</p>
           </div>
           <div class="col-panel">
             <div class="col-tabs" role="tablist">
@@ -148,7 +147,8 @@ export default class Colony {
     this.renderPanel(true);
     this.last = performance.now();
     this.saveTimer = setInterval(() => this.persist(), 5000);
-    this.uiTimer = setInterval(() => { this.renderResources(); this.renderPanel(false); }, 400);
+    this.renderLog();
+    this.uiTimer = setInterval(() => { this.renderResources(); this.renderPanel(false); this.renderLog(); }, 400);
     this.raf = requestAnimationFrame((t) => this.loop(t));
     this.on(window, 'beforeunload', () => this.persist());
     this.on(document, 'visibilitychange', () => { if (document.hidden) this.persist(); });
@@ -445,7 +445,7 @@ export default class Colony {
   /* ---------- UI ---------- */
   renderResources() {
     const s = this.s, r = this.rates(), cap = this.storageCap();
-    const cell = (k, val, rate, extra = '') => `<div class="col-res" style="--rc:${RES[k].color}" title="${RES[k].name}">${icon(RES[k].icon)}<div><b>${fmt(val)}</b>${extra}<span class="${rate < 0 ? 'neg' : ''}">${fmtRate(rate)}</span></div></div>`;
+    const cell = (k, val, rate, extra = '') => `<div class="col-res" style="--rc:${RES[k].color}" title="${RES[k].name}">${icon(RES[k].icon)}<div><b>${fmt(val)}${extra}</b><span class="${rate < 0 ? 'neg' : ''}">${fmtRate(rate)}</span></div></div>`;
     const html = [
       cell('credits', s.res.credits, r.credits),
       cell('ore', s.res.ore, r.ore, `<small>/${fmt(cap)}</small>`),
@@ -457,7 +457,9 @@ export default class Colony {
     ].join('');
     const bar = this.$('[data-resbar]');
     if (bar._html !== html) { bar.innerHTML = html; bar._html = html; }
-    this.$('[data-level]').innerHTML = `<b>Colony level ${s.level}</b><span>System ${s.warps + 1}${s.dm ? ` · ${s.dm} Dark Matter (+${s.dm * 10}%)` : ''}</span>`;
+    const lv = `<b>Level ${s.level}</b><span>System ${s.warps + 1}${s.dm ? ` · ${s.dm} DM` : ''}</span>`;
+    const lvEl = this.$('[data-level]');
+    if (lvEl._html !== lv) { lvEl.innerHTML = lv; lvEl._html = lv; lvEl.title = s.dm ? `${s.dm} Dark Matter: +${s.dm * 10}% production` : ''; }
     this.ctx.setScore(s.lifetime);
     this.ctx.setInfo(`Level ${s.level} · ${fmt(r.credits)} cr/s`);
     const ev = this.s.events.map((e) => `<span class="col-event">${e.type === 'flare' ? icon('bolt') : icon('coin')}${e.type === 'flare' ? 'Solar flare' : 'Trade convoy'} ${fmtDur((e.until - Date.now()) / 1000)}</span>`).join('');
@@ -465,8 +467,13 @@ export default class Colony {
     if (evEl._html !== ev) { evEl.innerHTML = ev; evEl._html = ev; }
   }
 
+  // Recent messages only (newest at the bottom); older ones dim, then drop off the view.
   renderLog() {
-    this.$('[data-log]').innerHTML = this.s.log.slice(0, 4).map((l) => `<p class="${l.kind}">${l.text}</p>`).join('');
+    const now = Date.now();
+    const html = this.s.log.filter((l) => now - l.at < 45000).slice(0, 4)
+      .map((l) => `<p class="${l.kind}${now - l.at > 15000 ? ' old' : ''}">${l.text}</p>`).join('');
+    const el = this.$('[data-log]');
+    if (el._html !== html) { el.innerHTML = html; el._html = html; }
   }
 
   costHTML(cost) {
@@ -588,7 +595,7 @@ export default class Colony {
   initScene() {
     const rnd = (() => { let a = 99; return () => { a = (a * 16807) % 2147483647; return a / 2147483647; }; })();
     this.stars = Array.from({ length: 220 }, () => ({ x: rnd(), y: rnd(), r: Math.pow(rnd(), 4) * 1.6 + 0.3, a: 0.3 + rnd() * 0.7 }));
-    this.rocks = Array.from({ length: 9 }, (_, i) => ({ x: 0.62 + rnd() * 0.34, y: 0.15 + rnd() * 0.6, r: 6 + rnd() * 14, rot: rnd() * 6, spin: (rnd() - 0.5) * 0.4, pts: Array.from({ length: 8 }, () => 0.7 + rnd() * 0.35), id: i }));
+    this.rocks = Array.from({ length: 9 }, (_, i) => ({ x: 0.7 + rnd() * 0.27, y: 0.15 + rnd() * 0.6, r: 6 + rnd() * 14, rot: rnd() * 6, spin: (rnd() - 0.5) * 0.4, pts: Array.from({ length: 8 }, () => 0.7 + rnd() * 0.35), id: i }));
     this.drones = [];
     this.floaters = [];
     this.particles = [];
@@ -603,16 +610,28 @@ export default class Colony {
     this.dpr = dpr;
   }
 
+  // Home asteroid sized to the free space between the level pill (top) and the log (bottom).
   asteroidGeom() {
-    const R = Math.min(this.vw * 0.26, this.vh * 0.36);
-    return { x: this.vw * 0.33, y: this.vh * 0.6, R };
+    const W = this.vw, H = this.vh, compact = W < 640;
+    const top = 36, bottom = compact ? 44 : 64;
+    const FLAT = 0.66, RISE = 0.62; // asteroid height and building height, in units of R
+    const usable = Math.max(60, H - top - bottom);
+    const R = Math.max(28, Math.min(W * (compact ? 0.26 : 0.24), usable / (FLAT * 2 + RISE)));
+    const y = top + RISE * R + FLAT * R + (usable - (FLAT * 2 + RISE) * R) / 2;
+    return { x: W * (compact ? 0.36 : 0.34), y, R, rx: R * 1.1, ry: R * FLAT };
+  }
+
+  // Height of the asteroid's top surface at x (relative to its centre): a gentle, slightly bumpy plateau.
+  surfaceY(a, x) {
+    const k = Math.max(0, 1 - (x / a.rx) ** 2);
+    return -a.ry * Math.sqrt(k) * (0.97 + 0.025 * Math.sin((x / a.R) * 7.3));
   }
 
   onCanvasTap(e) {
     const r = this.canvas.getBoundingClientRect();
     const x = e.clientX - r.left, y = e.clientY - r.top;
     const a = this.asteroidGeom();
-    if (Math.hypot(x - a.x, y - a.y) < a.R * 1.05) {
+    if (((x - a.x) / (a.rx * 1.08)) ** 2 + ((y - a.y) / (a.ry * 1.6)) ** 2 < 1.4) {
       const gain = Math.max(1, Math.round(3 + this.s.level * 2 * this.dmMult()));
       this.s.res.ore = Math.min(this.storageCap(), this.s.res.ore + gain);
       this.s.clicks++;
@@ -625,12 +644,15 @@ export default class Colony {
 
   floatText(text, color, x, y) {
     const a = this.asteroidGeom();
-    this.floaters.push({ text, color, x: x ?? a.x, y: y ?? a.y - a.R, life: 1.4 });
+    this.floaters.push({ text, color, x: x ?? a.x, y: y ?? a.y - a.ry - a.R * 0.5, life: 1.4 });
   }
 
   burst(id) {
     const a = this.asteroidGeom();
-    for (let i = 0; i < 24; i++) this.particles.push({ x: a.x + rand(-a.R, a.R) * 0.6, y: a.y - a.R * 0.4, vx: rand(-90, 90), vy: rand(-140, -20), life: 0.9, color: id === 'solar' ? '#93c5fd' : '#67e8f9' });
+    for (let i = 0; i < 24; i++) {
+      const x = rand(-a.R, a.R) * 0.7;
+      this.particles.push({ x: a.x + x, y: a.y + this.surfaceY(a, x), vx: rand(-90, 90), vy: rand(-140, -20), life: 0.9, color: id === 'solar' ? '#93c5fd' : '#67e8f9' });
+    }
   }
 
   loop(now) {
@@ -681,73 +703,9 @@ export default class Colony {
       g.restore();
     }
 
-    // Home asteroid with colony modules
+    // Home asteroid with the colony built on its surface
     const a = this.asteroidGeom();
-    g.save(); g.translate(a.x, a.y);
-    const ag = g.createRadialGradient(-a.R * 0.4, -a.R * 0.5, a.R * 0.1, 0, 0, a.R * 1.1);
-    ag.addColorStop(0, '#9a9087'); ag.addColorStop(0.6, '#5e5751'); ag.addColorStop(1, '#2a2622');
-    g.fillStyle = ag;
-    g.beginPath();
-    this.asteroidPts.forEach((k, i) => { const ang = (i / this.asteroidPts.length) * Math.PI * 2; g[i ? 'lineTo' : 'moveTo'](Math.cos(ang) * a.R * k * 1.15, Math.sin(ang) * a.R * k * 0.78); });
-    g.closePath(); g.fill();
-    g.fillStyle = 'rgba(0,0,0,0.25)';
-    [[-0.3, 0.2, 0.16], [0.35, 0.3, 0.11], [0.05, 0.45, 0.08]].forEach(([x, y, r]) => { g.beginPath(); g.ellipse(x * a.R, y * a.R, r * a.R, r * a.R * 0.5, 0, 0, Math.PI * 2); g.fill(); });
-    const surfaceY = -a.R * 0.62;
-    const span = a.R * 1.6;
-    // Solar arrays on masts
-    const solar = Math.min(8, this.count('solar'));
-    for (let i = 0; i < solar; i++) {
-      const x = -span / 2 + (i + 0.5) * (span / Math.max(solar, 1)) * 0.5 - span * 0.05;
-      g.strokeStyle = '#94a3b8'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(x, surfaceY + 6); g.lineTo(x, surfaceY - 18); g.stroke();
-      g.save(); g.translate(x, surfaceY - 20); g.rotate(-0.35 + Math.sin(t * 0.3 + i) * 0.05);
-      g.fillStyle = '#1e3a8a'; g.fillRect(-11, -4, 22, 8);
-      g.strokeStyle = 'rgba(191,219,254,0.5)'; g.lineWidth = 0.6;
-      for (let k = -11; k <= 11; k += 5.5) { g.beginPath(); g.moveTo(k, -4); g.lineTo(k, 4); g.stroke(); }
-      if (this.flare() > 1) { g.fillStyle = 'rgba(253,224,71,0.35)'; g.fillRect(-11, -4, 22, 8); }
-      g.restore();
-    }
-    // Habitat domes
-    const domes = Math.min(5, this.count('habitat'));
-    for (let i = 0; i < domes; i++) {
-      const x = span * 0.05 + i * a.R * 0.22, r = a.R * 0.12;
-      g.fillStyle = 'rgba(203,213,225,0.9)'; g.beginPath(); g.arc(x, surfaceY + 4, r, Math.PI, 0); g.fill();
-      g.fillStyle = 'rgba(255,217,160,0.85)';
-      for (let k = 0; k < 3; k++) g.fillRect(x - r * 0.6 + k * r * 0.5, surfaceY - r * 0.25, 2, 2);
-    }
-    // Research lab dish
-    if (this.count('lab')) {
-      const x = -a.R * 0.15;
-      g.strokeStyle = '#cbd5e1'; g.lineWidth = 2; g.beginPath(); g.moveTo(x, surfaceY + 4); g.lineTo(x, surfaceY - 26); g.stroke();
-      g.save(); g.translate(x, surfaceY - 28); g.rotate(Math.sin(t * 0.5) * 0.5 - 0.6);
-      g.strokeStyle = '#e2e8f0'; g.lineWidth = 2.5; g.beginPath(); g.arc(0, 0, 9, 0.2, Math.PI - 0.2); g.stroke();
-      g.restore();
-      g.fillStyle = (t % 2) < 1 ? '#c4b5fd' : '#7c3aed'; g.beginPath(); g.arc(x, surfaceY - 30, 2, 0, Math.PI * 2); g.fill();
-    }
-    // Refinery tower with glow
-    if (this.count('refinery')) {
-      const x = a.R * 0.62;
-      g.fillStyle = '#64748b'; g.fillRect(x - 6, surfaceY - 34, 12, 40);
-      g.fillStyle = '#fb923c'; g.shadowColor = '#fb923c'; g.shadowBlur = 12; g.fillRect(x - 6, surfaceY - 22, 12, 3); g.shadowBlur = 0;
-      if (Math.random() < 0.4) this.particles.push({ x: a.x + x + rand(-3, 3), y: a.y + surfaceY - 36, vx: rand(-6, 6), vy: rand(-30, -14), life: 1.2, color: 'rgba(148,163,184,0.6)' });
-    }
-    // Fusion reactor glow
-    if (this.count('reactor')) {
-      const x = -a.R * 0.6;
-      const pulse = 0.6 + Math.sin(t * 3) * 0.3;
-      g.fillStyle = '#475569'; g.beginPath(); g.arc(x, surfaceY + 2, a.R * 0.1, Math.PI, 0); g.fill();
-      g.fillStyle = `rgba(103,232,249,${pulse})`; g.shadowColor = '#67e8f9'; g.shadowBlur = 16;
-      g.beginPath(); g.arc(x, surfaceY - a.R * 0.03, a.R * 0.04, 0, Math.PI * 2); g.fill(); g.shadowBlur = 0;
-    }
-    // Shipyard + docked ship
-    if (this.count('shipyard')) {
-      const x = a.R * 0.25, y = a.R * 0.1;
-      g.strokeStyle = '#94a3b8'; g.lineWidth = 1.5; g.strokeRect(x - 18, surfaceY - 52 + y, 36, 16);
-      if (s.expeditions.length < this.count('shipyard')) { g.fillStyle = '#e2e8f0'; g.beginPath(); g.moveTo(x - 12, surfaceY - 44 + y); g.lineTo(x + 14, surfaceY - 44 + y); g.lineTo(x - 6, surfaceY - 49 + y); g.closePath(); g.fill(); }
-    }
-    // Command module
-    g.fillStyle = '#cbd5e1'; g.fillRect(-a.R * 0.42, surfaceY - 6, a.R * 0.3, 12);
-    g.fillStyle = (t % 1.4) < 0.15 ? '#f87171' : '#7f1d1d'; g.beginPath(); g.arc(-a.R * 0.27, surfaceY - 9, 2.2, 0, Math.PI * 2); g.fill();
-    g.restore();
+    this.drawAsteroid(g, a, t);
 
     // Drones ferry ore between the field and the colony
     const want = Math.min(16, this.count('drone') + this.count('harvester'));
@@ -759,7 +717,7 @@ export default class Colony {
       if (d.k > 1) { d.k -= 1; d.target = pick(this.rocks); }
       const out = d.k < 0.5;
       const p = out ? d.k * 2 : (1 - d.k) * 2;
-      const sx = a.x + a.R * 0.3, sy = a.y - a.R * 0.55;
+      const sx = a.x + a.R * 0.1, sy = a.y + this.surfaceY(a, a.R * 0.1) - a.R * 0.12;
       const tx = d.target.x * W, ty = d.target.y * H;
       const mx = (sx + tx) / 2, my = Math.min(sy, ty) - 40;
       const x = (1 - p) * (1 - p) * sx + 2 * (1 - p) * p * mx + p * p * tx;
@@ -798,6 +756,122 @@ export default class Colony {
     }
     this.floaters = this.floaters.filter((f) => f.life > 0);
     g.globalAlpha = 1;
+  }
+
+  // Asteroid body plus colony buildings. Buildings stand on the surface in two rows:
+  // tall equipment at the back (solar masts, lab dish, refinery), habitats at the front;
+  // the shipyard is an orbital dock floating above. Everything scales with the asteroid.
+  drawAsteroid(g, a, t) {
+    const s = this.s;
+    g.save(); g.translate(a.x, a.y);
+    // body: noisy underside, smooth plateau on top
+    const ag = g.createRadialGradient(-a.R * 0.45, -a.ry * 0.7, a.R * 0.1, 0, 0, a.R * 1.25);
+    ag.addColorStop(0, '#a39a90'); ag.addColorStop(0.55, '#5e5751'); ag.addColorStop(1, '#221f1c');
+    g.fillStyle = ag;
+    g.beginPath();
+    const n = this.asteroidPts.length;
+    for (let i = 0; i <= n; i++) {
+      const ang = (i / n) * Math.PI; // 0..PI: right edge, underside, left edge
+      const k = this.asteroidPts[i % n];
+      const bump = Math.sin(ang); // 0 at both ends, so the outline joins the plateau cleanly
+      g.lineTo(Math.cos(ang) * a.rx * (1 + (k - 0.95) * 0.5 * bump), bump * a.ry * 1.15 * (1 + (k - 0.95) * bump));
+    }
+    for (let i = 0; i <= 28; i++) { const x = -a.rx + (i / 28) * a.rx * 2; g.lineTo(x, this.surfaceY(a, x)); }
+    g.closePath(); g.fill();
+    // rim light along the plateau and a few craters
+    g.strokeStyle = 'rgba(255,240,220,0.18)'; g.lineWidth = Math.max(1, a.R * 0.02);
+    g.beginPath(); for (let i = 2; i <= 26; i++) { const x = -a.rx + (i / 28) * a.rx * 2; g[i === 2 ? 'moveTo' : 'lineTo'](x, this.surfaceY(a, x)); } g.stroke();
+    g.fillStyle = 'rgba(0,0,0,0.25)';
+    [[-0.45, 0.35, 0.14], [0.4, 0.42, 0.1], [0.02, 0.62, 0.08], [0.72, 0.18, 0.06]].forEach(([x, y, r]) => { g.beginPath(); g.ellipse(x * a.R, y * a.ry, r * a.R, r * a.R * 0.45, 0, 0, Math.PI * 2); g.fill(); });
+
+    const u = a.R / 64; // building unit
+    const ground = (x, lift = 0) => this.surfaceY(a, x) + 2 * u - lift;
+    const row = (items, from, to) => {
+      const total = items.reduce((sum, it) => sum + it.w, 0) + Math.max(0, items.length - 1) * 4;
+      const scale = Math.min(1, (to - from) / (total * u));
+      let x = (from + to) / 2 - (total * u * scale) / 2;
+      return items.map((it) => { const w = it.w * u * scale; const cx = x + w / 2; x += w + 4 * u * scale; return { ...it, cx, k: scale }; });
+    };
+    const flare = this.flare() > 1;
+
+    // back row
+    const back = [];
+    for (let i = 0; i < Math.min(4, this.count('solar')); i++) back.push({ type: 'solar', w: 15, i });
+    if (this.count('lab')) back.push({ type: 'lab', w: 14 });
+    if (this.count('refinery')) back.push({ type: 'refinery', w: 12 });
+    for (const m of row(back, -a.rx * 0.74, a.rx * 0.7)) {
+      const y = ground(m.cx, 3 * u), k = u * m.k;
+      if (m.type === 'solar') {
+        g.strokeStyle = '#8391a7'; g.lineWidth = Math.max(1, 1.4 * k); g.beginPath(); g.moveTo(m.cx, y); g.lineTo(m.cx, y - 16 * k); g.stroke();
+        g.save(); g.translate(m.cx, y - 18 * k); g.rotate(-0.3 + Math.sin(t * 0.3 + m.i) * 0.05);
+        g.fillStyle = '#1e3a8a'; g.fillRect(-8 * k, -3 * k, 16 * k, 6 * k);
+        g.strokeStyle = 'rgba(191,219,254,0.55)'; g.lineWidth = Math.max(0.5, 0.5 * k);
+        for (let q = -8; q <= 8; q += 4) { g.beginPath(); g.moveTo(q * k, -3 * k); g.lineTo(q * k, 3 * k); g.stroke(); }
+        if (flare) { g.fillStyle = 'rgba(253,224,71,0.35)'; g.fillRect(-8 * k, -3 * k, 16 * k, 6 * k); }
+        g.restore();
+      } else if (m.type === 'lab') {
+        g.strokeStyle = '#cbd5e1'; g.lineWidth = Math.max(1, 1.6 * k); g.beginPath(); g.moveTo(m.cx, y); g.lineTo(m.cx, y - 20 * k); g.stroke();
+        g.save(); g.translate(m.cx, y - 21 * k); g.rotate(Math.sin(t * 0.5) * 0.5 - 0.6);
+        g.strokeStyle = '#e2e8f0'; g.lineWidth = Math.max(1, 2 * k); g.beginPath(); g.arc(0, 0, 7 * k, 0.2, Math.PI - 0.2); g.stroke();
+        g.restore();
+        g.fillStyle = (t % 2) < 1 ? '#c4b5fd' : '#7c3aed'; g.beginPath(); g.arc(m.cx, y - 23 * k, Math.max(1.2, 1.6 * k), 0, Math.PI * 2); g.fill();
+      } else if (m.type === 'refinery') {
+        g.fillStyle = '#64748b'; g.fillRect(m.cx - 5 * k, y - 28 * k, 10 * k, 28 * k);
+        g.fillStyle = '#fb923c'; g.shadowColor = '#fb923c'; g.shadowBlur = 10; g.fillRect(m.cx - 5 * k, y - 19 * k, 10 * k, 2.5 * k); g.shadowBlur = 0;
+        if (Math.random() < 0.35) this.particles.push({ x: a.x + m.cx + rand(-2, 2) * k, y: a.y + y - 30 * k, vx: rand(-6, 6), vy: rand(-30, -14), life: 1.1, color: 'rgba(148,163,184,0.55)' });
+      }
+    }
+
+    // front row
+    const front = [];
+    if (this.count('reactor')) front.push({ type: 'reactor', w: 16 });
+    front.push({ type: 'command', w: 24 });
+    for (let i = 0; i < Math.min(4, this.count('habitat')); i++) front.push({ type: 'dome', w: 18 });
+    for (const m of row(front, -a.rx * 0.84, a.rx * 0.84)) {
+      const y = ground(m.cx), k = u * m.k;
+      if (m.type === 'reactor') {
+        const pulse = 0.6 + Math.sin(t * 3) * 0.3;
+        g.fillStyle = '#475569'; g.beginPath(); g.arc(m.cx, y, 8 * k, Math.PI, 0); g.fill();
+        g.fillStyle = `rgba(103,232,249,${pulse})`; g.shadowColor = '#67e8f9'; g.shadowBlur = 14;
+        g.beginPath(); g.arc(m.cx, y - 4 * k, 3 * k, 0, Math.PI * 2); g.fill(); g.shadowBlur = 0;
+      } else if (m.type === 'command') {
+        g.fillStyle = '#cbd5e1'; g.fillRect(m.cx - 12 * k, y - 9 * k, 24 * k, 9 * k);
+        g.fillStyle = '#94a3b8'; g.fillRect(m.cx - 12 * k, y - 3 * k, 24 * k, 3 * k);
+        g.fillStyle = 'rgba(255,217,160,0.9)'; for (let q = 0; q < 3; q++) g.fillRect(m.cx - 8 * k + q * 6 * k, y - 7 * k, 2.5 * k, 2 * k);
+        g.strokeStyle = '#cbd5e1'; g.lineWidth = Math.max(1, k); g.beginPath(); g.moveTo(m.cx + 8 * k, y - 9 * k); g.lineTo(m.cx + 8 * k, y - 16 * k); g.stroke();
+        g.fillStyle = (t % 1.4) < 0.15 ? '#f87171' : '#7f1d1d'; g.beginPath(); g.arc(m.cx + 8 * k, y - 17 * k, Math.max(1.4, 1.8 * k), 0, Math.PI * 2); g.fill();
+      } else if (m.type === 'dome') {
+        const r = 9 * k;
+        g.fillStyle = 'rgba(148,163,184,0.9)'; g.fillRect(m.cx - r, y - 1.5 * k, r * 2, 1.5 * k);
+        const dg = g.createLinearGradient(m.cx - r, y - r, m.cx + r, y);
+        dg.addColorStop(0, 'rgba(241,245,249,0.95)'); dg.addColorStop(1, 'rgba(148,163,184,0.85)');
+        g.fillStyle = dg; g.beginPath(); g.arc(m.cx, y - 1.5 * k, r, Math.PI, 0); g.fill();
+        g.fillStyle = 'rgba(255,217,160,0.9)';
+        for (let q = 0; q < 3; q++) g.fillRect(m.cx - r * 0.55 + q * r * 0.45, y - r * 0.45, Math.max(1.2, 1.6 * k), Math.max(1.2, 1.6 * k));
+      }
+    }
+
+    // orbital shipyard above the colony
+    if (this.count('shipyard')) {
+      const k = u * 0.8, cx = a.rx * 0.62, cy = -a.ry - 34 * u + Math.sin(t * 0.8) * 2 * u;
+      g.strokeStyle = 'rgba(148,163,184,0.9)'; g.lineWidth = Math.max(1, 1.3 * k);
+      g.strokeRect(cx - 16 * k, cy - 6 * k, 32 * k, 12 * k);
+      g.beginPath(); for (let q = -16; q <= 16; q += 8) { g.moveTo(cx + q * k, cy - 6 * k); g.lineTo(cx + q * k, cy + 6 * k); } g.stroke();
+      if (s.expeditions.length < this.count('shipyard')) {
+        g.fillStyle = '#e2e8f0'; g.beginPath(); g.moveTo(cx - 11 * k, cy + 2 * k); g.lineTo(cx + 13 * k, cy); g.lineTo(cx - 11 * k, cy - 2 * k); g.closePath(); g.fill();
+      }
+      g.fillStyle = (t % 1.2) < 0.15 ? '#67e8f9' : '#164e63'; g.beginPath(); g.arc(cx + 16 * k, cy - 6 * k, Math.max(1.2, 1.5 * k), 0, Math.PI * 2); g.fill();
+    }
+
+    // hint until the player has mined by hand a few times
+    if (s.clicks < 5) {
+      g.globalAlpha = 0.55 + Math.sin(t * 3) * 0.25;
+      g.fillStyle = '#e2e8f0'; g.textAlign = 'center';
+      g.font = `700 ${Math.max(10, Math.min(13, a.R * 0.13))}px Inter, sans-serif`;
+      g.fillText('TAP TO MINE', 0, a.ry * 0.45);
+      g.globalAlpha = 1;
+    }
+    g.restore();
   }
 
   destroy() {

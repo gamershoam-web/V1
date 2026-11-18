@@ -12,6 +12,7 @@ copy('node_modules/three/build/three.module.min.js', 'site/vendor/three.module.m
 for (const w of [500, 700, 900]) copy(`node_modules/@fontsource/orbitron/files/orbitron-latin-${w}-normal.woff2`, `site/fonts/orbitron-latin-${w}-normal.woff2`);
 for (const w of [400, 500, 600, 700, 800]) copy(`node_modules/@fontsource/inter/files/inter-latin-${w}-normal.woff2`, `site/fonts/inter-latin-${w}-normal.woff2`);
 copy('node_modules/@fontsource-variable/exo-2/files/exo-2-latin-wght-normal.woff2', 'site/fonts/exo-2-latin-wght-normal.woff2');
+copy('node_modules/@fontsource/sacramento/files/sacramento-latin-400-normal.woff2', 'site/fonts/sacramento-latin-400-normal.woff2');
 
 // three.js add-ons used by the 3D hub and Starfighter (resolved through the import map in index.html).
 const ADDONS = [
