@@ -1,0 +1,16 @@
+{
+  "name": "orbit-network-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Orbit Network Hub: 3D space gaming portal and Orbitnetwork.net Minecraft server site.",
+  "scripts": {
+    "build:css": "tailwindcss -i src/tailwind.css -o site/css/tailwind.css --minify",
+    "build:vendor": "node -e \"require('fs').copyFileSync('node_modules/three/build/three.module.min.js','site/vendor/three.module.min.js')\"",
+    "build": "npm run build:vendor && npm run build:css",
+    "serve": "python3 -m http.server 8080 --directory site"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.19",
+    "three": "0.170.0"
+  }
+}

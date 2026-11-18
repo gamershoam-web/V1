@@ -2,66 +2,350 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Nebula Arcade – Space Gaming</title>
-<meta name="description" content="Nebula Arcade – space games, live streams and a galactic community.">
-<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Orbit Network Hub</title>
+<meta name="description" content="Orbit Network Hub: a 3D space gaming portal with the Orbitnetwork.net Minecraft server and 12 playable arcade games.">
+<meta name="theme-color" content="#05030f">
+<meta property="og:title" content="Orbit Network Hub">
+<meta property="og:description" content="Join the Orbitnetwork.net Minecraft server and play 12 space arcade games.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='14' fill='%23a855f7'/%3E%3Cellipse cx='32' cy='32' rx='28' ry='9' fill='none' stroke='%2322d3ee' stroke-width='4' transform='rotate(-20 32 32)'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Component styles first so Tailwind utilities (e.g. .hidden) take precedence. -->
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/tailwind.css">
+<script type="module" src="js/main.js"></script>
 </head>
-<body>
-<div class="stars"></div><div class="stars s2"></div><div class="stars s3"></div>
+<body class="bg-space-950 text-slate-100 font-body antialiased">
 
-<header class="nav">
-  <a class="logo" href="#">&#10022; Nebula<span>Arcade</span></a>
-  <nav>
-    <a href="#games">Games</a>
-    <a href="#missions">Missions</a>
-    <a href="#crew">Crew</a>
-    <a href="#contact">Contact</a>
-  </nav>
+<!-- 3D viewport -->
+<canvas id="space" aria-label="Interactive 3D map of Orbit Network sectors"></canvas>
+<div id="fallback-space" aria-hidden="true"></div>
+<div id="labels" aria-label="Sectors"></div>
+
+<!-- ============ HUD ============ -->
+<header class="hud-top fixed top-0 inset-x-0 z-[42] flex items-start justify-between gap-2 px-3 sm:px-5 pt-3 sm:pt-4 pointer-events-none">
+  <div class="glass hud-chip pointer-events-auto flex items-center gap-3 px-3 py-2 min-w-0 shrink">
+    <button type="button" data-sector="hub" class="flex items-center gap-2.5 min-w-0" aria-label="Orbit Network Hub home">
+      <span class="logo-orb" aria-hidden="true"></span>
+      <span class="text-left leading-tight min-w-0">
+        <span class="block font-display font-black tracking-[0.12em] sm:tracking-[0.18em] text-[12px] sm:text-sm whitespace-nowrap">ORBIT<span class="text-neon-cyan">NETWORK</span></span>
+        <span class="block truncate max-w-[118px] sm:max-w-[260px] text-[10px] sm:text-[11px] tracking-[0.18em] sm:tracking-[0.25em] text-slate-400 uppercase"><span class="hidden sm:inline">Sector · </span><span id="sector-name" class="text-neon-purple">Deep Space</span></span>
+      </span>
+    </button>
+  </div>
+
+  <div class="pointer-events-auto flex items-start gap-1.5 sm:gap-2 shrink-0">
+    <button type="button" data-open-modal="minecraft" class="glass hud-chip hidden md:flex items-center gap-2 px-3 py-2 text-xs" aria-label="Minecraft server status">
+      <span class="status-dot" data-mc-dot data-state="checking"></span>
+      <span class="font-semibold" data-mc-state>Scanning…</span>
+      <span class="text-slate-400"><span data-mc-players>–</span>/<span data-mc-max>–</span></span>
+    </button>
+
+    <div class="glass hud-chip px-2.5 sm:px-3 py-2 w-[78px] sm:w-[200px]">
+      <div class="flex items-baseline justify-between text-[11px]">
+        <span class="font-display tracking-wider">LV <b id="hud-level" class="text-neon-cyan">1</b> <span id="hud-rank" class="hidden sm:inline text-slate-400 font-body">Cadet</span></span>
+        <span id="hud-xp" class="text-slate-400 hidden sm:inline">0 / 100 XP</span>
+      </div>
+      <div class="xp-track mt-1.5"><div id="hud-xpbar" class="xp-fill" style="width:0%"></div></div>
+    </div>
+
+    <button type="button" id="hud-scores" class="glass hud-chip flex items-center gap-1.5 px-2.5 sm:px-3 py-2 text-xs h-10" aria-label="High scores">
+      <svg viewBox="0 0 24 24" class="w-4 h-4 text-yellow-300" fill="currentColor" aria-hidden="true"><path d="M7 3h10v2h3v3a5 5 0 0 1-4.6 5A5 5 0 0 1 13 15.9V18h3v3H8v-3h3v-2.1A5 5 0 0 1 8.6 13 5 5 0 0 1 4 8V5h3V3Zm-1 4v1a3 3 0 0 0 1.4 2.5A7 7 0 0 1 7 8V7H6Zm12 0h-1v1c0 .9-.1 1.7-.4 2.5A3 3 0 0 0 18 8V7Z"/></svg>
+      <span id="hud-highscore" class="font-display">0</span>
+    </button>
+
+    <button type="button" id="sound-toggle" class="glass hud-chip grid place-items-center w-10 h-10" aria-pressed="true" aria-label="Turn sound off">
+      <svg data-on viewBox="0 0 24 24" class="w-5 h-5 text-neon-cyan" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+      <svg data-off viewBox="0 0 24 24" class="w-5 h-5 text-slate-400 hidden" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 6 6M22 9l-6 6"/></svg>
+    </button>
+  </div>
 </header>
 
-<section class="hero">
-  <div class="planet"></div>
-  <h1>Play across the <span>galaxy</span></h1>
-  <p>Space games, live streams and a crew of players from every corner of the universe.</p>
-  <a class="btn" href="#crew">Join the crew</a>
-</section>
-
-<section id="games">
-  <h2>Featured games</h2>
-  <div class="grid">
-    <article class="card"><div class="icon">&#128640;</div><h3>Star Raiders</h3><p>Fast space combat. Dogfight rivals through asteroid fields.</p></article>
-    <article class="card"><div class="icon">&#129680;</div><h3>Orbit Tycoon</h3><p>Build stations, trade resources and rule the trade lanes.</p></article>
-    <article class="card"><div class="icon">&#128125;</div><h3>Void Explorers</h3><p>Chart unknown planets and survive what lives on them.</p></article>
+<!-- Minecraft hero card -->
+<aside id="hero-card" class="glass hero-card fixed z-20 left-3 sm:left-5 right-3 sm:right-auto top-[72px] sm:top-auto sm:bottom-28 sm:w-[340px] p-3.5 sm:p-5">
+  <div class="flex items-center gap-3">
+    <div class="voxel-icon" aria-hidden="true"><img data-mc-icon class="hidden w-full h-full rounded-md" alt=""></div>
+    <div class="min-w-0">
+      <p class="text-[10px] tracking-[0.3em] text-neon-green font-display">MINECRAFT SERVER</p>
+      <h1 class="font-display font-black text-lg sm:text-xl leading-tight truncate" data-ip>Orbitnetwork.net</h1>
+      <p class="text-xs text-slate-300 flex items-center gap-1.5 mt-0.5">
+        <span class="status-dot" data-mc-dot data-state="checking"></span>
+        <span data-mc-state>Scanning…</span>
+        <span class="text-slate-500">·</span>
+        <span><b data-mc-players>–</b> / <span data-mc-max>–</span> players</span>
+      </p>
+    </div>
   </div>
-</section>
-
-<section id="missions">
-  <h2>Live missions</h2>
-  <p class="muted">Join our weekend streams. Stream embeds go here.</p>
-  <div class="grid">
-    <div class="card"><h3>Fri 20:00</h3><p>Co-op raid night</p></div>
-    <div class="card"><h3>Sat 18:00</h3><p>Community tournament</p></div>
-    <div class="card"><h3>Sun 16:00</h3><p>New game reviews</p></div>
+  <div class="hero-body">
+    <p class="motd mt-3 hidden sm:block" data-mc-motd>Connecting to the server…</p>
+    <div class="flex gap-2 mt-3 sm:mt-4">
+      <button type="button" class="btn-neon flex-1" data-copy-ip>
+        <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        Join Orbitnetwork.net
+      </button>
+      <button type="button" class="btn-ghost" data-open-modal="minecraft">Portal</button>
+    </div>
   </div>
-</section>
+</aside>
 
-<section id="crew">
-  <h2>The crew</h2>
-  <p class="muted">Chat, team up and share your best clips with players across the universe.</p>
-  <a class="btn" href="#contact">Get in touch</a>
-</section>
+<p id="nav-hint" class="fixed z-20 left-1/2 -translate-x-1/2 bottom-[96px] sm:bottom-[104px] text-[11px] sm:text-xs tracking-widest text-slate-400 uppercase transition-opacity duration-700 pointer-events-none text-center px-4">
+  Drag to orbit · Scroll or pinch to zoom · Tap a planet
+</p>
 
-<section id="contact">
-  <h2>Contact mission control</h2>
-  <form onsubmit="event.preventDefault();this.querySelector('button').textContent='Transmission sent!'">
-    <input type="text" placeholder="Your name" required>
-    <input type="email" placeholder="Email" required>
-    <textarea rows="4" placeholder="Message" required></textarea>
-    <button class="btn" type="submit">Send</button>
-  </form>
-</section>
+<!-- Quick-navigation dock -->
+<nav id="dock" class="fixed z-[42] bottom-3 sm:bottom-5 left-1/2 -translate-x-1/2 glass flex items-center gap-1 p-1.5 rounded-2xl" aria-label="Quick navigation">
+  <button type="button" class="dock-btn" data-sector="hub">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/></svg>
+    <span>Space</span>
+  </button>
+  <button type="button" class="dock-btn" data-sector="station">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/><path d="M12 4v5.5M12 14.5V20M4 12h5.5M14.5 12H20"/></svg>
+    <span>Station</span>
+  </button>
+  <button type="button" class="dock-btn dock-mc" data-sector="minecraft">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 2 21 7v10l-9 5-9-5V7l9-5Z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
+    <span>Minecraft</span>
+  </button>
+  <button type="button" class="dock-btn" data-sector="arcade">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 10.5v4M5 12.5h4"/><circle cx="15.5" cy="11.5" r="1" fill="currentColor"/><circle cx="18" cy="13.5" r="1" fill="currentColor"/></svg>
+    <span>Arcade</span>
+  </button>
+  <button type="button" class="dock-btn" data-sector="comms">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20a12 12 0 0 1 0-16M20 4a12 12 0 0 1 0 16M8 16a6 6 0 0 1 0-8M16 8a6 6 0 0 1 0 8"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>
+    <span>Comms</span>
+  </button>
+</nav>
 
-<footer>&copy; <script>document.write(new Date().getFullYear())</script> Nebula Arcade</footer>
+<!-- ============ Minecraft portal ============ -->
+<div id="modal-minecraft" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="mc-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-panel glass max-w-3xl">
+    <div class="modal-head">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="voxel-icon" aria-hidden="true"><img data-mc-icon class="hidden w-full h-full rounded-md" alt=""></div>
+        <div class="min-w-0">
+          <p class="text-[10px] tracking-[0.3em] text-neon-green font-display">MINECRAFT SERVER PORTAL</p>
+          <h2 id="mc-title" class="font-display font-black text-xl sm:text-2xl truncate" data-ip>Orbitnetwork.net</h2>
+        </div>
+      </div>
+      <button type="button" class="close-btn" data-close aria-label="Close">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Live status -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="stat-card">
+          <span class="stat-label">Status</span>
+          <span class="flex items-center gap-2 font-display font-bold"><span class="status-dot" data-mc-dot data-state="checking"></span><span data-mc-state>Scanning…</span></span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Players</span>
+          <span class="font-display font-bold"><span data-mc-players>–</span> <span class="text-slate-400 text-sm">/ <span data-mc-max>–</span></span></span>
+          <div class="xp-track mt-2"><div class="xp-fill" data-mc-bar style="width:0%"></div></div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Version</span>
+          <span class="font-display font-bold text-sm truncate" data-mc-version>—</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label" data-mc-updated>Live status</span>
+          <button type="button" class="btn-mini mt-1 self-start flex items-center gap-1.5" data-mc-refresh>
+            <svg viewBox="0 0 24 24" class="w-3.5 h-3.5 refresh-icon" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-3">
+        <span class="stat-label">Message of the day</span>
+        <p class="motd mt-1.5" data-mc-motd>Connecting to the server…</p>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 mt-5">
+        <button type="button" class="btn-neon btn-lg flex-1" data-copy-ip>
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          Join Orbitnetwork.net
+        </button>
+        <a class="btn-discord btn-lg" href="#" target="_blank" rel="noopener" data-discord>
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.4C.6 9 0 13.5.3 18a19.9 19.9 0 0 0 6 3l1.3-2a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2a19.8 19.8 0 0 0 6-3c.4-5.2-.7-9.6-3.8-13.6ZM8.5 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm7 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>
+          Discord
+        </a>
+      </div>
+
+      <!-- Tabs -->
+      <div class="mt-6" data-tabs>
+        <div class="tablist" role="tablist" data-tablist>
+          <button type="button" role="tab" class="tab" data-tab="modes">Game Modes</button>
+          <button type="button" role="tab" class="tab" data-tab="guide">How to Join</button>
+        </div>
+        <div data-panels>
+          <div data-panel="modes" class="pt-4" role="tabpanel">
+            <div data-tabs>
+              <div class="flex flex-wrap gap-2" role="tablist" data-tablist>
+                <button type="button" class="pill" data-tab="survival">🌲 Survival</button>
+                <button type="button" class="pill" data-tab="skyblock">☁️ Skyblock</button>
+                <button type="button" class="pill" data-tab="pvp">⚔️ PvP</button>
+                <button type="button" class="pill" data-tab="events">🎉 Events</button>
+              </div>
+              <div data-panels class="mt-4">
+                <div data-panel="survival" class="mode-card" style="--mode:#4ade80">
+                  <h3>Survival</h3>
+                  <p>The classic experience. Gather resources, build your base with friends, explore new worlds and trade with other players.</p>
+                  <ul><li>Protected land claims</li><li>Player economy and shops</li><li>Friendly, active community</li></ul>
+                </div>
+                <div data-panel="skyblock" class="mode-card" style="--mode:#38bdf8">
+                  <h3>Skyblock</h3>
+                  <p>Start on a tiny island floating in the void. Grow it block by block into a sky empire.</p>
+                  <ul><li>Island upgrades and challenges</li><li>Co-op islands with friends</li><li>Island leaderboards</li></ul>
+                </div>
+                <div data-panel="pvp" class="mode-card" style="--mode:#f87171">
+                  <h3>PvP</h3>
+                  <p>Test your combat skills in arenas and duels against other players.</p>
+                  <ul><li>1v1 duels and team fights</li><li>Custom kits</li><li>Ranked seasons</li></ul>
+                </div>
+                <div data-panel="events" class="mode-card" style="--mode:#facc15">
+                  <h3>Events</h3>
+                  <p>Regular community events with prizes: build battles, drop parties, tournaments and holiday specials.</p>
+                  <ul><li>Weekly community events</li><li>Seasonal celebrations</li><li>Announcements on Discord</li></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div data-panel="guide" class="pt-4 hidden" role="tabpanel">
+            <div class="grid md:grid-cols-2 gap-4">
+              <div class="guide-card">
+                <h3><span class="badge">Java</span> Edition (PC / Mac / Linux)</h3>
+                <ol>
+                  <li>Open Minecraft: Java Edition and click <b>Multiplayer</b>.</li>
+                  <li>Click <b>Add Server</b>.</li>
+                  <li>Enter <b data-ip>Orbitnetwork.net</b> as the Server Address.</li>
+                  <li>Click <b>Done</b>, then double-click the server to join.</li>
+                </ol>
+                <button type="button" class="btn-mini mt-3" data-copy-ip>Copy address</button>
+              </div>
+              <div class="guide-card">
+                <h3><span class="badge badge-b">Bedrock</span> Edition (Mobile / Console / Win)</h3>
+                <ol>
+                  <li>Open Minecraft and tap <b>Play</b>, then <b>Servers</b>.</li>
+                  <li>Scroll down and tap <b>Add Server</b>.</li>
+                  <li>Server Address: <b data-ip>Orbitnetwork.net</b></li>
+                  <li>Port: <b data-bedrock-port>19132</b>, then tap <b>Save</b> and join.</li>
+                </ol>
+                <button type="button" class="btn-mini mt-3" data-copy-ip>Copy address</button>
+              </div>
+            </div>
+            <p class="text-xs text-slate-400 mt-3">Having trouble? Ask for help in our Discord community.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Arcade grid ============ -->
+<div id="modal-arcade" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="arcade-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-panel glass max-w-5xl holo">
+    <div class="modal-head">
+      <div>
+        <p class="text-[10px] tracking-[0.3em] text-neon-pink font-display">HOLOGRAPHIC SIMULATIONS</p>
+        <h2 id="arcade-title" class="font-display font-black text-xl sm:text-2xl">Arcade Sector</h2>
+      </div>
+      <button type="button" class="close-btn" data-close aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="arcade-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Game modal ============ -->
+<div id="modal-game" class="modal modal-game hidden" role="dialog" aria-modal="true" aria-labelledby="game-title">
+  <div class="modal-panel glass holo game-panel">
+    <div class="game-head">
+      <div class="flex items-center gap-2 min-w-0">
+        <button type="button" id="game-to-space" class="btn-mini whitespace-nowrap" title="Back to Space">← <span class="hidden sm:inline">Back to Space</span><span class="sm:hidden">Space</span></button>
+        <button type="button" id="game-to-arcade" class="btn-mini hidden sm:inline-flex" title="Back to the arcade">Arcade</button>
+        <span id="game-icon" class="text-xl ml-1" aria-hidden="true"></span>
+        <h2 id="game-title" class="font-display font-bold text-sm sm:text-lg truncate">Game</h2>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <span id="game-info" class="hidden lg:inline text-xs text-slate-300 max-w-[260px] truncate"></span>
+        <div class="score-box"><span>Score</span><b id="game-score">0</b></div>
+        <div class="score-box"><span>Best</span><b id="game-best">0</b></div>
+        <button type="button" id="game-restart" class="btn-mini" title="Restart" aria-label="Restart game">
+          <svg viewBox="0 0 24 24" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="game-stage" class="game-stage"></div>
+  </div>
+</div>
+
+<!-- ============ Command deck (station) ============ -->
+<div id="modal-deck" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="deck-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-panel glass max-w-2xl">
+    <div class="modal-head">
+      <div>
+        <p class="text-[10px] tracking-[0.3em] text-neon-cyan font-display">ORBIT STATION</p>
+        <h2 id="deck-title" class="font-display font-black text-xl sm:text-2xl">Command Deck</h2>
+      </div>
+      <button type="button" class="close-btn" data-close aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="text-slate-300 text-sm">Welcome aboard, pilot. Orbit Network is a home base for gamers: our Minecraft server <b data-ip>Orbitnetwork.net</b>, a 12-game arcade, and a community that plays together.</p>
+      <div class="grid sm:grid-cols-3 gap-3 mt-5">
+        <div class="stat-card sm:col-span-2">
+          <span class="stat-label">Pilot profile</span>
+          <p class="font-display font-bold text-lg">Level <span id="deck-level" class="text-neon-cyan">1</span> · <span id="deck-rank">Cadet</span></p>
+          <div class="xp-track mt-2"><div id="deck-xpbar" class="xp-fill" style="width:0%"></div></div>
+          <p class="text-xs text-slate-400 mt-1.5"><span id="deck-xp">0</span> XP total · <span id="deck-next"></span></p>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Combined high score</span>
+          <p class="font-display font-black text-2xl text-yellow-300" id="deck-total">0</p>
+        </div>
+      </div>
+      <h3 class="font-display text-sm tracking-widest text-slate-300 mt-6 mb-1">HIGH SCORES</h3>
+      <ul id="deck-scores"></ul>
+      <p class="text-xs text-slate-500 mt-4">Progress is saved in this browser only.</p>
+      <button type="button" id="deck-reset" class="text-xs text-rose-300/80 hover:text-rose-300 underline mt-1">Reset progress</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Comms relay ============ -->
+<div id="modal-comms" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="comms-title">
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-panel glass max-w-xl">
+    <div class="modal-head">
+      <div>
+        <p class="text-[10px] tracking-[0.3em] text-neon-cyan font-display">COMMS RELAY</p>
+        <h2 id="comms-title" class="font-display font-black text-xl sm:text-2xl">Join the community</h2>
+      </div>
+      <button type="button" class="close-btn" data-close aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="text-slate-300 text-sm">Find teammates, get event announcements, share builds and suggest new arcade games. Transmissions are open.</p>
+      <a class="btn-discord btn-lg w-full mt-5" href="#" target="_blank" rel="noopener" data-discord>
+        <svg viewBox="0 0 24 24" class="w-5 h-5" fill="currentColor" aria-hidden="true"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.4C.6 9 0 13.5.3 18a19.9 19.9 0 0 0 6 3l1.3-2a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1l1.3 2a19.8 19.8 0 0 0 6-3c.4-5.2-.7-9.6-3.8-13.6ZM8.5 15.3c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Zm7 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4Z"/></svg>
+        Join our Discord
+      </a>
+      <div class="grid grid-cols-2 gap-3 mt-4">
+        <button type="button" class="btn-ghost" data-open-modal="minecraft">⛏ Minecraft portal</button>
+        <button type="button" class="btn-ghost" data-open-modal="arcade">🎮 Arcade Sector</button>
+      </div>
+      <p class="text-xs text-slate-500 mt-6">© <span data-year></span> Orbit Network. Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</p>
+    </div>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+
+<noscript><p style="position:fixed;inset:auto 0 0 0;padding:16px;text-align:center;background:#111;color:#fff">Orbit Network Hub needs JavaScript. Server IP: Orbitnetwork.net</p></noscript>
 </body>
 </html>
