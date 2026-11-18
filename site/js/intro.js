@@ -1,5 +1,5 @@
 // Cinematic opening sequence: boot line -> logo assembles -> title flies in -> launch bar -> hyperspace jump.
-// Tap, click or press any key to skip. Honors prefers-reduced-motion.
+// Tap, click or press any key to skip. In calm mode (see motion.js) the hyperspace jump becomes a soft fade.
 import { audio } from './audio.js';
 
 const STATUS = ['Initializing systems', 'Calibrating star charts', 'Pinging Orbitnetwork.net', 'Charging arcade cores', 'Ready for launch'];
@@ -14,7 +14,6 @@ export function runIntro({ onReveal } = {}) {
   }
 
   return new Promise((resolve) => {
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const timers = [];
     const later = (ms, fn) => timers.push(setTimeout(fn, ms));
     const pct = el.querySelector('.intro-pct');
@@ -80,11 +79,6 @@ export function runIntro({ onReveal } = {}) {
     window.addEventListener('keydown', onKey, true);
     el.addEventListener('pointerdown', () => launch(true, true));
 
-    if (reduce) {
-      el.classList.add('reduced');
-      later(400, () => launch(true));
-    } else {
-      later(Math.max(500, 3600 - performance.now()), () => launch());
-    }
+    later(Math.max(500, 3600 - performance.now()), () => launch());
   });
 }

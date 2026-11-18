@@ -1,5 +1,7 @@
 // Shared base for canvas mini-games: fixed logical resolution, responsive scaling,
 // keyboard/pointer input, touch buttons, a frame loop and clean teardown.
+import { Motion } from '../motion.js';
+
 export const rand = (a, b) => a + Math.random() * (b - a);
 export const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -79,6 +81,7 @@ export class CanvasGame {
     this.t = 0;
     this.readyText = ['READY', 'Press Space or tap to start'];
     this.coarse = window.matchMedia('(pointer: coarse)').matches;
+    this.calm = Motion.calm;
     this._listeners = [];
     this._timers = [];
 

@@ -4,6 +4,7 @@ import { Store } from './storage.js';
 import { audio } from './audio.js';
 import { $, Modals, toast, fmt, escapeHTML } from './ui.js';
 import { gameIcon, icon } from './icons.js';
+import { Motion } from './motion.js';
 
 export class Arcade {
   constructor({ onGameOpen, onGameClose, onBackToSpace }) {
@@ -45,7 +46,7 @@ export class Arcade {
       b.addEventListener('click', () => this.launch(b.dataset.game));
       b.addEventListener('pointerenter', () => audio.hover());
       b.addEventListener('pointermove', (e) => {
-        if (e.pointerType !== 'mouse') return;
+        if (e.pointerType !== 'mouse' || Motion.calm) return;
         const r = b.getBoundingClientRect();
         const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
         b.style.setProperty('--ry', `${(x * 10).toFixed(2)}deg`);
@@ -108,7 +109,7 @@ export class Arcade {
   warp() {
     const panel = document.querySelector('#modal-game .modal-panel');
     panel.querySelector('.warp')?.remove();
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (Motion.calm) return;
     const w = document.createElement('div');
     w.className = 'warp';
     w.innerHTML = Array.from({ length: 48 }, () => `<i style="--a:${Math.round(Math.random() * 360)}deg;--d:${Math.round(Math.random() * 180)}ms"></i>`).join('');

@@ -8,6 +8,7 @@ import { Arcade } from './arcade.js';
 import { GAMES } from './games/index.js';
 import { gameIcon, icon } from './icons.js';
 import { runIntro } from './intro.js';
+import { Motion } from './motion.js';
 
 const SECTORS = {
   hub: { label: 'Deep Space' },
@@ -43,6 +44,7 @@ async function initScene() {
       onHover: () => audio.hover(),
       viewInsets,
       intro: introRunning,
+      calm: Motion.calm,
     });
     // Keep the 3D system centred in the free space as the server card changes size.
     new ResizeObserver(() => scene.resize()).observe($('#hero-card'));
@@ -198,7 +200,56 @@ function bindUI() {
   $$('[data-year]').forEach((el) => { el.textContent = new Date().getFullYear(); });
 }
 
+/* ---------- animation setting ---------- */
+function renderMotion() {
+  const setting = Motion.setting;
+  $$('[data-motion]').forEach((b) => {
+    const on = b.dataset.motion === setting;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-checked', String(on));
+  });
+  const note = $('#motion-note');
+  if (note) {
+    note.textContent = setting === 'auto'
+      ? `Auto follows your device: currently ${Motion.mode === 'calm' ? 'Calm, because your device asks for reduced motion' : 'Full'}.`
+      : setting === 'full' ? 'Full: every effect, including the hyperspace jump and camera sweeps.' : 'Calm: animated, but big motion effects become gentle fades.';
+  }
+}
+
+function bindMotion() {
+  $$('[data-motion]').forEach((b) => b.addEventListener('click', () => {
+    Motion.set(b.dataset.motion);
+    toast(Motion.mode === 'calm' ? 'Calm animations on' : 'Full animations on', { icon: 'sparkle' });
+  }));
+  Motion.onChange(() => { scene?.setCalm(Motion.calm); renderMotion(); });
+  Motion.apply();
+  renderMotion();
+}
+
+/* ---------- diagnostics: open the site with ?diag ---------- */
+function showDiagnostics() {
+  if (!new URLSearchParams(location.search).has('diag')) return;
+  const yes = (v) => (v ? '<span class="ok">yes</span>' : '<span class="bad">no</span>');
+  const render = () => {
+    const box = $('#diag') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'diag', className: 'diag' }));
+    const webgl = document.body.classList.contains('scene-ready') ? '<span class="ok">running</span>' : document.body.classList.contains('no-webgl') ? '<span class="bad">unavailable</span>' : 'starting…';
+    box.innerHTML = `
+      <div><b>Orbit Network Hub</b> build ${escapeHTML(CONFIG.version)}</div>
+      <div>Animations: <b>${Motion.mode}</b> (setting: ${Motion.setting})</div>
+      <div>Device asks for reduced motion: ${Motion.osReduce ? '<span class="bad">yes</span>' : '<span class="ok">no</span>'}</div>
+      <div>Running animations: ${document.getAnimations ? document.getAnimations().length : 'n/a'}</div>
+      <div>3D scene (WebGL): ${webgl}</div>
+      <div>Fonts loaded: ${yes(document.fonts?.check('900 16px Orbitron'))}</div>
+      <div>CSS color-mix: ${yes(window.CSS?.supports?.('color', 'color-mix(in srgb, red 50%, blue)'))} · @property: ${yes(typeof window.CSS?.registerProperty === 'function')}</div>
+      <div>Viewport: ${innerWidth}×${innerHeight} @${devicePixelRatio}x</div>
+      <div style="word-break:break-all;opacity:.75;margin-top:6px">${escapeHTML(navigator.userAgent)}</div>`;
+  };
+  render();
+  setInterval(render, 1000);
+}
+
 bindUI();
+bindMotion();
 initTabs(document);
 Store.subscribe(renderHUD);
 renderHUD();
@@ -207,3 +258,4 @@ setSector('hub');
 portal.start();
 runIntro({ onReveal: () => { introRunning = false; scene?.reveal(); } });
 initScene();
+showDiagnostics();

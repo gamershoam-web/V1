@@ -85,7 +85,8 @@ const ringTex = () => canvasTexture(512, 512, (g) => {
 });
 
 export class SpaceScene {
-  constructor(canvas, { labelsEl, onSelect, onHover, viewInsets, intro = false } = {}) {
+  constructor(canvas, { labelsEl, onSelect, onHover, viewInsets, intro = false, calm = false } = {}) {
+    this.calm = calm;
     this.canvas = canvas;
     this.viewInsets = viewInsets;
     this.holding = intro;
@@ -110,7 +111,7 @@ export class SpaceScene {
 
     this.rig = {
       target: new THREE.Vector3(), targetGoal: new THREE.Vector3(),
-      r: intro ? 760 : 320, rGoal: intro ? 760 : 82, theta: intro ? 2.6 : 0.9, thetaGoal: intro ? 2.6 : 0.5,
+      r: intro && !calm ? 760 : 320, rGoal: intro && !calm ? 760 : 82, theta: intro ? 2.6 : 0.9, thetaGoal: intro ? 2.6 : 0.5,
       phi: intro ? 0.55 : 1.12, phiGoal: intro ? 0.55 : 1.12,
       focus: null, lastInteract: 0,
     };
@@ -623,11 +624,16 @@ export class SpaceScene {
   reveal() {
     if (!this.holding) return;
     this.holding = false;
-    this.rig.rGoal = this.homeDistance();
-    this.rig.thetaGoal = 0.5;
-    this.rig.phiGoal = 1.12;
-    this.rig.lastInteract = this.time + 2;
+    const rig = this.rig;
+    rig.rGoal = this.homeDistance();
+    rig.thetaGoal = 0.5;
+    rig.phiGoal = 1.12;
+    rig.lastInteract = this.time + 2;
+    // Calm mode: no sweeping fly-in, start at the home view.
+    if (this.calm) { rig.r = rig.rGoal; rig.theta = rig.thetaGoal; rig.phi = rig.phiGoal; }
   }
+
+  setCalm(calm) { this.calm = calm; }
 
   /* ---------- frame loop ---------- */
   _loop() {
@@ -699,7 +705,7 @@ export class SpaceScene {
     );
     this.camera.lookAt(rig.target);
     // Mouse parallax: shift the camera slightly along its own right/up axes.
-    const par = rig.r * 0.045;
+    const par = this.calm ? 0 : rig.r * 0.045;
     this.camera.translateX(this.mouseSmooth.x * par);
     this.camera.translateY(this.mouseSmooth.y * par * 0.6);
     this.camera.lookAt(rig.target);

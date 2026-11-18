@@ -101,7 +101,7 @@ export default class AsteroidDodger extends CanvasGame {
     const { W, H } = this;
     if (this.state === 'play') { this.parts.update(dt); if (this.shake > 0) this.shake -= dt; }
     g.save();
-    if (this.shake > 0) g.translate(rand(-6, 6) * this.shake, rand(-6, 6) * this.shake);
+    if (this.shake > 0 && !this.calm) g.translate(rand(-6, 6) * this.shake, rand(-6, 6) * this.shake);
     const bg = g.createLinearGradient(0, 0, 0, H);
     bg.addColorStop(0, '#0b0626'); bg.addColorStop(0.3, '#1a0b3d'); bg.addColorStop(1, '#05030f');
     g.fillStyle = bg; g.fillRect(-10, -10, W + 20, H + 20);

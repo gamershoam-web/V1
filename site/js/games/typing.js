@@ -126,7 +126,7 @@ export default class LaserTyping extends CanvasGame {
     if (this.waveBanner > 0) this.waveBanner -= dt;
 
     g.save();
-    if (this.shake > 0) g.translate(rand(-5, 5), rand(-5, 5));
+    if (this.shake > 0 && !this.calm) g.translate(rand(-5, 5), rand(-5, 5));
     g.fillStyle = '#05030f'; g.fillRect(-10, -10, W + 20, H + 20);
     drawStars(g, this.stars, this.t, W, H, 14, dt);
 

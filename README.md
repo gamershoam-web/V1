@@ -3,6 +3,9 @@
 A 3D space-themed gaming portal for the **Orbitnetwork.net** Minecraft server, with 12 playable arcade games.
 
 - **Opening sequence**: a cinematic intro (logo assembles, title flies in, hyperspace jump into the hub). Tap or press any key to skip.
+- **Animation modes**: Full or Calm (Command Deck > Settings). *Auto* picks Calm when the device asks for reduced motion
+  (for example Windows with "Animation effects" turned off). Calm keeps everything animated but replaces the hyperspace
+  jump, flashes, camera sweeps, parallax, screen shake and 3D tilt with gentle fades.
 - **3D hub** (Three.js): starfield, nebula, rotating space station and orbiting planets that act as navigation nodes. Drag to orbit, scroll or pinch to zoom, click a planet to fly to it.
 - **HUD**: glassmorphism UI, sound toggle, quick-navigation dock, XP/level and high scores saved in `localStorage`.
 - **Minecraft portal**: live status from the mcsrvstat.us API, one-click IP copy, game-mode tabs, Java/Bedrock join guide and a Discord link.
@@ -60,3 +63,9 @@ On the VPS (as root), run:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/gamershoam-web/V1/ccr-149e134a-e2c045/deploy/deploy.sh | bash
 ```
+
+## Troubleshooting
+
+Open the site with `?diag` (for example `http://your-server/?diag`) to show a diagnostics panel: build number,
+animation mode, whether the device asks for reduced motion, WebGL status, fonts and browser details.
+

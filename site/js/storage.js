@@ -1,6 +1,6 @@
 // Player progress (XP, high scores, settings) persisted in localStorage.
 const KEY = 'orbitHub.v1';
-const DEFAULTS = { xp: 0, best: {}, muted: false, visited: {} };
+const DEFAULTS = { xp: 0, best: {}, muted: false, visited: {}, motion: 'auto' };
 const RANKS = ['Cadet', 'Pilot', 'Navigator', 'Lieutenant', 'Commander', 'Captain', 'Commodore', 'Admiral', 'Star Marshal', 'Galactic Legend'];
 const listeners = new Set();
 
@@ -25,6 +25,7 @@ const xpForLevel = (n) => 50 * n * (n - 1);
 export const Store = {
   get xp() { return state.xp; },
   get muted() { return state.muted; },
+  get motion() { return ['auto', 'full', 'calm'].includes(state.motion) ? state.motion : 'auto'; },
   levelInfo() {
     let level = 1;
     while (state.xp >= xpForLevel(level + 1)) level++;
@@ -53,11 +54,12 @@ export const Store = {
     return { best: Math.max(prev, score), isNew: isNew && score > 0 };
   },
   setMuted(m) { state.muted = !!m; save(); },
+  setMotion(m) { state.motion = ['auto', 'full', 'calm'].includes(m) ? m : 'auto'; save(); },
   markVisited(id) {
     if (state.visited[id]) return false;
     state.visited[id] = true; save();
     return true;
   },
-  reset() { const muted = state.muted; state = { ...DEFAULTS, best: {}, visited: {}, muted }; save(); },
+  reset() { const { muted, motion } = state; state = { ...DEFAULTS, best: {}, visited: {}, muted, motion }; save(); },
   subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 };
