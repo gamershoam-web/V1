@@ -1323,3 +1323,18 @@ body { font-feature-settings: "tnum" 0; }
 .motion-calm .greeting.show .greet-orb { animation: rv-fade .5s ease backwards; }
 .motion-calm .greeting.show .greet-shine { animation: none; }
 .lite .greet-card { box-shadow: 0 14px 34px rgba(0, 0, 0, .5); }
+
+/* Orbit Colony 3D view (js/games/big/colony3d.js) */
+.col-gl { touch-action: none; cursor: grab; }
+.col-gl:active { cursor: grabbing; }
+.col-float { position: absolute; z-index: 2; pointer-events: none; transform: translate(-50%, -50%); white-space: nowrap;
+  font: 800 14px/1 Inter, sans-serif; text-shadow: 0 1px 3px #000, 0 0 10px rgba(0, 0, 0, .6); animation: col-float 1.25s ease-out forwards; }
+@keyframes col-float { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.8); } 15% { opacity: 1; transform: translate(-50%, -60%) scale(1.05); } 100% { opacity: 0; transform: translate(-50%, -260%); } }
+.col-view.col-alert::after { content: ""; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 60px rgba(244, 63, 94, .45); animation: col-alert .5s ease-in-out infinite alternate; }
+@keyframes col-alert { from { opacity: .4; } to { opacity: 1; } }
+.col-level, .col-events, .col-log { z-index: 1; }
+.col-hint { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; white-space: nowrap; padding: 6px 12px; border-radius: 99px;
+  font: 700 12px/1 var(--font-ui); letter-spacing: .06em; color: #fff; background: rgba(6, 8, 20, .72); border: 1px solid rgba(214, 198, 176, .5);
+  box-shadow: 0 0 18px rgba(214, 198, 176, .25); }
+.col-hint[hidden] { display: none; }
+.col-hint::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 7px; border-radius: 50%; background: #e7dccb; vertical-align: 1px; animation: prog-dot 1.2s ease-in-out infinite; }

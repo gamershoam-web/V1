@@ -3,6 +3,7 @@
 // survive random events and warp to new systems for permanent Dark Matter bonuses. Saves automatically
 // and keeps producing while you are away (up to 8 hours).
 import { icon } from '../../icons.js';
+import { ColonyView3D } from './colony3d.js';
 
 const VERSION = 1;
 const OFFLINE_CAP = 8 * 3600;
@@ -123,14 +124,23 @@ export default class Colony {
         </div>
       </div>`;
     this.$ = (sel) => root.querySelector(sel);
-    this.canvas = this.$('.col-canvas');
-    this.g = this.canvas.getContext('2d');
+    // 3D colony view when WebGL is available; the original 2D drawing otherwise
+    const canvas2d = this.$('.col-canvas');
+    this.view3d = ColonyView3D.create(this.$('.col-view'), this);
+    if (this.view3d) {
+      canvas2d.remove();
+      this.canvas = this.view3d.canvas;
+      this.g = null;
+    } else {
+      this.canvas = canvas2d;
+      this.g = canvas2d.getContext('2d');
+    }
     root.querySelectorAll('[data-tab]').forEach((b) => this.on(b, 'click', () => { this.tab = b.dataset.tab; this.ctx.audio.click(); this.renderPanel(true); }));
     this.on(this.$('[data-body]'), 'click', (e) => this.onPanelClick(e));
     this.on(this.$('[data-body]'), 'pointerdown', () => { this.pressing = true; });
     this.on(window, 'pointerup', () => { this.pressing = false; });
     this.on(window, 'pointercancel', () => { this.pressing = false; });
-    this.on(this.canvas, 'pointerdown', (e) => this.onCanvasTap(e));
+    if (!this.view3d) this.on(this.canvas, 'pointerdown', (e) => this.onCanvasTap(e));
 
     this.initScene();
     this.ro = new ResizeObserver(() => this.resize());
@@ -603,6 +613,7 @@ export default class Colony {
   }
 
   resize() {
+    if (this.view3d) { this.view3d.resize(); return; }
     const r = this.$('.col-view').getBoundingClientRect();
     this.vw = Math.max(1, r.width); this.vh = Math.max(1, r.height);
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -632,22 +643,29 @@ export default class Colony {
     const x = e.clientX - r.left, y = e.clientY - r.top;
     const a = this.asteroidGeom();
     if (((x - a.x) / (a.rx * 1.08)) ** 2 + ((y - a.y) / (a.ry * 1.6)) ** 2 < 1.4) {
-      const gain = Math.max(1, Math.round(3 + this.s.level * 2 * this.dmMult()));
-      this.s.res.ore = Math.min(this.storageCap(), this.s.res.ore + gain);
-      this.s.clicks++;
-      this.floatText(`+${gain} ore`, '#d6c6b0', x, y);
+      this.mineByHand(x, y);
       for (let i = 0; i < 10; i++) this.particles.push({ x, y, vx: rand(-80, 80), vy: rand(-120, 20), life: 0.7, color: '#d6c6b0' });
-      this.ctx.audio.tone({ freq: rand(180, 260), type: 'square', dur: 0.05, vol: 0.06 });
-      this.renderResources();
     }
   }
 
+  // A tap on the home asteroid (x, y in view pixels, for the "+ore" label)
+  mineByHand(x, y) {
+    const gain = Math.max(1, Math.round(3 + this.s.level * 2 * this.dmMult()));
+    this.s.res.ore = Math.min(this.storageCap(), this.s.res.ore + gain);
+    this.s.clicks++;
+    this.floatText(`+${gain} ore`, '#e7dccb', x, y);
+    this.ctx.audio.tone({ freq: rand(180, 260), type: 'square', dur: 0.05, vol: 0.06 });
+    this.renderResources();
+  }
+
   floatText(text, color, x, y) {
+    if (this.view3d) { this.view3d.floatText(text, color, x, y); return; }
     const a = this.asteroidGeom();
     this.floaters.push({ text, color, x: x ?? a.x, y: y ?? a.y - a.ry - a.R * 0.5, life: 1.4 });
   }
 
   burst(id) {
+    if (this.view3d) { this.view3d.celebrate(id); return; }
     const a = this.asteroidGeom();
     for (let i = 0; i < 24; i++) {
       const x = rand(-a.R, a.R) * 0.7;
@@ -670,7 +688,7 @@ export default class Colony {
       if (Date.now() > s.offersAt) this.rollOffers();
     }
     if (Math.floor(this.time * 2) !== Math.floor((this.time - dt) * 2)) this.checkExpeditions();
-    this.draw(dt);
+    if (this.view3d) this.view3d.frame(dt); else this.draw(dt);
   }
 
   draw(dt) {
@@ -876,6 +894,7 @@ export default class Colony {
 
   destroy() {
     this.persist();
+    this.view3d?.dispose();
     cancelAnimationFrame(this.raf);
     clearInterval(this.saveTimer);
     clearInterval(this.uiTimer);
