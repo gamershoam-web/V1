@@ -3,50 +3,58 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>GamerShoam</title>
-<meta name="description" content="GamerShoam – gaming news, streams and community.">
+<title>Nebula Arcade – Space Gaming</title>
+<meta name="description" content="Nebula Arcade – space games, live streams and a galactic community.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="stars"></div><div class="stars s2"></div><div class="stars s3"></div>
+
 <header class="nav">
-  <a class="logo" href="#">Gamer<span>Shoam</span></a>
+  <a class="logo" href="#">&#10022; Nebula<span>Arcade</span></a>
   <nav>
     <a href="#games">Games</a>
-    <a href="#streams">Streams</a>
-    <a href="#community">Community</a>
+    <a href="#missions">Missions</a>
+    <a href="#crew">Crew</a>
     <a href="#contact">Contact</a>
   </nav>
 </header>
 
 <section class="hero">
-  <h1>Level up with <span>GamerShoam</span></h1>
-  <p>Reviews, live streams and a community built for players.</p>
-  <a class="btn" href="#community">Join the squad</a>
+  <div class="planet"></div>
+  <h1>Play across the <span>galaxy</span></h1>
+  <p>Space games, live streams and a crew of players from every corner of the universe.</p>
+  <a class="btn" href="#crew">Join the crew</a>
 </section>
 
 <section id="games">
   <h2>Featured games</h2>
   <div class="grid">
-    <article class="card"><h3>Action</h3><p>Fast, loud and competitive. Our top picks this month.</p></article>
-    <article class="card"><h3>RPG</h3><p>Deep worlds and stories worth hundreds of hours.</p></article>
-    <article class="card"><h3>Indie</h3><p>Small teams, big ideas. Hidden gems you shouldn't miss.</p></article>
+    <article class="card"><div class="icon">&#128640;</div><h3>Star Raiders</h3><p>Fast space combat. Dogfight rivals through asteroid fields.</p></article>
+    <article class="card"><div class="icon">&#129680;</div><h3>Orbit Tycoon</h3><p>Build stations, trade resources and rule the trade lanes.</p></article>
+    <article class="card"><div class="icon">&#128125;</div><h3>Void Explorers</h3><p>Chart unknown planets and survive what lives on them.</p></article>
   </div>
 </section>
 
-<section id="streams">
-  <h2>Live streams</h2>
-  <p class="muted">Catch us live every weekend. Stream embeds go here.</p>
+<section id="missions">
+  <h2>Live missions</h2>
+  <p class="muted">Join our weekend streams. Stream embeds go here.</p>
+  <div class="grid">
+    <div class="card"><h3>Fri 20:00</h3><p>Co-op raid night</p></div>
+    <div class="card"><h3>Sat 18:00</h3><p>Community tournament</p></div>
+    <div class="card"><h3>Sun 16:00</h3><p>New game reviews</p></div>
+  </div>
 </section>
 
-<section id="community">
-  <h2>Community</h2>
-  <p class="muted">Chat, team up and share clips with other players.</p>
+<section id="crew">
+  <h2>The crew</h2>
+  <p class="muted">Chat, team up and share your best clips with players across the universe.</p>
   <a class="btn" href="#contact">Get in touch</a>
 </section>
 
 <section id="contact">
-  <h2>Contact</h2>
-  <form onsubmit="event.preventDefault();this.querySelector('button').textContent='Thanks!'">
+  <h2>Contact mission control</h2>
+  <form onsubmit="event.preventDefault();this.querySelector('button').textContent='Transmission sent!'">
     <input type="text" placeholder="Your name" required>
     <input type="email" placeholder="Email" required>
     <textarea rows="4" placeholder="Message" required></textarea>
@@ -54,6 +62,6 @@
   </form>
 </section>
 
-<footer>&copy; <script>document.write(new Date().getFullYear())</script> GamerShoam</footer>
+<footer>&copy; <script>document.write(new Date().getFullYear())</script> Nebula Arcade</footer>
 </body>
 </html>
