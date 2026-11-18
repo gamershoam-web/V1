@@ -1046,3 +1046,56 @@ body { font-feature-settings: "tnum" 0; }
   .col-tabs { gap: 2px; padding: 6px; }
   .col-tabs button { font-size: 10px; letter-spacing: 0; padding-left: 1px; padding-right: 1px; }
 }
+
+/* =====================================================================
+   Animated cursive wordmarks (js/wordmark.js)
+   Wavy coloured threads weave in and settle onto the letters, a neon pen
+   writes the word, then the ink glows in.
+   ===================================================================== */
+.wordmark { display: block; height: auto; overflow: visible; --wm-delay: 0s; }
+.wordmark use { stroke-linecap: round; stroke-linejoin: round; }
+.wm-thread use { stroke-width: 1.6px; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+.wm-pen use { stroke-width: 1.1px; stroke-dasharray: 1 1; stroke-dashoffset: 1; }
+.wm-fill { opacity: 0; }
+.wm-fill use { stroke-width: var(--wm-weight, 0px); }
+.wm-thread { opacity: 0; }
+.wm-play .wm-thread use { animation: wm-draw 1.35s cubic-bezier(.5, 0, .2, 1) forwards; animation-delay: calc(var(--wm-delay) + var(--d) * .65s); }
+.wm-play .wm-thread { animation: wm-converge 1.9s cubic-bezier(.3, 0, .15, 1) var(--wm-delay) forwards; }
+.wm-play .wm-thread.t1 { --tx: -4%; --ty: -26%; }
+.wm-play .wm-thread.t2 { --tx: 3%; --ty: 22%; animation-delay: calc(var(--wm-delay) + .08s); }
+.wm-play .wm-thread.t3 { --tx: 0%; --ty: 40%; animation-delay: calc(var(--wm-delay) + .16s); }
+.wm-play .wm-pen use { animation: wm-draw 1.05s cubic-bezier(.45, 0, .25, 1) forwards; animation-delay: calc(var(--wm-delay) + .6s + var(--d) * .8s); }
+.wm-play .wm-fill { animation: wm-ink 1s ease forwards; animation-delay: calc(var(--wm-delay) + 1.55s); }
+@keyframes wm-draw { to { stroke-dashoffset: 0; } }
+@keyframes wm-converge {
+  0% { opacity: 0; transform: translate(var(--tx), var(--ty)); }
+  15% { opacity: 1; }
+  75% { opacity: 1; transform: translate(0, 0); }
+  100% { opacity: .5; transform: translate(0, 0); }
+}
+@keyframes wm-ink { from { opacity: 0; } to { opacity: 1; } }
+/* After the animation, a slow shimmer keeps the neon alive */
+.wm-play .wm-ink { animation: wm-shimmer 4s ease-in-out calc(var(--wm-delay) + 2.6s) infinite; }
+@keyframes wm-shimmer { 50% { filter: brightness(1.25); } }
+/* Calm mode: no drifting threads or waves, just the pen writing and the ink glowing in */
+.motion-calm .wm-waves, .motion-calm .wm-threads { display: none; }
+.motion-calm .wm-play .wm-ink { animation: none; }
+
+/* Intro: the big wordmark */
+.intro-script { display: block; width: min(860px, 84vw); margin-top: clamp(10px, 2.5vh, 22px); font-size: 0; }
+.intro-script .wordmark { width: 100%; filter: drop-shadow(0 0 18px rgba(124, 58, 237, .45)); }
+@media (max-width: 639px) { .intro-script { width: 92vw; } }
+
+/* HUD logo: single line on wide screens, stacked "Orbit / Network" on phones */
+.brand-name.has-wm { display: block; letter-spacing: 0; line-height: 0; }
+.wm-brand { --wm-weight: 1.1px; }
+.wm-brand.wm-wide { height: 30px; width: auto; }
+.wm-brand.wm-stack { display: none; height: 19px; width: auto; }
+.wm-brand.wm-stack + .wm-stack { margin-top: -3px; margin-left: 12px; }
+@media (max-width: 639px) {
+  .wm-brand.wm-wide { display: none; }
+  .wm-brand.wm-stack { display: block; }
+}
+
+/* Panel titles */
+.wm-title { --wm-weight: .8px; height: clamp(34px, 6vw, 44px); width: auto; max-width: 100%; margin: 2px 0 -2px -4px; }

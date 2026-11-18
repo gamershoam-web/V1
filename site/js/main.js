@@ -9,6 +9,7 @@ import { ALL_GAMES } from './games/index.js';
 import { gameIcon, icon } from './icons.js';
 import { runIntro } from './intro.js';
 import { Motion } from './motion.js';
+import { wordmarkSVG, playWordmark } from './wordmark.js';
 
 const SECTORS = {
   hub: { label: 'Deep Space' },
@@ -270,6 +271,27 @@ function showDiagnostics() {
   setInterval(render, 1000);
 }
 
+/* ---------- cursive wordmarks ---------- */
+function initWordmarks() {
+  const brand = $('.brand-name');
+  if (brand) {
+    brand.classList.add('has-wm');
+    brand.innerHTML = wordmarkSVG('Orbit Network', { cls: 'wm-brand wm-wide', waves: false })
+      + wordmarkSVG('Orbit', { cls: 'wm-brand wm-stack', waves: false, label: '' })
+      + wordmarkSVG('Network', { cls: 'wm-brand wm-stack', waves: false, label: '' });
+    brand.querySelectorAll('.wm-stack').forEach((s) => s.setAttribute('aria-hidden', 'true'));
+  }
+  // Panel titles keep their text as the accessible name
+  [['#arcade-title', 'Arcade Sector'], ['#deck-title', 'Command Deck'], ['#comms-title', 'Join the community']].forEach(([sel, text]) => {
+    const h = $(sel);
+    if (h) h.innerHTML = wordmarkSVG(text, { cls: 'wm-title', waves: false });
+  });
+  const playBrand = () => brand?.querySelectorAll('.wordmark').forEach((svg, i) => setTimeout(() => playWordmark(svg), i === 2 ? 350 : 0));
+  if (document.getElementById('intro')) document.addEventListener('intro:reveal', playBrand, { once: true });
+  else playBrand();
+}
+
+initWordmarks();
 bindUI();
 bindMotion();
 window.addEventListener('resize', () => placeDockIndicator(false));

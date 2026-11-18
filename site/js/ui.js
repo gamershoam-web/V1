@@ -1,5 +1,6 @@
 // Small UI helpers: toasts, modals, tabs, clipboard.
 import { icon as svgIcon } from './icons.js';
+import { playWordmark } from './wordmark.js';
 
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -37,6 +38,7 @@ export const Modals = {
     el.classList.add('open');
     this.stack.push(id);
     document.body.classList.add('modal-open');
+    el.querySelectorAll('.wm-title').forEach((svg) => playWordmark(svg));
     const focusable = el.querySelector('[autofocus], .modal-panel button, .modal-panel [tabindex]');
     focusable?.focus({ preventScroll: true });
   },

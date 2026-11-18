@@ -16,7 +16,8 @@ A 3D space-themed gaming portal for the **Orbitnetwork.net** Minecraft server, w
 - **Mini games**: AstroWordle, Nebula Sketch, Asteroid Dodger, Black Hole Pong, Laser Typing Defense, Quantum 2048, Lunar Lander, Orbital Brick Breaker, Starlight Memory Matrix, Cosmic Minesweeper, Galactic Invaders Blitz and Wormhole Trivia. Each game is loaded only when opened, and the 3D render loop pauses while a game is open.
 - **Icons**: a custom animated SVG icon set (`site/js/icons.js`); each game icon is tinted with its card's accent colour.
 - **Audio**: all sound effects are synthesized with the Web Audio API (no audio files).
-- **Fonts**: self-hosted in `site/fonts` (no third-party requests): Exo 2 for the interface, Inter for body text, Orbitron for the logo.
+- **Fonts**: self-hosted in `site/fonts` (no third-party requests): Exo 2 for the interface and Inter for body text.
+- **Cursive wordmarks**: the logo, intro title and panel titles are drawn in the Sacramento script as animated SVG: wavy coloured lines weave together into the word, a neon pen writes it, then the ink glows in. Letter shapes are converted to SVG paths at build time (`scripts/build-wordmarks.mjs`); add a new text to `TEXTS` there and run `npm run build:wordmarks`.
 
 ## Customize
 
@@ -49,6 +50,7 @@ site/                 static site served by nginx (no build needed on the server
   js/games/big/       full games: starfighter.js, conquest.js, colony.js
   js/space-assets.js  procedural sky, planets, sun, asteroids (shared by hub and Starfighter)
   js/covers.js        animated cover art for the full games
+  js/wordmark.js      animated cursive wordmarks (paths in js/wordmark-data.js, generated)
 src/tailwind.css      Tailwind entry file
 deploy/               nginx config and VPS deploy script
 ```
@@ -57,7 +59,7 @@ deploy/               nginx config and VPS deploy script
 
 ```bash
 npm install
-npm run build      # copies three.js (+ add-ons) and fonts, rebuilds css/tailwind.css
+npm run build      # copies three.js (+ add-ons) and fonts, generates wordmarks, rebuilds css/tailwind.css
 npm run serve      # http://localhost:8080
 ```
 

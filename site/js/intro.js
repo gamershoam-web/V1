@@ -9,6 +9,7 @@ export function runIntro({ onReveal } = {}) {
   const el = document.getElementById('intro');
   if (!el) {
     document.body.classList.remove('intro-active');
+    document.dispatchEvent(new CustomEvent('intro:reveal'));
     onReveal?.();
     return Promise.resolve();
   }
@@ -68,6 +69,7 @@ export function runIntro({ onReveal } = {}) {
       later(fast ? 260 : 700, () => {
         el.classList.add('reveal');
         document.body.classList.remove('intro-active');
+        document.dispatchEvent(new CustomEvent('intro:reveal'));
       });
       later(fast ? 1000 : 1700, finish);
     };
