@@ -29,7 +29,7 @@ export class MinecraftPortal {
     const ok = await copyText(CONFIG.serverIp);
     if (ok) {
       audio.chime();
-      toast(`${CONFIG.serverIp} copied — paste it in Multiplayer → Add Server`, { type: 'success', icon: '⛏', duration: 3600 });
+      toast(`${CONFIG.serverIp} copied — paste it in Multiplayer → Add Server`, { type: 'success', icon: 'pickaxe', duration: 3600 });
       if (!this.copiedOnce) { this.copiedOnce = true; Store.addXP(10); }
     } else {
       audio.error();
@@ -50,7 +50,7 @@ export class MinecraftPortal {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       this.data = await res.json();
       this.render();
-      if (manual) toast('Server status refreshed', { icon: '📡' });
+      if (manual) toast('Server status refreshed', { icon: 'radar' });
     } catch (err) {
       console.warn('Status lookup failed', err);
       this.renderState('unknown');

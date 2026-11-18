@@ -130,7 +130,7 @@
           <h2 id="mc-title" class="font-display font-black text-xl sm:text-2xl truncate" data-ip>Orbitnetwork.net</h2>
         </div>
       </div>
-      <button type="button" class="close-btn" data-close aria-label="Close">✕</button>
+      <button type="button" class="close-btn" data-close aria-label="Close"><span data-icon="close"></span></button>
     </div>
 
     <div class="modal-body">
@@ -184,10 +184,10 @@
           <div data-panel="modes" class="pt-4" role="tabpanel">
             <div data-tabs>
               <div class="flex flex-wrap gap-2" role="tablist" data-tablist>
-                <button type="button" class="pill" data-tab="survival">🌲 Survival</button>
-                <button type="button" class="pill" data-tab="skyblock">☁️ Skyblock</button>
-                <button type="button" class="pill" data-tab="pvp">⚔️ PvP</button>
-                <button type="button" class="pill" data-tab="events">🎉 Events</button>
+                <button type="button" class="pill" data-tab="survival" style="--mode:#4ade80"><span data-icon="tree"></span>Survival</button>
+                <button type="button" class="pill" data-tab="skyblock" style="--mode:#38bdf8"><span data-icon="cloud"></span>Skyblock</button>
+                <button type="button" class="pill" data-tab="pvp" style="--mode:#f87171"><span data-icon="swords"></span>PvP</button>
+                <button type="button" class="pill" data-tab="events" style="--mode:#facc15"><span data-icon="party"></span>Events</button>
               </div>
               <div data-panels class="mt-4">
                 <div data-panel="survival" class="mode-card" style="--mode:#4ade80">
@@ -254,7 +254,7 @@
         <p class="text-[10px] tracking-[0.3em] text-neon-pink font-display">HOLOGRAPHIC SIMULATIONS</p>
         <h2 id="arcade-title" class="font-display font-black text-xl sm:text-2xl">Arcade Sector</h2>
       </div>
-      <button type="button" class="close-btn" data-close aria-label="Close">✕</button>
+      <button type="button" class="close-btn" data-close aria-label="Close"><span data-icon="close"></span></button>
     </div>
     <div class="modal-body">
       <div id="arcade-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
@@ -267,9 +267,9 @@
   <div class="modal-panel glass holo game-panel">
     <div class="game-head">
       <div class="flex items-center gap-2 min-w-0">
-        <button type="button" id="game-to-space" class="btn-mini whitespace-nowrap" title="Back to Space">← <span class="hidden sm:inline">Back to Space</span><span class="sm:hidden">Space</span></button>
+        <button type="button" id="game-to-space" class="btn-mini whitespace-nowrap" title="Back to Space"><span data-icon="back"></span><span class="hidden sm:inline">Back to Space</span><span class="sm:hidden">Space</span></button>
         <button type="button" id="game-to-arcade" class="btn-mini hidden sm:inline-flex" title="Back to the arcade">Arcade</button>
-        <span id="game-icon" class="text-xl ml-1" aria-hidden="true"></span>
+        <span id="game-icon" class="game-head-icon ml-1" aria-hidden="true"></span>
         <h2 id="game-title" class="font-display font-bold text-sm sm:text-lg truncate">Game</h2>
       </div>
       <div class="flex items-center gap-2 sm:gap-3">
@@ -294,7 +294,7 @@
         <p class="text-[10px] tracking-[0.3em] text-neon-cyan font-display">ORBIT STATION</p>
         <h2 id="deck-title" class="font-display font-black text-xl sm:text-2xl">Command Deck</h2>
       </div>
-      <button type="button" class="close-btn" data-close aria-label="Close">✕</button>
+      <button type="button" class="close-btn" data-close aria-label="Close"><span data-icon="close"></span></button>
     </div>
     <div class="modal-body">
       <p class="text-slate-300 text-sm">Welcome aboard, pilot. Orbit Network is a home base for gamers: our Minecraft server <b data-ip>Orbitnetwork.net</b>, a 12-game arcade, and a community that plays together.</p>
@@ -327,7 +327,7 @@
         <p class="text-[10px] tracking-[0.3em] text-neon-cyan font-display">COMMS RELAY</p>
         <h2 id="comms-title" class="font-display font-black text-xl sm:text-2xl">Join the community</h2>
       </div>
-      <button type="button" class="close-btn" data-close aria-label="Close">✕</button>
+      <button type="button" class="close-btn" data-close aria-label="Close"><span data-icon="close"></span></button>
     </div>
     <div class="modal-body">
       <p class="text-slate-300 text-sm">Find teammates, get event announcements, share builds and suggest new arcade games. Transmissions are open.</p>
@@ -336,8 +336,8 @@
         Join our Discord
       </a>
       <div class="grid grid-cols-2 gap-3 mt-4">
-        <button type="button" class="btn-ghost" data-open-modal="minecraft">⛏ Minecraft portal</button>
-        <button type="button" class="btn-ghost" data-open-modal="arcade">🎮 Arcade Sector</button>
+        <button type="button" class="btn-ghost" data-open-modal="minecraft"><span data-icon="pickaxe"></span>Minecraft portal</button>
+        <button type="button" class="btn-ghost" data-open-modal="arcade"><span data-icon="gamepad"></span>Arcade Sector</button>
       </div>
       <p class="text-xs text-slate-500 mt-6">© <span data-year></span> Orbit Network. Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</p>
     </div>

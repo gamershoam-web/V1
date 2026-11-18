@@ -1,4 +1,9 @@
 // Cosmic Minesweeper — reveal safe sectors using radar numbers; flag the space mines.
+import { icon } from '../icons.js';
+
+const FLAG = icon('flag', 'cell-ico flag-ico');
+const MINE = icon('mine', 'cell-ico mine-ico');
+const BOOM = icon('boom', 'cell-ico boom-ico');
 const LEVELS = {
   cadet: { cols: 9, rows: 9, mines: 10, mult: 1, label: 'Cadet' },
   pilot: { cols: 12, rows: 12, mines: 24, mult: 2, label: 'Pilot' },
@@ -13,9 +18,9 @@ export default class CosmicMines {
     root.innerHTML = `
       <div class="game-toolbar">
         <div class="seg">${Object.entries(LEVELS).map(([k, v]) => `<button type="button" data-level="${k}">${v.label}</button>`).join('')}</div>
-        <button type="button" class="btn-mini" data-flagmode aria-pressed="false">⛏ Scan mode</button>
-        <span class="btn-mini pointer-events-none">🚩 <b data-left>0</b></span>
-        <span class="btn-mini pointer-events-none">⏱ <b data-time>0</b>s</span>
+        <button type="button" class="btn-mini" data-flagmode aria-pressed="false">${icon('radar')}<span>Scan mode</span></button>
+        <span class="btn-mini pointer-events-none">${icon('flag')}<b data-left>0</b></span>
+        <span class="btn-mini pointer-events-none">${icon('timer')}<b data-time>0</b>s</span>
       </div>
       <p class="text-[11px] text-slate-400 text-center mt-2 px-3">Tap to scan · right-click, long-press or Flag mode to mark a mine · tap a number to clear around it</p>
       <div class="scroll-stage grid place-items-center"><div class="mines-grid" data-grid></div></div>`;
@@ -24,7 +29,7 @@ export default class CosmicMines {
     const fm = root.querySelector('[data-flagmode]');
     fm.addEventListener('click', () => {
       this.flagMode = !this.flagMode;
-      fm.textContent = this.flagMode ? '🚩 Flag mode' : '⛏ Scan mode';
+      fm.innerHTML = this.flagMode ? `${icon('flag')}<span>Flag mode</span>` : `${icon('radar')}<span>Scan mode</span>`;
       fm.setAttribute('aria-pressed', String(this.flagMode));
       fm.classList.toggle('active', this.flagMode);
       fm.style.borderColor = this.flagMode ? '#f472b6' : '';
@@ -110,7 +115,8 @@ export default class CosmicMines {
     if (this.done || cell.open) return;
     cell.flag = !cell.flag;
     this.flags += cell.flag ? 1 : -1;
-    this.els[i].textContent = cell.flag ? '🚩' : '';
+    this.els[i].innerHTML = cell.flag ? FLAG : '';
+    this.els[i].classList.toggle('flag-pop', cell.flag);
     this.ctx.audio.tone({ freq: cell.flag ? 900 : 500, type: 'triangle', dur: 0.06, vol: 0.08 });
     this.updateLeft();
   }
@@ -151,18 +157,18 @@ export default class CosmicMines {
     clearInterval(this.timer);
     this.ctx.audio.explosion();
     this.cells.forEach((c, k) => {
-      if (c.mine && !c.flag) { this.els[k].textContent = '✹'; this.els[k].classList.add('open'); this.els[k].style.color = '#f472b6'; }
+      if (c.mine && !c.flag) { this.els[k].innerHTML = MINE; this.els[k].classList.add('open', 'reveal-mine'); this.els[k].style.animationDelay = `${Math.round(Math.random() * 400)}ms`; }
       if (!c.mine && c.flag) this.els[k].classList.add('wrong');
     });
     this.els[i].classList.add('boom');
-    this.els[i].textContent = '💥';
+    this.els[i].innerHTML = BOOM;
     setTimeout(() => { if (this.done) this.ctx.gameOver(0, { title: 'Mine detonated', message: 'A proximity mine caught your ship. Try again, pilot!' }); }, 900);
   }
 
   win() {
     this.done = true;
     clearInterval(this.timer);
-    this.cells.forEach((c, k) => { if (c.mine && !c.flag) this.els[k].textContent = '🚩'; });
+    this.cells.forEach((c, k) => { if (c.mine && !c.flag) this.els[k].innerHTML = FLAG; });
     const score = Math.max(100 * this.mult, Math.round(this.mult * (1500 - this.seconds * 8)));
     this.ctx.setScore(score);
     this.ctx.gameOver(score, { won: true, title: 'Sector cleared!', message: `${LEVELS[this.level].label} field cleared in ${this.seconds}s.` });

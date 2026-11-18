@@ -6,6 +6,7 @@ import { $, $$, Modals, toast, initTabs, fmt, escapeHTML } from './ui.js';
 import { MinecraftPortal } from './minecraft.js';
 import { Arcade } from './arcade.js';
 import { GAMES } from './games/index.js';
+import { gameIcon, icon } from './icons.js';
 
 const SECTORS = {
   hub: { label: 'Deep Space' },
@@ -53,7 +54,7 @@ function goSector(id) {
   scene?.flyTo(id);
   if (Store.markVisited(id)) {
     Store.addXP(15);
-    setTimeout(() => toast(`New sector discovered: ${SECTORS[id].label} (+15 XP)`, { icon: '🛰' }), 900);
+    setTimeout(() => toast(`New sector discovered: ${SECTORS[id].label} (+15 XP)`, { icon: 'satellite' }), 900);
   }
   if (id === 'station') renderDeck();
   sectorTimer = setTimeout(() => Modals.open(SECTORS[id].modal), scene ? 750 : 0);
@@ -66,8 +67,14 @@ Modals.onEmpty = () => {
 };
 
 /* ---------- HUD ---------- */
+let lastLevel = Store.levelInfo().level;
 function renderHUD() {
   const info = Store.levelInfo();
+  if (info.level > lastLevel) {
+    const chip = $('#hud-xpbar').closest('.hud-chip');
+    chip.classList.remove('levelup'); void chip.offsetWidth; chip.classList.add('levelup');
+  }
+  lastLevel = info.level;
   $('#hud-level').textContent = info.level;
   $('#hud-rank').textContent = info.rank;
   $('#hud-xp').textContent = `${fmt(info.xp - info.floor)} / ${fmt(info.next - info.floor)} XP`;
@@ -95,7 +102,7 @@ function renderDeck() {
   $('#deck-total').textContent = fmt(Store.totalBest());
   $('#deck-scores').innerHTML = GAMES.map((g) => `
     <li class="flex items-center gap-3 py-2.5 border-b border-white/5 last:border-0">
-      <span class="text-xl w-8 text-center" aria-hidden="true">${g.icon}</span>
+      <span class="deck-icon" aria-hidden="true">${gameIcon(g.id)}</span>
       <span class="flex-1 min-w-0 truncate text-sm">${escapeHTML(g.title)}</span>
       <b class="font-display text-neon-cyan text-sm">${fmt(Store.getBest(g.id))}</b>
       <button type="button" class="btn-mini" data-play="${g.id}">Play</button>
@@ -121,6 +128,8 @@ const arcade = new Arcade({
 
 /* ---------- wiring ---------- */
 function bindUI() {
+  // Hydrate declarative icons: <span data-icon="name"></span>
+  $$('[data-icon]').forEach((el) => { el.innerHTML = icon(el.dataset.icon); });
   $$('[data-sector]').forEach((b) => b.addEventListener('click', () => goSector(b.dataset.sector)));
   $$('[data-open-modal]').forEach((b) => b.addEventListener('click', () => goSector(b.dataset.openModal)));
   $$('.modal [data-close]').forEach((b) => b.addEventListener('click', () => Modals.close(b.closest('.modal').id)));
@@ -135,7 +144,7 @@ function bindUI() {
   $('#deck-reset').addEventListener('click', () => {
     if (confirm('Reset your XP and all high scores? This cannot be undone.')) {
       Store.reset();
-      toast('Progress reset', { icon: '♻' });
+      toast('Progress reset', { icon: 'reset' });
     }
   });
 
@@ -143,7 +152,7 @@ function bindUI() {
     if (CONFIG.discordUrl) {
       a.href = CONFIG.discordUrl;
     } else {
-      a.addEventListener('click', (e) => { e.preventDefault(); toast('Discord invite coming soon — check back later!', { icon: '💬' }); });
+      a.addEventListener('click', (e) => { e.preventDefault(); toast('Discord invite coming soon — check back later!', { icon: 'chat' }); });
     }
   });
 

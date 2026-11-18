@@ -1,4 +1,5 @@
 // Starlight Memory Matrix — repeat the constellation's growing light/tone sequence.
+import { icon } from '../icons.js';
 const STARS = [
   { x: 18, y: 30, c: '#22d3ee' }, { x: 40, y: 18, c: '#a855f7' }, { x: 62, y: 32, c: '#f472b6' },
   { x: 82, y: 22, c: '#facc15' }, { x: 74, y: 62, c: '#4ade80' }, { x: 48, y: 78, c: '#fb923c' },
@@ -56,8 +57,8 @@ export default class MemoryMatrix {
 
   nextRound() {
     this.round++;
-    if (this.round === 6) { this.active = 7; this.refreshActive(); this.ctx.toast('A new star joined the constellation!', { icon: '✨' }); }
-    if (this.round === 10) { this.active = 8; this.refreshActive(); this.ctx.toast('The constellation is complete — 8 stars!', { icon: '✨' }); }
+    if (this.round === 6) { this.active = 7; this.refreshActive(); this.ctx.toast('A new star joined the constellation!', { icon: 'sparkle' }); }
+    if (this.round === 10) { this.active = 8; this.refreshActive(); this.ctx.toast('The constellation is complete — 8 stars!', { icon: 'sparkle' }); }
     this.seq.push(Math.floor(Math.random() * this.active));
     this.input = 0;
     this.accept = false;
@@ -83,7 +84,7 @@ export default class MemoryMatrix {
       if (this.input === this.seq.length) {
         this.accept = false;
         this.ctx.setScore(this.round);
-        this.status.textContent = '✔ Perfect! Next sequence…';
+        this.status.innerHTML = `${icon('check')} Perfect! Next sequence…`;
         this.later(450, () => this.ctx.audio.pickup());
         this.later(1100, () => this.nextRound());
       }
@@ -91,7 +92,7 @@ export default class MemoryMatrix {
       this.accept = false;
       this.buttons[i].classList.add('lit');
       this.ctx.audio.error();
-      this.status.textContent = '✖ Wrong star!';
+      this.status.innerHTML = `${icon('cross')} Wrong star!`;
       // Show the correct star.
       this.later(350, () => this.flash(this.seq[this.input], 600));
       const done = this.round - 1;

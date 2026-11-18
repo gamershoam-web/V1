@@ -1,4 +1,6 @@
 // Small UI helpers: toasts, modals, tabs, clipboard.
+import { icon as svgIcon } from './icons.js';
+
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
@@ -12,7 +14,7 @@ export function toast(message, { type = 'info', icon = '', duration = 2800 } = {
   const el = document.createElement('div');
   el.className = `toast toast-${type}`;
   el.setAttribute('role', 'status');
-  el.innerHTML = `<span class="toast-icon">${icon || (type === 'success' ? '✔' : type === 'error' ? '⚠' : '✦')}</span><span></span>`;
+  el.innerHTML = `<span class="toast-icon">${svgIcon(icon || (type === 'success' ? 'check' : type === 'error' ? 'alert' : 'sparkle'))}</span><span></span>`;
   el.lastElementChild.textContent = message;
   host.appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));

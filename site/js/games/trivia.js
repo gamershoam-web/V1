@@ -1,4 +1,5 @@
 // Wormhole Trivia — rapid-fire quiz with a depleting oxygen supply.
+import { icon } from '../icons.js';
 const BANK = [
   // Astronomy
   ['Astronomy', 'Which planet is known as the Red Planet?', 'Mars', ['Venus', 'Jupiter', 'Mercury']],
@@ -112,7 +113,7 @@ export default class WormholeTrivia {
     this.card.innerHTML = `
       <div class="flex justify-between items-center text-xs text-slate-400">
         <span class="game-tag" style="--card-accent:${q.cat === 'Minecraft' ? '#4ade80' : q.cat === 'Sci-Fi' ? '#f472b6' : '#22d3ee'}">${q.cat}</span>
-        <span>Question ${this.index + 1} / ${this.questions.length}${this.streak >= 2 ? ` · 🔥 Streak ${this.streak}` : ''}</span>
+        <span>Question ${this.index + 1} / ${this.questions.length}${this.streak >= 2 ? ` · <span class="streak">${icon('fire')} Streak ${this.streak}</span>` : ''}</span>
       </div>
       <h3 class="text-lg sm:text-xl font-bold mt-3 leading-snug"></h3>
       <div class="grid sm:grid-cols-2 gap-2.5 mt-4">

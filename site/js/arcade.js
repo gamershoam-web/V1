@@ -3,6 +3,7 @@ import { GAMES } from './games/index.js';
 import { Store } from './storage.js';
 import { audio } from './audio.js';
 import { $, Modals, toast, fmt, escapeHTML } from './ui.js';
+import { gameIcon, icon } from './icons.js';
 
 export class Arcade {
   constructor({ onGameOpen, onGameClose, onBackToSpace }) {
@@ -30,7 +31,7 @@ export class Arcade {
     if (!grid) return;
     grid.innerHTML = GAMES.map((g, i) => `
       <button type="button" class="game-card group" data-game="${g.id}" style="--card-accent:${g.color};--i:${i}">
-        <span class="game-card-icon" aria-hidden="true">${g.icon}</span>
+        <span class="game-card-icon" aria-hidden="true">${gameIcon(g.id)}</span>
         <span class="flex-1 min-w-0 text-left">
           <span class="block font-display text-sm sm:text-base font-bold tracking-wide text-white">${escapeHTML(g.title)}</span>
           <span class="block text-xs text-slate-400 mt-0.5 leading-snug">${escapeHTML(g.desc)}</span>
@@ -43,6 +44,14 @@ export class Arcade {
     grid.querySelectorAll('[data-game]').forEach((b) => {
       b.addEventListener('click', () => this.launch(b.dataset.game));
       b.addEventListener('pointerenter', () => audio.hover());
+      b.addEventListener('pointermove', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        const r = b.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+        b.style.setProperty('--ry', `${(x * 10).toFixed(2)}deg`);
+        b.style.setProperty('--rx', `${(-y * 10).toFixed(2)}deg`);
+      });
+      b.addEventListener('pointerleave', () => { b.style.removeProperty('--rx'); b.style.removeProperty('--ry'); });
     });
   }
 
@@ -55,8 +64,9 @@ export class Arcade {
     Modals.close('modal-arcade', { silent: true });
     Modals.open('modal-game');
     this.onGameOpen?.();
+    this.warp();
     this.titleEl.textContent = meta.title;
-    $('#game-icon').textContent = meta.icon;
+    $('#game-icon').innerHTML = gameIcon(meta.id);
     this.setScore(0);
     this.setInfo('');
     this.bestEl.textContent = fmt(Store.getBest(id));
@@ -84,7 +94,35 @@ export class Arcade {
     };
   }
 
-  setScore(n) { this.scoreEl.textContent = fmt(Math.round(n)); }
+  setScore(n) {
+    const text = fmt(Math.round(n));
+    if (text === this.scoreEl.textContent) return;
+    this.scoreEl.textContent = text;
+    if (Math.round(n) > 0) {
+      const box = this.scoreEl.parentElement;
+      box.classList.remove('bump'); void box.offsetWidth; box.classList.add('bump');
+    }
+  }
+
+  warp() {
+    const panel = document.querySelector('#modal-game .modal-panel');
+    panel.querySelector('.warp')?.remove();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const w = document.createElement('div');
+    w.className = 'warp';
+    w.innerHTML = Array.from({ length: 48 }, () => `<i style="--a:${Math.round(Math.random() * 360)}deg;--d:${Math.round(Math.random() * 180)}ms"></i>`).join('');
+    panel.appendChild(w);
+    audio.whoosh();
+    setTimeout(() => w.remove(), 1000);
+  }
+
+  confetti(host) {
+    const colors = ['#22d3ee', '#a855f7', '#f472b6', '#facc15', '#4ade80'];
+    host.insertAdjacentHTML('beforeend', Array.from({ length: 40 }, (_, i) => {
+      const a = Math.random() * Math.PI * 2, d = 120 + Math.random() * 180;
+      return `<span class="confetti" style="--c:${colors[i % 5]};--x:${Math.round(Math.cos(a) * d)}px;--y:${Math.round(Math.sin(a) * d)}px;--r:${Math.round(Math.random() * 720)}deg;--d:${Math.round(Math.random() * 200)}ms"></span>`;
+    }).join(''));
+  }
   setInfo(t) { this.infoEl.textContent = t || ''; }
 
   gameOver(score, { won = false, title, message } = {}) {
@@ -97,7 +135,7 @@ export class Arcade {
     const { leveledUp, level } = Store.addXP(xp);
     this.bestEl.textContent = fmt(best);
     if (won || isNew) audio.chime(); else audio.lose();
-    if (leveledUp) setTimeout(() => toast(`Level up! You reached level ${level}`, { type: 'success', icon: '⬆' }), 500);
+    if (leveledUp) setTimeout(() => toast(`Level up! You reached level ${level}`, { type: 'success', icon: 'levelUp' }), 500);
 
     const overlay = document.createElement('div');
     overlay.className = 'game-over';
@@ -111,7 +149,7 @@ export class Arcade {
           <div class="stat"><span>Best</span><b>${fmt(best)}</b></div>
           <div class="stat"><span>XP</span><b>+${xp}</b></div>
         </div>
-        ${isNew ? '<p class="mt-4 text-neon-pink font-display tracking-widest text-sm animate-pulse">★ NEW HIGH SCORE ★</p>' : ''}
+        ${isNew ? `<p class="new-best mt-4">${icon('star')} NEW HIGH SCORE ${icon('star')}</p>` : ''}
         <div class="flex flex-wrap gap-3 justify-center mt-6">
           <button type="button" class="btn-neon" data-again>Play again</button>
           <button type="button" class="btn-ghost" data-arcade>Arcade</button>
@@ -120,6 +158,7 @@ export class Arcade {
     overlay.querySelector('[data-again]').addEventListener('click', () => this.restart());
     overlay.querySelector('[data-arcade]').addEventListener('click', () => this.backToArcade());
     this.stage.appendChild(overlay);
+    if (isNew || won) this.confetti(overlay);
     setTimeout(() => overlay.classList.add('show'), 20);
     overlay.querySelector('[data-again]').focus({ preventScroll: true });
   }

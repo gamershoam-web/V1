@@ -1,6 +1,8 @@
 // Nebula Sketch — Skribbl-style drawing & guessing.
 // Mode 1 "AI Bot Drawer": the bot sketches an icon stroke-by-stroke; type guesses in chat.
 // Mode 2 "Free Draw / Pass & Play": one player draws a secret word, the other guesses.
+import { icon } from '../icons.js';
+
 const TAU = Math.PI * 2;
 const arc = (cx, cy, rx, ry, a0 = 0, a1 = TAU, n = 40) => Array.from({ length: n + 1 }, (_, i) => {
   const a = a0 + ((a1 - a0) * i) / n;
@@ -120,8 +122,8 @@ export default class NebulaSketch {
       <div class="sketch">
         <div class="sketch-top">
           <div class="seg" role="tablist">
-            <button type="button" data-mode="bot" class="active">🤖 AI Bot Drawer</button>
-            <button type="button" data-mode="free">✏️ Free Draw / Pass &amp; Play</button>
+            <button type="button" data-mode="bot" class="active">${icon('bot')}AI Bot Drawer</button>
+            <button type="button" data-mode="free">${icon('pencil')}Free Draw / Pass &amp; Play</button>
           </div>
           <div class="flex items-center gap-3">
             <span class="text-xs text-slate-400" data-round></span>
@@ -135,13 +137,13 @@ export default class NebulaSketch {
             ${COLORS.map((c, i) => `<button type="button" class="swatch${i === 0 ? ' active' : ''}" data-color="${c}" style="background:${c}" aria-label="Color ${c}"></button>`).join('')}
             <span class="w-2"></span>
             ${SIZES.map((s, i) => `<button type="button" class="size-btn${i === 1 ? ' active' : ''}" data-size="${s}" aria-label="Brush size ${s}"><i style="width:${Math.max(4, s * 0.9)}px;height:${Math.max(4, s * 0.9)}px"></i></button>`).join('')}
-            <button type="button" class="btn-mini tool-btn" data-eraser>🧽 Eraser</button>
-            <button type="button" class="btn-mini" data-clear>🗑 Clear</button>
+            <button type="button" class="btn-mini tool-btn" data-eraser>${icon('eraser')}Eraser</button>
+            <button type="button" class="btn-mini" data-clear>${icon('trash')}Clear</button>
           </div>
           <div class="flex flex-wrap gap-2 justify-center hidden" data-free-bar>
-            <button type="button" class="btn-mini" data-reveal>👁 Show secret word</button>
-            <button type="button" class="btn-mini" data-skip>⏭ New word</button>
-            <button type="button" class="btn-mini" data-finish>🏁 Finish game</button>
+            <button type="button" class="btn-mini" data-reveal>${icon('eye')}Show secret word</button>
+            <button type="button" class="btn-mini" data-skip>${icon('skip')}New word</button>
+            <button type="button" class="btn-mini" data-finish>${icon('flag')}Finish game</button>
           </div>
         </div>
         <div class="sketch-chat">
@@ -186,10 +188,13 @@ export default class NebulaSketch {
   later(ms, fn) { const id = setTimeout(fn, ms); this._timers.push(id); return id; }
   clearTimers() { this._timers.forEach(clearTimeout); this._timers = []; clearInterval(this.tick); cancelAnimationFrame(this._raf); }
 
-  say(text, cls = 'sys') {
+  say(text, cls = 'sys', ico = null) {
     const p = document.createElement('p');
     p.className = cls;
-    p.textContent = text;
+    const icons = { bot: 'bot', good: 'check', close: 'fire', me: null, sys: 'sparkle' };
+    const name = ico ?? icons[cls];
+    p.innerHTML = name ? icon(name, 'chat-ico') : '';
+    p.append(text);
     this.log.appendChild(p);
     while (this.log.children.length > 80) this.log.firstChild.remove();
     this.log.scrollTop = this.log.scrollHeight;
@@ -263,7 +268,7 @@ export default class NebulaSketch {
     if (mode === 'bot') {
       this.queue = shuffle([...ICONS]).slice(0, ROUNDS);
       this.round = 0;
-      this.say('🤖 Orbit-Bot is warming up its plasma pen…', 'bot');
+      this.say('Orbit-Bot is warming up its plasma pen…', 'bot');
       this.later(900, () => this.startBotRound());
     } else {
       this.timerEl.textContent = '';
@@ -285,7 +290,7 @@ export default class NebulaSketch {
     this.clearCanvas();
     this.roundEl.textContent = `Round ${this.round}/${ROUNDS}`;
     this.updateHint();
-    this.say(`🤖 Round ${this.round}: I'm drawing something… guess it!`, 'bot');
+    this.say(`Round ${this.round}: I'm drawing something… guess it!`, 'bot');
     this.input.focus({ preventScroll: true });
 
     // Turn the icon paths into canvas-space polylines and animate them.
@@ -321,7 +326,7 @@ export default class NebulaSketch {
         clearInterval(this.tick);
         this.solved = true;
         this.ctx.audio.lose();
-        this.say(`⏱ Time's up! It was "${this.current.word.toUpperCase()}".`);
+        this.say(`Time's up! It was "${this.current.word.toUpperCase()}".`, 'sys', 'timer');
         this.wordEl.textContent = this.current.word.toUpperCase();
         this.later(2600, () => this.startBotRound());
       }
@@ -339,7 +344,7 @@ export default class NebulaSketch {
     if (hidden.length <= 1) return;
     this.revealed.add(hidden[Math.floor(Math.random() * hidden.length)]);
     this.updateHint();
-    this.say('💡 Hint: a letter was revealed.');
+    this.say('Hint: a letter was revealed.', 'sys', 'bulb');
   }
 
   /* ----- Free mode ----- */
@@ -372,7 +377,7 @@ export default class NebulaSketch {
         this.score += pts;
         this.ctx.setScore(this.score);
         this.ctx.audio.chime();
-        this.say(`✅ Correct! It was "${this.current.word.toUpperCase()}" (+${pts})`, 'good');
+        this.say(`Correct! It was "${this.current.word.toUpperCase()}" (+${pts})`, 'good');
         this.wordEl.textContent = this.current.word.toUpperCase();
         // Finish drawing instantly so the player sees the full picture.
         for (let s = this.si; s < this.strokes.length; s++) {
@@ -381,7 +386,7 @@ export default class NebulaSketch {
         this.later(2400, () => this.startBotRound());
       } else if (answers.some((a) => lev(a, g) <= (a.length > 5 ? 2 : 1))) {
         this.ctx.audio.tone({ freq: 660, type: 'triangle', dur: 0.1, vol: 0.1 });
-        this.say(`🔥 "${raw.trim()}" is so close!`, 'close');
+        this.say(`"${raw.trim()}" is so close!`, 'close');
       } else {
         this.ctx.audio.hit();
       }
@@ -391,11 +396,11 @@ export default class NebulaSketch {
         this.score += 100;
         this.ctx.setScore(this.score);
         this.ctx.audio.chime();
-        this.say(`✅ Correct! The word was "${this.secret.toUpperCase()}" (+100)`, 'good');
+        this.say(`Correct! The word was "${this.secret.toUpperCase()}" (+100)`, 'good');
         this.wordEl.textContent = this.secret.toUpperCase();
         this.later(2000, () => this.nextFreeWord());
       } else if (lev(s, g) <= (s.length > 5 ? 2 : 1)) {
-        this.say(`🔥 "${raw.trim()}" is so close!`, 'close');
+        this.say(`"${raw.trim()}" is so close!`, 'close');
       }
     }
   }

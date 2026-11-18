@@ -1,5 +1,6 @@
 // Lunar Lander — thrust & rotate against gravity with limited fuel; land softly on a flat pad.
 import { CanvasGame, Particles, rand, clamp, makeStars, drawStars } from './canvas.js';
+import { icon } from '../icons.js';
 
 const G = 24, THRUST = 62, ROT = 2.4, BURN = 55;
 const SAFE_VY = 38, SAFE_VX = 22, SAFE_ANG = 0.26;
@@ -13,9 +14,9 @@ export default class LunarLander extends CanvasGame {
     this.level = 1; this.score = 0; this.fuel = 1000;
     this.newLevel();
     this.addTouchButtons([
-      { label: '⟲', code: 'ArrowLeft', aria: 'Rotate left' },
-      { label: '🔥', code: 'ArrowUp', aria: 'Thrust' },
-      { label: '⟳', code: 'ArrowRight', aria: 'Rotate right' },
+      { label: icon('rotateL'), code: 'ArrowLeft', aria: 'Rotate left' },
+      { label: icon('thrust'), code: 'ArrowUp', aria: 'Thrust' },
+      { label: icon('rotateR'), code: 'ArrowRight', aria: 'Rotate right' },
     ]);
   }
 

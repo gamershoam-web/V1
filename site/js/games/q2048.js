@@ -1,7 +1,6 @@
-// Quantum 2048 — merge cosmic matter: Space Dust → Asteroid → Moon → Planet → Star → Pulsar → Supernova → …
-const STAGES = [null,
-  ['Space Dust', '✨'], ['Asteroid', '🪨'], ['Moon', '🌙'], ['Planet', '🪐'], ['Star', '⭐'], ['Pulsar', '💫'],
-  ['Supernova', '💥'], ['Black Hole', '🕳️'], ['Quasar', '🌀'], ['Galaxy', '🌌'], ['Universe', '♾️'], ['Multiverse', '🔮']];
+// Quantum 2048 — merge cosmic matter: Space Dust > Asteroid > Moon > Planet > Star > Pulsar > Supernova > ...
+import { cosmicArt, icon } from '../icons.js';
+const STAGES = [null, 'Space Dust', 'Asteroid', 'Moon', 'Planet', 'Star', 'Pulsar', 'Supernova', 'Black Hole', 'Quasar', 'Galaxy', 'Universe', 'Multiverse'];
 const N = 4;
 const DIRS = { left: [0, -1], right: [0, 1], up: [-1, 0], down: [1, 0] };
 
@@ -18,7 +17,7 @@ export default class Quantum2048 {
         <div class="q-board" tabindex="0" aria-label="Quantum 2048 board">
           ${Array.from({ length: N * N }, (_, i) => `<div class="q-cell" style="--r:${Math.floor(i / N)};--c:${i % N}"></div>`).join('')}
         </div>
-        <div class="q-legend">${STAGES.slice(1, 8).map((s, i) => `<span>${s[1]} ${s[0]}${i < 6 ? ' →' : ''}</span>`).join('')}</div>
+        <div class="q-legend">${STAGES.slice(1, 8).map((name, i) => `<span class="q-legend-item" style="--d:${i * 90}ms">${cosmicArt(i + 1, 'cosmic-mini')}${name}</span>${i < 6 ? icon('right', 'q-legend-arrow') : ''}`).join('')}</div>
       </div>`;
     this.board = root.querySelector('.q-board');
 
@@ -40,7 +39,7 @@ export default class Quantum2048 {
     });
 
     this.spawn(); this.spawn();
-    ctx.setInfo('Goal: create a Supernova 💥');
+    ctx.setInfo('Goal: create a Supernova');
   }
 
   spawn() {
@@ -58,11 +57,11 @@ export default class Quantum2048 {
       tile.el = document.createElement('div');
       this.board.appendChild(tile.el);
     }
-    const [name, emoji] = STAGES[Math.min(tile.level, STAGES.length - 1)];
+    const name = STAGES[Math.min(tile.level, STAGES.length - 1)];
     tile.el.className = `q-tile lvl-${tile.level}${cls ? ` ${cls}` : ''}`;
     tile.el.style.setProperty('--r', tile.r);
     tile.el.style.setProperty('--c', tile.c);
-    tile.el.innerHTML = `<div class="q-inner"><span class="q-emoji">${emoji}</span><span class="q-name">${name}</span><span class="q-val">${2 ** tile.level}</span></div>`;
+    tile.el.innerHTML = `<div class="q-inner">${cosmicArt(tile.level, 'q-art')}<span class="q-name">${name}</span><span class="q-val">${2 ** tile.level}</span></div>`;
   }
 
   move(dir) {
@@ -130,7 +129,7 @@ export default class Quantum2048 {
           if (t.level >= 7 && !this.announced) {
             this.announced = true;
             this.ctx.audio.chime();
-            this.ctx.toast('💥 Supernova formed! Keep going for a Black Hole…', { type: 'success' });
+            this.ctx.toast('Supernova formed! Keep going for a Black Hole...', { type: 'success', icon: 'boom' });
           }
         }
       }
@@ -140,7 +139,7 @@ export default class Quantum2048 {
         this.over = true;
         this.timers.push(setTimeout(() => this.ctx.gameOver(this.score, {
           won: this.announced, title: this.announced ? 'Cosmos evolved!' : 'Universe collapsed',
-          message: `Highest matter: ${STAGES[Math.min(this.maxLevel(), STAGES.length - 1)][0]}`,
+          message: `Highest matter: ${STAGES[Math.min(this.maxLevel(), STAGES.length - 1)]}`,
         }), 500));
       }
     }, 130));

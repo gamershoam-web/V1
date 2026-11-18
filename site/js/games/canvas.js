@@ -179,7 +179,7 @@ export class CanvasGame {
     defs.forEach(({ label, code, aria }) => {
       const b = document.createElement('button');
       b.type = 'button';
-      b.textContent = label;
+      b.innerHTML = label;
       b.setAttribute('aria-label', aria || code);
       const press = (e) => {
         e.preventDefault();

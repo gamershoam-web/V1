@@ -1,5 +1,6 @@
 // Asteroid Dodger — pseudo-3D lanes; switch lanes to dodge asteroids and grab plasma shields.
 import { CanvasGame, Particles, rand } from './canvas.js';
+import { icon } from '../icons.js';
 
 const LANES = 5;
 
@@ -13,7 +14,7 @@ export default class AsteroidDodger extends CanvasGame {
     this.speed = 0.42; this.dist = 0; this.bonus = 0; this.shield = 0;
     this.spawnT = 0.6; this.parts = new Particles();
     this.warp = Array.from({ length: 70 }, () => ({ a: rand(0, Math.PI * 2), d: rand(0, 1), s: rand(0.3, 1) }));
-    this.addTouchButtons([{ label: '◀', code: 'ArrowLeft', aria: 'Move left' }, { label: '▶', code: 'ArrowRight', aria: 'Move right' }]);
+    this.addTouchButtons([{ label: icon('left'), code: 'ArrowLeft', aria: 'Move left' }, { label: icon('right'), code: 'ArrowRight', aria: 'Move right' }]);
     this.shake = 0;
   }
 

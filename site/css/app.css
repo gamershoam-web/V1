@@ -335,3 +335,192 @@ button.hud-chip:hover { border-color: rgba(34, 211, 238, .55); box-shadow: 0 0 2
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* =====================================================================
+   Custom icon system + extra motion
+   ===================================================================== */
+@property --angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+
+.ico { width: 1.1em; height: 1.1em; flex: none; display: inline-block; vertical-align: -0.18em; }
+[data-icon] { display: inline-flex; }
+.btn-mini .ico, .btn-ghost .ico, .pill .ico, .seg .ico, .tab .ico { width: 15px; height: 15px; }
+.btn-mini, .pill, .seg button, .btn-ghost { gap: 6px; }
+.pill, .seg button { display: inline-flex; align-items: center; }
+.close-btn .ico { width: 18px; height: 18px; transition: transform .3s; }
+.close-btn:hover .ico { transform: rotate(90deg); }
+.touch-controls .ico { width: 26px; height: 26px; }
+.touch-controls button { display: inline-flex; align-items: center; justify-content: center; }
+.toast-icon { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: rgba(34, 211, 238, .15); color: var(--cyan); animation: icon-pop .45s cubic-bezier(.2, 1.6, .4, 1) .1s backwards; }
+.toast-icon .ico { width: 16px; height: 16px; }
+.toast-success .toast-icon { background: rgba(74, 222, 128, .15); color: var(--green); }
+.toast-error .toast-icon { background: rgba(244, 63, 94, .15); color: #fb7185; }
+@keyframes icon-pop { from { transform: scale(0) rotate(-90deg); } }
+
+/* ---- Game icons (SVG) ---- */
+.gi { width: 100%; height: 100%; overflow: visible; }
+.gi * { transform-box: fill-box; transform-origin: center; }
+.gi-letter { font: 900 11px Orbitron, Inter, sans-serif; fill: #fff; text-anchor: middle; }
+.gi .d1 { animation-delay: .25s !important; } .gi .d2 { animation-delay: .5s !important; } .gi .d3 { animation-delay: .75s !important; } .gi .d4 { animation-delay: 1s !important; }
+.gi-flip { animation: gi-flip 3.6s ease-in-out infinite; }
+@keyframes gi-flip { 0%, 62%, 100% { transform: scaleY(1); } 70% { transform: scaleY(.05); } 78% { transform: scaleY(1); } }
+.gi-caret { animation: gi-blink 1s steps(2) infinite; }
+@keyframes gi-blink { 50% { opacity: 0; } }
+.gi-draw { stroke-dasharray: 100; animation: gi-draw 3.2s ease-in-out infinite; }
+@keyframes gi-draw { 0% { stroke-dashoffset: 100; } 55%, 80% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -100; } }
+.gi-bob { animation: gi-bob 3.2s ease-in-out infinite; }
+@keyframes gi-bob { 0%, 100% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(-3px, 3px) rotate(-8deg); } }
+.gi-twinkle { animation: gi-twinkle 1.8s ease-in-out infinite; }
+@keyframes gi-twinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.6); } }
+.gi-fall { animation: gi-fall 2.2s linear infinite; }
+@keyframes gi-fall { 0% { transform: translateY(-6px) rotate(0); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(44px) rotate(220deg); opacity: 0; } }
+.gi-strafe { animation: gi-strafe 2.6s ease-in-out infinite; }
+@keyframes gi-strafe { 0%, 100% { transform: translateX(-7px); } 50% { transform: translateX(7px); } }
+.gi-flame { animation: gi-flame .18s ease-in-out infinite alternate; transform-origin: top center; }
+@keyframes gi-flame { from { transform: scaleY(.6); opacity: .7; } to { transform: scaleY(1.15); opacity: 1; } }
+.gi-swirl { animation: gi-swirl 1.4s linear infinite; }
+@keyframes gi-swirl { to { stroke-dashoffset: -20; } }
+.gi-paddle { animation: gi-paddle 2.6s ease-in-out infinite; }
+@keyframes gi-paddle { 0%, 100% { transform: translateY(-3px); } 50% { transform: translateY(5px); } }
+.gi-hover { animation: gi-hover 2.4s ease-in-out infinite; }
+@keyframes gi-hover { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(2.5px); } }
+.gi-beam { animation: gi-beam 1.2s ease-out infinite; transform-origin: bottom center; }
+@keyframes gi-beam { 0%, 35% { transform: scaleY(0); opacity: 1; } 55% { transform: scaleY(1); opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
+.gi-key { animation: gi-key 1.2s ease-out infinite; }
+@keyframes gi-key { 0%, 30% { transform: translateY(0); } 38% { transform: translateY(1.5px); fill-opacity: .7; } 60%, 100% { transform: translateY(0); } }
+.gi-merge { animation: gi-merge 2.4s ease-in-out infinite; }
+@keyframes gi-merge { 0%, 70%, 100% { transform: scale(1); } 80% { transform: scale(1.14); } 90% { transform: scale(.96); } }
+.gi-descend { animation: gi-descend 3.4s ease-in-out infinite; }
+@keyframes gi-descend { 0% { transform: translateY(-14px); } 70%, 85% { transform: translateY(2px); } 100% { transform: translateY(-14px); } }
+.gi-pad { animation: gi-blink 1.4s steps(2) infinite; }
+.gi-blink { animation: gi-brick 2.2s ease-in-out infinite; }
+@keyframes gi-brick { 0%, 40% { opacity: 1; transform: scale(1); } 50% { opacity: 0; transform: scale(1.4); } 90%, 100% { opacity: 1; transform: scale(1); } }
+.gi-seq { animation: gi-seq 2.6s ease-in-out infinite; opacity: .35; }
+@keyframes gi-seq { 0%, 30%, 100% { opacity: .35; transform: scale(.8); } 12% { opacity: 1; transform: scale(1.5); } }
+.gi-sweep { transform-box: view-box; transform-origin: 24px 24px; animation: gi-spin 2.4s linear infinite; }
+.gi-blip { animation: gi-blip 2.4s ease-out infinite; }
+@keyframes gi-blip { 0%, 100% { opacity: 0; transform: scale(.4); } 15% { opacity: 1; transform: scale(1.3); } 60% { opacity: .5; transform: scale(1); } }
+.gi-frame-a { animation: gi-frame .8s steps(1) infinite; }
+.gi-frame-b { animation: gi-frame .8s steps(1) infinite reverse; }
+@keyframes gi-frame { 0% { opacity: 1; } 50% { opacity: 0; } }
+.gi-shot { animation: gi-shot 1.1s ease-in infinite; }
+@keyframes gi-shot { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-14px); opacity: 0; } }
+.gi-spin { animation: gi-spin 6s linear infinite; }
+.gi-spin-rev { animation: gi-spin 4s linear infinite reverse; }
+.gi-spin-slow { animation: gi-spin 14s linear infinite; }
+@keyframes gi-spin { to { transform: rotate(360deg); } }
+.gi-pulse { animation: gi-pulse 1.8s ease-in-out infinite; }
+@keyframes gi-pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.12); opacity: .8; } }
+.gi-rise { animation: gi-rise 2.6s ease-in infinite; }
+@keyframes gi-rise { from { transform: translateY(0); opacity: .9; } to { transform: translateY(-30px); opacity: 0; } }
+.gi-float { animation: gi-hover 3s ease-in-out infinite; }
+.gi-ring { animation: gi-ring 1.8s ease-out infinite; }
+@keyframes gi-ring { from { transform: scale(.5); opacity: 1; } to { transform: scale(1.15); opacity: 0; } }
+
+/* ---- Arcade cards: icon chamber, 3D tilt, rotating neon border ---- */
+.game-card { transform-style: preserve-3d; transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px)); transition: transform .25s ease-out, border-color .2s, box-shadow .2s; }
+.game-card:hover, .game-card:focus-visible { --lift: -3px; transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift)); }
+.game-card::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; pointer-events: none; opacity: 0; transition: opacity .3s;
+  background: conic-gradient(from var(--angle), transparent 0 60%, var(--card-accent) 80%, #fff 85%, transparent 90%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: border-spin 2.4s linear infinite; }
+.game-card:hover::before, .game-card:focus-visible::before { opacity: 1; }
+@keyframes border-spin { to { --angle: 360deg; } }
+.game-card-icon { position: relative; width: 64px; height: 64px; padding: 6px; border-radius: 16px; overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--card-accent) 32%, transparent), rgba(5, 3, 15, .85) 75%);
+  border: 1px solid color-mix(in srgb, var(--card-accent) 45%, transparent); transition: transform .3s cubic-bezier(.2, 1.4, .4, 1), box-shadow .3s; }
+.game-card-icon::after { content: ""; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, .05) 0 1px, transparent 1px 3px); pointer-events: none; }
+.game-card:hover .game-card-icon { transform: translateZ(30px) scale(1.08); box-shadow: 0 0 28px color-mix(in srgb, var(--card-accent) 60%, transparent); }
+
+.deck-icon { width: 34px; height: 34px; flex: none; padding: 4px; border-radius: 10px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .1); }
+.game-head-icon { width: 30px; height: 30px; flex: none; display: inline-block; padding: 3px; border-radius: 9px; background: rgba(255, 255, 255, .06); }
+
+/* ---- Holographic scan when a panel opens ---- */
+.modal-panel::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 120px; pointer-events: none; opacity: 0;
+  background: linear-gradient(180deg, transparent, rgba(34, 211, 238, .14) 50%, transparent); }
+.modal.open .modal-panel::after { animation: holo-scan 1s ease-out .05s; }
+@keyframes holo-scan { 0% { opacity: 1; transform: translateY(-120px); } 100% { opacity: 0; transform: translateY(110vh); } }
+.modal.open .modal-body > * { animation: fade-up .45s ease backwards; }
+.modal.open .modal-body > *:nth-child(2) { animation-delay: .06s; } .modal.open .modal-body > *:nth-child(3) { animation-delay: .12s; }
+.modal.open .modal-body > *:nth-child(4) { animation-delay: .18s; } .modal.open .modal-body > *:nth-child(n+5) { animation-delay: .24s; }
+
+/* ---- Warp jump when a game launches ---- */
+.warp { position: absolute; inset: 0; z-index: 30; pointer-events: none; overflow: hidden; background: radial-gradient(circle, rgba(34, 211, 238, .25), rgba(5, 3, 15, .95) 60%); animation: warp-fade .9s ease-out forwards; }
+.warp i { position: absolute; left: 50%; top: 50%; width: 2px; height: 90px; border-radius: 2px; background: linear-gradient(transparent, #a5f3fc); transform-origin: 50% 0;
+  transform: rotate(var(--a)) translateY(20px) scaleY(.1); animation: warp-streak .7s cubic-bezier(.5, 0, .9, .6) forwards; animation-delay: var(--d); opacity: .9; }
+@keyframes warp-streak { to { transform: rotate(var(--a)) translateY(70vmax) scaleY(2.6); opacity: 0; } }
+@keyframes warp-fade { 0%, 45% { opacity: 1; } 100% { opacity: 0; } }
+
+/* ---- Score bump ---- */
+.score-box b { display: inline-block; }
+.score-box.bump b { animation: bump .35s cubic-bezier(.2, 1.8, .4, 1); }
+@keyframes bump { 40% { transform: scale(1.35); color: #fff; text-shadow: 0 0 12px var(--cyan); } }
+
+/* ---- Game over: new best + confetti ---- */
+.new-best { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--pink); font-family: Orbitron, sans-serif; letter-spacing: .2em; font-size: 13px; animation: glow-pulse 1.2s ease-in-out infinite; }
+.new-best .ico { width: 16px; height: 16px; fill: currentColor; animation: gi-spin 3s linear infinite; }
+@keyframes glow-pulse { 50% { text-shadow: 0 0 14px var(--pink); opacity: .75; } }
+.confetti { position: absolute; left: 50%; top: 42%; width: 8px; height: 8px; border-radius: 2px; pointer-events: none; background: var(--c);
+  animation: confetti 1.3s cubic-bezier(.15, .7, .4, 1) forwards; animation-delay: var(--d); }
+@keyframes confetti { 0% { transform: translate(-50%, -50%) scale(0); opacity: 1; } 100% { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) rotate(var(--r)) scale(1); opacity: 0; } }
+
+/* ---- HUD / hub entrance and idle motion ---- */
+.hud-top > * { animation: drop-in .7s cubic-bezier(.2, 1.2, .4, 1) backwards; }
+.hud-top > *:nth-child(2) { animation-delay: .12s; }
+@keyframes drop-in { from { opacity: 0; transform: translateY(-24px); } }
+#dock { animation: rise-in .8s cubic-bezier(.2, 1.2, .4, 1) .25s backwards; }
+@keyframes rise-in { from { opacity: 0; transform: translate(-50%, 40px); } }
+.dock-btn { position: relative; }
+.dock-btn.active svg { animation: dock-bounce .5s cubic-bezier(.2, 1.8, .4, 1); }
+.dock-btn.active::after { content: ""; position: absolute; bottom: 2px; left: 50%; width: 16px; height: 2px; margin-left: -8px; border-radius: 2px; background: currentColor; box-shadow: 0 0 8px currentColor; animation: grow-x .35s ease; }
+@keyframes dock-bounce { 40% { transform: translateY(-5px) scale(1.15); } }
+@keyframes grow-x { from { transform: scaleX(0); } }
+.hero-card { animation: hero-in .9s cubic-bezier(.2, 1.1, .4, 1) .35s backwards, hero-float 7s ease-in-out 1.3s infinite; }
+@keyframes hero-in { from { opacity: 0; transform: translateX(-30px); } }
+@keyframes hero-float { 50% { transform: translateY(-6px); } }
+.modal-open .hero-card { animation: none; }
+.btn-neon { position: relative; overflow: hidden; }
+.btn-neon::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; transform: skewX(-20deg); pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .55), transparent); animation: shine 3.6s ease-in-out infinite; }
+@keyframes shine { 0%, 60% { left: -60%; } 100% { left: 130%; } }
+.xp-fill { position: relative; overflow: hidden; }
+.xp-fill::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .6), transparent); transform: translateX(-100%); animation: xp-shimmer 2.8s ease-in-out infinite; }
+@keyframes xp-shimmer { 60%, 100% { transform: translateX(100%); } }
+.hud-chip.levelup { animation: levelup 1.2s ease; }
+@keyframes levelup { 0%, 100% { box-shadow: 0 0 0 rgba(250, 204, 21, 0); } 30% { box-shadow: 0 0 34px rgba(250, 204, 21, .8); border-color: #facc15; transform: scale(1.06); } }
+.space-label-dot { position: relative; }
+.space-label-dot::after { content: ""; position: absolute; inset: -4px; border-radius: 50%; border: 1px solid currentColor; color: inherit; opacity: 0; animation: ping 2s ease-out infinite; }
+.space-label-dot { color: var(--cyan); } .label-minecraft .space-label-dot { color: var(--green); } .label-arcade .space-label-dot { color: #e879f9; }
+@keyframes ping { 0% { transform: scale(.5); opacity: .9; } 100% { transform: scale(2.2); opacity: 0; } }
+.voxel-icon { animation: voxel-spin 6s ease-in-out infinite; }
+@keyframes voxel-spin { 0%, 100% { transform: perspective(200px) rotateY(-12deg) rotateX(6deg); } 50% { transform: perspective(200px) rotateY(12deg) rotateX(-4deg); } }
+
+/* ---- Mode pills (Minecraft) ---- */
+.pill.active { color: #fff; border-color: var(--mode, var(--cyan)); background: color-mix(in srgb, var(--mode, var(--cyan)) 18%, transparent); box-shadow: 0 0 14px color-mix(in srgb, var(--mode, var(--cyan)) 45%, transparent); }
+.pill .ico { color: var(--mode, var(--cyan)); transition: transform .3s; }
+.pill:hover .ico, .pill.active .ico { transform: scale(1.2) rotate(-8deg); }
+
+/* ---- Quantum 2048 art ---- */
+.q-art { width: 58%; height: 58%; overflow: visible; }
+.q-art * { transform-box: fill-box; transform-origin: center; }
+.q-legend { align-items: center; }
+.q-legend-item { display: inline-flex; align-items: center; gap: 4px; animation: fade-up .4s ease backwards; animation-delay: var(--d); }
+.cosmic-mini { width: 18px; height: 18px; overflow: visible; }
+.cosmic-mini * { transform-box: fill-box; transform-origin: center; }
+.q-legend-arrow { width: 12px; height: 12px; opacity: .5; }
+
+/* ---- Minesweeper icons ---- */
+.cell-ico { width: 62%; height: 62%; }
+.flag-ico { color: #f472b6; fill: rgba(244, 114, 182, .35); }
+.flag-pop .flag-ico { animation: icon-pop .35s cubic-bezier(.2, 1.8, .4, 1); }
+.mine-ico { color: #f472b6; }
+.boom-ico { color: #fff7ed; fill: #fb923c; animation: icon-pop .4s ease; }
+.reveal-mine { animation: mine-in .4s ease backwards; }
+@keyframes mine-in { from { transform: scale(.4); background: #be123c; } }
+.mine-cell.open:not(.reveal-mine):not(.boom) { animation: cell-open .25s ease; }
+@keyframes cell-open { from { transform: scale(.85); background: rgba(34, 211, 238, .25); } }
+
+/* ---- Misc game UI ---- */
+.chat-ico { width: 14px; height: 14px; margin-right: 6px; vertical-align: -2px; display: inline-block; }
+.chat-log p { animation: fade-up .25s ease; }
+.streak { display: inline-flex; align-items: center; gap: 3px; color: #fb923c; font-weight: 700; }
+.streak .ico { width: 14px; height: 14px; animation: gi-pulse .8s ease-in-out infinite; }
+[data-status] .ico { width: 16px; height: 16px; vertical-align: -3px; }

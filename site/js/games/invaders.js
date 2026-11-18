@@ -179,7 +179,7 @@ export default class InvadersBlitz extends CanvasGame {
     for (const d of this.drops) {
       if (Math.abs(d.x - this.px) < 24 && d.y > H - 76 && d.y < H - 40) {
         d.got = true;
-        if (d.type === 'L') { this.laser = Math.min(3, this.laser + 1); this.ctx.toast(`Laser upgraded to level ${this.laser}`, { icon: '🔫' }); } else this.rapidT = 10;
+        if (d.type === 'L') { this.laser = Math.min(3, this.laser + 1); this.ctx.toast(`Laser upgraded to level ${this.laser}`, { icon: 'laser' }); } else this.rapidT = 10;
         this.ctx.audio.pickup();
       }
     }
