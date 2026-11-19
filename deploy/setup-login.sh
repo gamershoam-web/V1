@@ -33,7 +33,11 @@ echo "Needs an email mailbox, for example noreply@$(cat $CONF/domain 2>/dev/null
 ask ORBIT_SMTP_USER "Mailbox address (Enter to skip)" ""
 ORBIT_SMTP_PASS=""
 if [ -n "$ORBIT_SMTP_USER" ]; then
-  ask ORBIT_SMTP_HOST "Outgoing mail server" "smtp.hostinger.com"
+  case "$ORBIT_SMTP_USER" in
+    *@gmail.com|*@googlemail.com) DEFAULT_HOST=smtp.gmail.com; echo "Gmail: use an App Password (https://myaccount.google.com/apppasswords), not your normal password." ;;
+    *) DEFAULT_HOST=smtp.hostinger.com ;;
+  esac
+  ask ORBIT_SMTP_HOST "Outgoing mail server" "$DEFAULT_HOST"
   ask ORBIT_SMTP_PORT "Port" "465"
   OLD_PASS=$(current ORBIT_SMTP_PASS)
   read -r -s -p "Mailbox password${OLD_PASS:+ (Enter to keep the saved one)}: " ORBIT_SMTP_PASS; echo
