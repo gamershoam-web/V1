@@ -2,7 +2,7 @@
 // Tap, click or press any key to skip. In calm mode (see motion.js) the hyperspace jump becomes a soft fade.
 import { audio } from './audio.js';
 
-const STATUS = ['Initializing systems', 'Calibrating star charts', 'Pinging Orbitnetwork.net', 'Charging arcade cores', 'Ready for launch'];
+const STATUS = ['Initializing systems', 'Calibrating star charts', 'Pinging Orbitnetwork.cloud', 'Charging arcade cores', 'Ready for launch'];
 const COLORS = ['#a5f3fc', '#c4b5fd', '#f9a8d4', '#ffffff', '#67e8f9'];
 
 // `ready` (optional promise): the launch waits for it (the 3D scene finishing its build), up to MAX_WAIT ms after page load.

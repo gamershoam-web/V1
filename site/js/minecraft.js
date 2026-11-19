@@ -1,4 +1,4 @@
-// Orbitnetwork.net live status (the hub's own /api/mc/status, else mcsrvstat.us) + one-click IP copy.
+// Orbitnetwork.cloud live status (the hub's own /api/mc/status, else mcsrvstat.us) + one-click IP copy.
 import { CONFIG } from './config.js';
 import { $$, copyText, toast, fmt } from './ui.js';
 import { audio } from './audio.js';

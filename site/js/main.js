@@ -15,7 +15,7 @@ import { wordmarkSVG, playWordmark } from './wordmark.js';
 const SECTORS = {
   hub: { label: 'Deep Space' },
   station: { label: 'Command Deck', modal: 'modal-deck' },
-  minecraft: { label: 'Minecraft · Orbitnetwork.net', modal: 'modal-minecraft' },
+  minecraft: { label: 'Minecraft · Orbitnetwork.cloud', modal: 'modal-minecraft' },
   arcade: { label: 'Arcade Sector', modal: 'modal-arcade' },
   comms: { label: 'Comms Relay', modal: 'modal-comms' },
 };

@@ -405,7 +405,7 @@ export class SpaceScene {
 
     this.mc = { planet, clouds, beam, beacon };
     this.addNode('minecraft', g, {
-      label: 'Minecraft Server', sub: 'Orbitnetwork.net', focusDist: 24, radius: 5,
+      label: 'Minecraft Server', sub: 'Orbitnetwork.cloud', focusDist: 24, radius: 5,
       orbit: { radius: 30, speed: 0.05, phase: 0.6, tilt: 0.12 },
     });
   }

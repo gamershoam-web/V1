@@ -1,8 +1,8 @@
 // Edit these values to customise the hub.
 export const CONFIG = {
-  version: '12',
+  version: '13',
   siteName: 'Orbit Network Hub',
-  serverIp: 'Orbitnetwork.net',
+  serverIp: 'Orbitnetwork.cloud',
   javaPort: 25565,
   bedrockPort: 19132,
   // Paste your Discord invite here, e.g. 'https://discord.gg/abc123'. Leave empty to hide the link.
