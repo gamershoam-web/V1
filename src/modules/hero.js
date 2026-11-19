@@ -121,8 +121,8 @@ export function initHero() {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       const portrait = w / h < 0.8;
-      group.userData.baseScale = portrait ? 0.55 : w < 1100 ? 0.95 : w < 1320 ? 0.9 : 1.02;
-      group.userData.baseY = portrait ? 1.0 : 0.22;
+      group.userData.baseScale = portrait ? 0.5 : w < 1100 ? 0.95 : w < 1320 ? 0.9 : 1.02;
+      group.userData.baseY = portrait ? 0.93 : 0.22;
       group.userData.baseX = portrait ? 0 : 0.35;
     }
     layout();

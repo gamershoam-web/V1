@@ -1,6 +1,6 @@
-# Nocturne — Immersive 3D & WebGL Studio website
+# Nocturne: learn to build immersive 3D & animated websites
 
-A cinematic, scroll-driven 3D website built with **Three.js**, **GSAP (ScrollTrigger + SplitText)** and **Lenis** smooth scrolling.
+A cinematic, scroll-driven 3D website that teaches the techniques it's built with built with **Three.js**, **GSAP (ScrollTrigger + SplitText)** and **Lenis** smooth scrolling.
 All artwork in `public/media/` was rendered procedurally with custom GPU shaders, so you have no stock-image licences to worry about.
 
 ## What's inside
@@ -12,14 +12,14 @@ All artwork in `public/media/` was rendered procedurally with custom GPU shaders
 | Manifesto | Word-by-word illumination scrubbed by scroll |
 | The journey | Pinned 3D fly-through tunnel of floating artworks with chapter titles |
 | Process | Diagonal image strip drifting with scroll |
-| Selected work | Project list with a cursor-following, velocity-tilted image preview (inline cards on touch screens) |
+| Effects library | Six effects with hover previews. Each one opens a breakdown drawer with steps, real code and a "See it live" jump |
 | Craft | A painting-like landscape that dissolves into ~70k GPU particles |
 | Motion | Giant layered "extruded" type whose depth rotates as you scroll |
 | Product | Pinned 3D product (procedural model) with an exploded view and three story chapters |
 | Interaction | Real-time metaball ink that inverts the headline under your cursor (auto-animates on phones) |
-| Services | Animated accordion plus counting stats |
+| Curriculum | Animated accordion of learning modules plus counting stats |
 | Archive | Slider with clip-path transitions, rolling counter, drag/swipe, keyboard and thumbnails |
-| Clients / Contact | Scroll-velocity marquee, magnetic CTA, copy-email button, live studio clock, giant footer wordmark |
+| Toolkit / Community | Scroll-velocity marquee of tools, Discord CTA, Instagram, copy-email button, giant footer wordmark |
 
 Every section has a fallback when WebGL isn't available, `prefers-reduced-motion` is respected, and the custom cursor is disabled on touch devices.
 
@@ -34,11 +34,11 @@ npm run preview   # serve the build locally
 
 ## Make it yours
 
-- **Brand name, copy, email:** everything lives in `index.html` (search for `Nocturne` and `hello@nocturne.studio`).
+- **Brand name, copy, links:** everything lives in `index.html` (search for `Nocturne`, `WeenySnore@gmail.com`, `discord.gg` and `instagram.com`).
+- **Effect breakdowns:** the `<template data-lesson>` blocks at the bottom of `index.html`. Add a new one plus a matching row in the effects list.
 - **Colours and fonts:** CSS variables at the top of `src/styles/main.css` (`--ember`, `--ink`, `--bone`…).
-- **Projects and archive slides:** the list is in `index.html`; slide titles are in `src/modules/archive.js`.
+- **Gallery slides:** titles are in `src/modules/archive.js`.
 - **Images:** replace files in `public/media/`, keeping the names (`name.webp` for full size, `name-sm.webp` at 720px wide).
-- **Social links:** at the bottom of `index.html`. They currently point to the platform home pages, so swap in your profiles.
 
 After editing, run `npm run build` and commit the updated `dist/` folder.
 

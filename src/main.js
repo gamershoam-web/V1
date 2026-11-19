@@ -20,7 +20,8 @@ import { initProduct } from './modules/product.js';
 import { initFluid } from './modules/fluid.js';
 import { initArchive } from './modules/archive.js';
 import { initMarquee } from './modules/marquee.js';
-import { initHeader, initMenu, initAnchors, initCursor, initMagnetic, initClock, initCopy } from './modules/ui.js';
+import { initHeader, initMenu, initAnchors, initCursor, initMagnetic, initCopy } from './modules/ui.js';
+import { initLessons } from './modules/lessons.js';
 import { initReveals, initServices, fitText } from './modules/reveals.js';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -55,8 +56,8 @@ async function boot() {
   safe('anchors', () => initAnchors(menu, archive));
   safe('cursor', initCursor);
   safe('magnetic', initMagnetic);
-  safe('clock', initClock);
   safe('copy', initCopy);
+  safe('lessons', initLessons);
 
   const tasks = [
     fontsReady,

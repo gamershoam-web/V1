@@ -36,10 +36,10 @@ export function stopScroll() { if (lenis) lenis.stop(); }
 export function startScroll() { if (lenis) lenis.start(); }
 
 export function scrollTo(target, opts = {}) {
-  const el = typeof target === 'string' ? document.querySelector(target) : target;
+  const el = target === 0 ? document.body : typeof target === 'string' ? document.querySelector(target) : target;
   if (!el) return;
   if (lenis) {
-    lenis.scrollTo(el, { duration: 1.8, easing: (t) => 1 - Math.pow(1 - t, 4), ...opts });
+    lenis.scrollTo(target === 0 ? 0 : el, { duration: 1.8, easing: (t) => 1 - Math.pow(1 - t, 4), ...opts });
   } else {
     el.scrollIntoView({ behavior: env.reduced ? 'auto' : 'smooth', block: 'start' });
   }

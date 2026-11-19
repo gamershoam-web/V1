@@ -3,21 +3,21 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Nocturne — Immersive 3D &amp; WebGL Studio</title>
-  <meta name="description" content="Nocturne is an independent studio designing and engineering real-time 3D websites, product launches and brand worlds for teams who refuse to blend in." />
+  <title>Nocturne — Learn to build immersive 3D &amp; animated websites</title>
+  <meta name="description" content="Nocturne breaks down how immersive websites are made — scroll storytelling, Three.js, shaders and motion design — step by step, with real code from effects running live on the page." />
   <meta name="theme-color" content="#0b0b0c" />
   <meta name="color-scheme" content="dark" />
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="Nocturne — Immersive 3D & WebGL Studio" />
-  <meta property="og:description" content="Real-time 3D websites, product launches and brand worlds for teams who refuse to blend in." />
+  <meta property="og:title" content="Nocturne — Learn to build immersive 3D & animated websites" />
+  <meta property="og:description" content="Step-by-step breakdowns of scroll animation, Three.js and shader effects — with real code from effects running live on the page." />
   <meta property="og:image" content="/media/og-image.jpg" />
   <meta name="twitter:card" content="summary_large_image" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="preload" href="/media/chrome.webp" as="image" type="image/webp" />
-  <script type="module" crossorigin src="/assets/index-B6r8DIVv.js"></script>
+  <script type="module" crossorigin src="/assets/index-B758dANs.js"></script>
   <link rel="modulepreload" crossorigin href="/assets/gsap-CinzbzGw.js">
   <link rel="modulepreload" crossorigin href="/assets/three-CTH6VMyo.js">
-  <link rel="stylesheet" crossorigin href="/assets/index-BisUFtPT.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-MzhmSK3C.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -25,7 +25,7 @@
   <!-- ───────────── Preloader ───────────── -->
   <div class="loader" id="loader" aria-hidden="true">
     <div class="loader__top">
-      <span class="mono">Nocturne&nbsp;Studio</span>
+      <span class="mono">Nocturne</span>
       <span class="mono">Loading experience</span>
     </div>
     <div class="loader__mark">
@@ -54,15 +54,14 @@
       <span>Nocturne<sup>®</sup></span>
     </a>
     <nav class="header__nav" aria-label="Primary">
-      <a href="#work" data-scroll-to class="roll"><span data-text="Work">Work</span></a>
-      <a href="#studio" data-scroll-to class="roll"><span data-text="Studio">Studio</span></a>
-      <a href="#services" data-scroll-to class="roll"><span data-text="Services">Services</span></a>
-      <a href="#archive" data-scroll-to class="roll"><span data-text="Archive">Archive</span></a>
+      <a href="#effects" data-scroll-to class="roll"><span data-text="Effects">Effects</span></a>
+      <a href="#curriculum" data-scroll-to class="roll"><span data-text="Curriculum">Curriculum</span></a>
+      <a href="#gallery" data-scroll-to class="roll"><span data-text="Gallery">Gallery</span></a>
+      <a href="#community" data-scroll-to class="roll"><span data-text="Community">Community</span></a>
     </nav>
     <div class="header__right">
-      <span class="header__time mono" aria-label="Studio local time"><span class="js-clock">--:--</span> LIS</span>
-      <a href="#contact" data-scroll-to class="pill" data-magnetic>
-        <span class="pill__dot"></span><span class="roll"><span data-text="Start a project">Start a project</span></span>
+      <a href="https://discord.gg/CAXC9PJffX" target="_blank" rel="noopener noreferrer" class="pill" data-magnetic>
+        <span class="pill__dot"></span><span class="roll"><span data-text="Join the Discord">Join the Discord</span></span>
       </a>
       <button class="burger" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
     </div>
@@ -70,15 +69,14 @@
 
   <div class="menu" id="menu" aria-hidden="true">
     <nav class="menu__nav" aria-label="Mobile">
-      <a href="#work" data-scroll-to><span class="mono">01</span>Work</a>
-      <a href="#studio" data-scroll-to><span class="mono">02</span>Studio</a>
-      <a href="#services" data-scroll-to><span class="mono">03</span>Services</a>
-      <a href="#archive" data-scroll-to><span class="mono">04</span>Archive</a>
-      <a href="#contact" data-scroll-to><span class="mono">05</span>Contact</a>
+      <a href="#effects" data-scroll-to><span class="mono">01</span>Effects</a>
+      <a href="#curriculum" data-scroll-to><span class="mono">02</span>Curriculum</a>
+      <a href="#gallery" data-scroll-to><span class="mono">03</span>Gallery</a>
+      <a href="#community" data-scroll-to><span class="mono">04</span>Community</a>
     </nav>
     <div class="menu__foot mono">
-      <a href="mailto:hello@nocturne.studio">hello@nocturne.studio</a>
-      <span>Lisbon · Berlin · Remote</span>
+      <a href="mailto:WeenySnore@gmail.com">WeenySnore@gmail.com</a>
+      <span><a href="https://www.instagram.com/weenysnore/" target="_blank" rel="noopener noreferrer">Instagram</a> · <a href="https://discord.gg/CAXC9PJffX" target="_blank" rel="noopener noreferrer">Discord</a></span>
     </div>
   </div>
 
@@ -90,18 +88,18 @@
       <div class="hero__glow" aria-hidden="true"></div>
       <div class="hero__inner">
         <div class="hero__meta">
-          <p class="mono hero__fade">Immersive 3D &amp; WebGL Studio</p>
-          <p class="mono hero__fade hero__meta-r">Independent · Est. 2017<br />Lisbon / Worldwide</p>
+          <p class="mono hero__fade">Learn web animation &amp; 3D</p>
+          <p class="mono hero__fade hero__meta-r">Breakdowns · Code · Community<br />Three.js / GSAP / GLSL</p>
         </div>
         <div class="hero__mid">
           <h1 class="hero__title">
-            <span class="line"><span>We build</span></span>
+            <span class="line"><span>Learn to build</span></span>
             <span class="line"><span><em class="serif">worlds</em> you can</span></span>
             <span class="line"><span>scroll through.</span></span>
           </h1>
           <div class="hero__aside hero__fade">
-            <p>We design and engineer real-time 3D websites, product launches and brand worlds for teams who refuse to blend in.</p>
-            <a href="#work" data-scroll-to class="link-arrow"><span>Explore our work</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></a>
+            <p>A hands-on guide to web animation: scroll storytelling, WebGL and 3D, broken down step by step so you can build sites like this one.</p>
+            <a href="#effects" data-scroll-to class="link-arrow"><span>Explore the effects</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></a>
           </div>
         </div>
         <div class="hero__word" aria-hidden="true">
@@ -110,21 +108,21 @@
         <div class="hero__foot hero__fade">
           <span class="mono">©2026</span>
           <span class="scroll-cue mono"><i></i>Scroll to explore</span>
-          <span class="mono">Real-time · Since 2017</span>
+          <span class="mono">Everything here runs live</span>
         </div>
       </div>
     </section>
 
     <!-- ───────────── Manifesto ───────────── -->
-    <section class="manifesto section" id="studio">
+    <section class="manifesto section" id="learn">
       <div class="wrap">
-        <p class="label mono"><span>(01)</span> Manifesto</p>
+        <p class="label mono"><span>(01)</span> Why learn this</p>
         <p class="manifesto__text js-words">
-          The web is no longer a page. It is a <em class="serif">space</em> — and we build it like one. Light, depth, motion and sound, composed with intent, so every scroll feels like a <em class="serif">discovery</em> and every interaction leaves a trace.
+          The web is no longer a page. It is a <em class="serif">space</em> — and you can learn to build it like one. Light, depth, motion and code, explained piece by piece, so every effect you see here becomes something <em class="serif">you</em> can make.
         </p>
         <div class="manifesto__foot">
-          <p class="mono">Studio of 24 designers, 3D artists &amp; creative engineers</p>
-          <a href="#services" data-scroll-to class="link-arrow"><span>What we do</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></a>
+          <p class="mono">Every effect on this page runs live in your browser</p>
+          <a href="#curriculum" data-scroll-to class="link-arrow"><span>See the curriculum</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></a>
         </div>
       </div>
     </section>
@@ -140,7 +138,7 @@
         <div class="journey__phrases">
           <h2 class="journey__phrase"><span class="mono">On scroll</span>An infinite universe <em class="serif">of moments unfolding</em></h2>
           <h2 class="journey__phrase"><span class="mono">Chapter II</span>Every frame <em class="serif">is a decision</em></h2>
-          <h2 class="journey__phrase"><span class="mono">Chapter III</span>Built to be <em class="serif">remembered</em></h2>
+          <h2 class="journey__phrase"><span class="mono">Chapter III</span>Now it's <em class="serif">your turn</em></h2>
         </div>
         <div class="journey__hud mono">
           <span>Depth <b class="js-depth">000</b>m</span>
@@ -151,10 +149,10 @@
     </section>
 
     <!-- ───────────── Fragments strip (light) ───────────── -->
-    <section class="fragments section" data-header="light" aria-label="Process">
+    <section class="fragments section" data-header="light" aria-label="The method">
       <div class="wrap fragments__head">
-        <p class="label mono"><span>(03)</span> Process</p>
-        <p class="fragments__text" data-split>Ideas start as fragments — a texture, a sound, a feeling. We arrange them in sequence until they become a system that moves with purpose.</p>
+        <p class="label mono"><span>(03)</span> The method</p>
+        <p class="fragments__text" data-split>Every effect starts as fragments — a shape, a motion, a feeling. You'll learn to combine them, step by step, until they become a system that moves with purpose.</p>
       </div>
       <div class="fragments__strip" aria-hidden="true">
         <div class="fragments__track">
@@ -171,85 +169,85 @@
         </div>
       </div>
       <div class="wrap fragments__steps">
-        <div class="step" data-reveal><span class="mono">01</span><h3>Discover</h3><p>Workshops, research and a sharp point of view on what your audience should feel.</p></div>
-        <div class="step" data-reveal><span class="mono">02</span><h3>Compose</h3><p>Art direction, 3D look-development and motion language prototyped in the browser.</p></div>
-        <div class="step" data-reveal><span class="mono">03</span><h3>Engineer</h3><p>Production-grade WebGL, tuned for every device and handed over with care.</p></div>
+        <div class="step" data-reveal><span class="mono">01</span><h3>Understand</h3><p>Break every effect down into simple ideas: geometry, light, time and scroll.</p></div>
+        <div class="step" data-reveal><span class="mono">02</span><h3>Build</h3><p>Recreate it line by line with Three.js, GSAP and a few small shaders.</p></div>
+        <div class="step" data-reveal><span class="mono">03</span><h3>Ship</h3><p>Make it fast on phones, add fallbacks and put it live on your own server.</p></div>
       </div>
     </section>
 
-    <!-- ───────────── Work list ───────────── -->
-    <section class="work section" id="work">
+    <!-- ───────────── Effects library ───────────── -->
+    <section class="work section" id="effects">
       <div class="wrap">
         <div class="section-head">
-          <p class="label mono"><span>(04)</span> Selected work</p>
-          <h2 class="display" data-split>Selected <em class="serif">work</em></h2>
-          <p class="section-head__count mono">2024 — 2026 · (06)</p>
+          <p class="label mono"><span>(04)</span> Effects library</p>
+          <h2 class="display" data-split>The effects <em class="serif">library</em></h2>
+          <p class="section-head__count mono">Tap any effect for its breakdown · (06)</p>
         </div>
         <ul class="work__list">
-          <li class="work__item" data-index="0" data-cursor="View">
-            <a href="#archive" data-scroll-to data-slide="1">
+          <li class="work__item" data-index="0" data-cursor="Learn">
+            <a href="#top" data-lesson="0">
               <span class="work__num mono">01</span>
-              <span class="work__title">Solace Audio</span>
-              <span class="work__tags">Product launch · WebGL</span>
-              <span class="work__year mono">2026</span>
-              <img class="work__thumb" src="/media/glass-sm.webp" alt="Refractive glass torus artwork for Solace Audio" loading="lazy" />
+              <span class="work__title">Liquid Chrome</span>
+              <span class="work__tags">Three.js · Vertex shaders</span>
+              <span class="work__year mono">Intermediate</span>
+              <img class="work__thumb" src="/media/chrome-sm.webp" alt="Iridescent liquid chrome sculpture" loading="lazy" />
             </a>
           </li>
-          <li class="work__item" data-index="1" data-cursor="View">
-            <a href="#archive" data-scroll-to data-slide="5">
+          <li class="work__item" data-index="1" data-cursor="Learn">
+            <a href="#journey" data-lesson="1">
               <span class="work__num mono">02</span>
-              <span class="work__title">Meridian Atlas</span>
-              <span class="work__tags">Architecture · Art direction</span>
-              <span class="work__year mono">2026</span>
-              <img class="work__thumb" src="/media/arches-sm.webp" alt="Sunlit arcade render for Meridian Atlas" loading="lazy" />
+              <span class="work__title">Scroll Tunnel</span>
+              <span class="work__tags">Three.js · ScrollTrigger</span>
+              <span class="work__year mono">Intermediate</span>
+              <img class="work__thumb" src="/media/arches-sm.webp" alt="Sunlit arcade receding into depth" loading="lazy" />
             </a>
           </li>
-          <li class="work__item" data-index="2" data-cursor="View">
-            <a href="#archive" data-scroll-to data-slide="2">
+          <li class="work__item" data-index="2" data-cursor="Learn">
+            <a href="#craft" data-lesson="2">
               <span class="work__num mono">03</span>
-              <span class="work__title">Umbra Records</span>
-              <span class="work__tags">Music label · Brand world</span>
-              <span class="work__year mono">2025</span>
-              <img class="work__thumb" src="/media/eclipse-sm.webp" alt="Eclipse artwork for Umbra Records" loading="lazy" />
+              <span class="work__title">Particle Dissolve</span>
+              <span class="work__tags">GPU particles · GLSL</span>
+              <span class="work__year mono">Advanced</span>
+              <img class="work__thumb" src="/media/dunes-sm.webp" alt="Ember desert dunes at sunset" loading="lazy" />
             </a>
           </li>
-          <li class="work__item" data-index="3" data-cursor="View">
-            <a href="#archive" data-scroll-to data-slide="3">
+          <li class="work__item" data-index="3" data-cursor="Learn">
+            <a href="#motion" data-lesson="3">
               <span class="work__num mono">04</span>
-              <span class="work__title">Basalt Capital</span>
-              <span class="work__tags">Fintech · Website</span>
-              <span class="work__year mono">2025</span>
-              <img class="work__thumb" src="/media/monolith-sm.webp" alt="Monolith render for Basalt Capital" loading="lazy" />
+              <span class="work__title">Kinetic Type</span>
+              <span class="work__tags">Layered DOM · GSAP</span>
+              <span class="work__year mono">Beginner</span>
+              <img class="work__thumb" src="/media/topo-sm.webp" alt="Layered topographic contour lines" loading="lazy" />
             </a>
           </li>
-          <li class="work__item" data-index="4" data-cursor="View">
-            <a href="#archive" data-scroll-to data-slide="4">
+          <li class="work__item" data-index="4" data-cursor="Learn">
+            <a href="#product" data-lesson="4">
               <span class="work__num mono">05</span>
-              <span class="work__title">Sahra Expeditions</span>
-              <span class="work__tags">Travel · Immersive story</span>
-              <span class="work__year mono">2024</span>
-              <img class="work__thumb" src="/media/dunes-sm.webp" alt="Ember dunes landscape for Sahra Expeditions" loading="lazy" />
+              <span class="work__title">3D Product Scroll</span>
+              <span class="work__tags">Three.js · Pinning</span>
+              <span class="work__year mono">Intermediate</span>
+              <img class="work__thumb" src="/media/spheres-sm.webp" alt="Clay spheres studio render" loading="lazy" />
             </a>
           </li>
-          <li class="work__item" data-index="5" data-cursor="View">
-            <a href="#archive" data-scroll-to data-slide="0">
+          <li class="work__item" data-index="5" data-cursor="Learn">
+            <a href="#interaction" data-lesson="5">
               <span class="work__num mono">06</span>
-              <span class="work__title">Iridia Labs</span>
-              <span class="work__tags">AI research · 3D identity</span>
-              <span class="work__year mono">2024</span>
-              <img class="work__thumb" src="/media/chrome-sm.webp" alt="Iridescent chrome sculpture for Iridia Labs" loading="lazy" />
+              <span class="work__title">Metaball Cursor</span>
+              <span class="work__tags">WebGL2 · Blend modes</span>
+              <span class="work__year mono">Advanced</span>
+              <img class="work__thumb" src="/media/glass-sm.webp" alt="Refractive glass torus" loading="lazy" />
             </a>
           </li>
         </ul>
       </div>
       <div class="work__preview" aria-hidden="true">
         <div class="work__preview-inner">
-          <img src="/media/glass-sm.webp" alt="" loading="lazy" />
-          <img src="/media/arches-sm.webp" alt="" loading="lazy" />
-          <img src="/media/eclipse-sm.webp" alt="" loading="lazy" />
-          <img src="/media/monolith-sm.webp" alt="" loading="lazy" />
-          <img src="/media/dunes-sm.webp" alt="" loading="lazy" />
           <img src="/media/chrome-sm.webp" alt="" loading="lazy" />
+          <img src="/media/arches-sm.webp" alt="" loading="lazy" />
+          <img src="/media/dunes-sm.webp" alt="" loading="lazy" />
+          <img src="/media/topo-sm.webp" alt="" loading="lazy" />
+          <img src="/media/spheres-sm.webp" alt="" loading="lazy" />
+          <img src="/media/glass-sm.webp" alt="" loading="lazy" />
         </div>
       </div>
     </section>
@@ -267,52 +265,52 @@
     </section>
 
     <!-- ───────────── Kinetic type (light) ───────────── -->
-    <section class="kinetic" data-header="light" aria-label="Make it move">
+    <section class="kinetic" id="motion" data-header="light" aria-label="Make it move">
       <div class="kinetic__row kinetic__row--a"><div class="stack" data-text="MAKE IT"></div></div>
       <div class="wrap kinetic__copy">
         <p class="mono">(06) Motion</p>
-        <p>Motion is our native language. We choreograph type, image and interface so brands don't just appear — <em class="serif">they arrive</em>.</p>
+        <p>Motion is a language you can learn. Timing, easing and choreography turn type and image into something that doesn't just appear — <em class="serif">it arrives</em>.</p>
       </div>
       <div class="kinetic__row kinetic__row--b"><div class="stack" data-text="MOVE"></div></div>
       <h2 class="visually-hidden">Make it move</h2>
     </section>
 
     <!-- ───────────── 3D product (light) ───────────── -->
-    <section class="product" id="product" data-header="light" aria-label="Digital products">
+    <section class="product" id="product" data-header="light" aria-label="3D scroll stories">
       <div class="product__pin">
         <canvas class="product__canvas webgl" aria-hidden="true"></canvas>
         <img class="product__fallback" src="/media/spheres.webp" alt="" aria-hidden="true" loading="lazy" />
         <div class="product__head">
-          <p class="label mono"><span>(07)</span> Product</p>
-          <h2 class="product__title">Digital<br />products</h2>
-          <p class="product__sub mono">For contemporary brands &amp; ambitious launches</p>
+          <p class="label mono"><span>(07)</span> 3D on scroll</p>
+          <h2 class="product__title">Scroll<br />stories</h2>
+          <p class="product__sub mono">Pin it, spin it, take it apart — all driven by scroll</p>
         </div>
         <div class="product__steps">
           <article class="product__step">
-            <span class="mono">01 / Strategy</span>
-            <h3>We start with a question, <em class="serif">not a template.</em></h3>
-            <p>Research, positioning and a clear idea of what the experience must make people feel — before a single pixel moves.</p>
+            <span class="mono">01 / Model</span>
+            <h3>Start with simple shapes, <em class="serif">not a template.</em></h3>
+            <p>This speaker is built entirely from code: a lathe profile, a cylinder and two rings. No 3D software needed.</p>
           </article>
           <article class="product__step">
-            <span class="mono">02 / Design</span>
-            <h3>Form follows <em class="serif">feeling.</em></h3>
-            <p>Art direction, 3D modelling and interface design, crafted as one continuous language across every touchpoint.</p>
+            <span class="mono">02 / Animate</span>
+            <h3>Motion follows <em class="serif">the scroll.</em></h3>
+            <p>Pin the section, map scroll progress to rotation and an exploded view, then smooth it with interpolation.</p>
           </article>
           <article class="product__step">
-            <span class="mono">03 / Engineering</span>
+            <span class="mono">03 / Optimise</span>
             <h3>Real-time, at <em class="serif">sixty frames</em> per second.</h3>
-            <p>Performant WebGL, accessible markup and a clean handover your team will actually enjoy maintaining.</p>
+            <p>Render only when visible, cap the pixel ratio and give every device a graceful fallback.</p>
           </article>
         </div>
         <div class="product__spec mono">
-          <span>Solace One</span><span>Sound object · Ceramic &amp; anodised aluminium</span>
+          <span>Demo model</span><span>LatheGeometry · zero external files</span>
         </div>
         <div class="product__progress"><i></i></div>
       </div>
     </section>
 
     <!-- ───────────── Fluid hover (light) ───────────── -->
-    <section class="fluid" data-header="light" aria-label="Interaction">
+    <section class="fluid" id="interaction" data-header="light" aria-label="Interaction">
       <div class="fluid__stage" data-cursor-hide>
         <canvas class="fluid__canvas" aria-hidden="true"></canvas>
         <div class="fluid__top mono"><span>(08) Interaction</span><span class="fluid__hint">Move your cursor ↘</span></div>
@@ -322,53 +320,58 @@
           <span>every touch</span>
         </h2>
         <div class="fluid__bottom">
-          <p>Interfaces that respond, breathe and flow. Every hover, drag and tap is an opportunity to delight.</p>
+          <p>This ink is a metaball field in a tiny WebGL shader, blended with <em class="serif">mix-blend-mode: difference</em>. Breakdown 06 shows you how.</p>
           <span class="mono">Real-time metaball field · 60fps</span>
         </div>
       </div>
     </section>
 
-    <!-- ───────────── Services ───────────── -->
-    <section class="services section" id="services">
+    <!-- ───────────── Curriculum ───────────── -->
+    <section class="services section" id="curriculum">
       <div class="wrap services__grid">
         <div class="services__aside">
-          <p class="label mono"><span>(09)</span> Services</p>
-          <h2 class="display" data-split>What we <em class="serif">do</em></h2>
-          <p class="services__intro">Small senior teams, embedded with yours. From the first spark to launch day and beyond.</p>
+          <p class="label mono"><span>(09)</span> Curriculum</p>
+          <h2 class="display" data-split>What you'll <em class="serif">learn</em></h2>
+          <p class="services__intro">A practical path from your first animation to full 3D scroll experiences, with breakdowns and real code from this very site.</p>
         </div>
         <div class="services__list">
           <details class="service" open>
-            <summary><span class="mono">01</span><h3>Immersive websites</h3><i class="service__icon" aria-hidden="true"></i></summary>
-            <div class="service__body"><p>Award-calibre marketing sites with real-time 3D, scroll storytelling and buttery motion — fast on every device.</p><ul class="tags mono"><li>WebGL</li><li>Three.js</li><li>GSAP</li><li>Headless CMS</li></ul></div>
+            <summary><span class="mono">01</span><h3>Motion fundamentals</h3><i class="service__icon" aria-hidden="true"></i></summary>
+            <div class="service__body"><p>Timing, easing, stagger and choreography with GSAP. These are the foundations of every animation on this page.</p><ul class="tags mono"><li>GSAP</li><li>Easing</li><li>Timelines</li><li>SplitText</li></ul></div>
           </details>
           <details class="service">
-            <summary><span class="mono">02</span><h3>3D &amp; motion design</h3><i class="service__icon" aria-hidden="true"></i></summary>
-            <div class="service__body"><p>Product renders, animated identities and cinematic loops that hold up from a phone screen to a stadium display.</p><ul class="tags mono"><li>Modelling</li><li>Look-dev</li><li>Animation</li><li>Rendering</li></ul></div>
+            <summary><span class="mono">02</span><h3>Scroll storytelling</h3><i class="service__icon" aria-hidden="true"></i></summary>
+            <div class="service__body"><p>Smooth scrolling, pinned sections, scrubbed timelines and reveals that react to where the reader is.</p><ul class="tags mono"><li>Lenis</li><li>ScrollTrigger</li><li>Pinning</li><li>Scrub</li></ul></div>
           </details>
           <details class="service">
-            <summary><span class="mono">03</span><h3>Product &amp; interface</h3><i class="service__icon" aria-hidden="true"></i></summary>
-            <div class="service__body"><p>Design systems and interfaces for apps and platforms, with motion and accessibility baked in from day one.</p><ul class="tags mono"><li>UX</li><li>UI</li><li>Prototyping</li><li>Design systems</li></ul></div>
+            <summary><span class="mono">03</span><h3>3D on the web</h3><i class="service__icon" aria-hidden="true"></i></summary>
+            <div class="service__body"><p>Scenes, cameras, lights and materials in Three.js, plus models built entirely from code.</p><ul class="tags mono"><li>Three.js</li><li>PBR materials</li><li>Environment maps</li><li>Geometry</li></ul></div>
           </details>
           <details class="service">
-            <summary><span class="mono">04</span><h3>Creative technology</h3><i class="service__icon" aria-hidden="true"></i></summary>
-            <div class="service__body"><p>Configurators, installations and interactive experiments that push what a browser can do.</p><ul class="tags mono"><li>R&amp;D</li><li>WebXR</li><li>Shaders</li><li>Real-time data</li></ul></div>
+            <summary><span class="mono">04</span><h3>Shaders &amp; effects</h3><i class="service__icon" aria-hidden="true"></i></summary>
+            <div class="service__body"><p>Write GLSL for liquid blobs, particles and metaballs, and keep it smooth on phones.</p><ul class="tags mono"><li>GLSL</li><li>Noise</li><li>Particles</li><li>Performance</li></ul></div>
+          </details>
+          <details class="service">
+            <summary><span class="mono">05</span><h3>Launch your site</h3><i class="service__icon" aria-hidden="true"></i></summary>
+            <div class="service__body"><p>Build with Vite, optimise images and fonts, then deploy to your own VPS with automatic backups.</p><ul class="tags mono"><li>Vite</li><li>Optimisation</li><li>nginx</li><li>Deploy</li></ul></div>
           </details>
         </div>
       </div>
       <div class="wrap stats">
-        <div class="stat"><b data-count="120">0</b><sup>+</sup><span class="mono">Launches shipped</span></div>
-        <div class="stat"><b data-count="38">0</b><span class="mono">International awards</span></div>
-        <div class="stat"><b data-count="14">0</b><span class="mono">Countries served</span></div>
-        <div class="stat"><b data-count="98">0</b><sup>%</sup><span class="mono">Clients who return</span></div>
+        <div class="stat"><b data-count="6">0</b><span class="mono">Effect breakdowns</span></div>
+        <div class="stat"><b data-count="5">0</b><span class="mono">Learning modules</span></div>
+        <div class="stat"><b data-count="11">0</b><span class="mono">Shader artworks</span></div>
+        <div class="stat"><b data-count="60">0</b><sup>fps</sup><span class="mono">Performance target</span></div>
       </div>
     </section>
 
-    <!-- ───────────── Archive slider ───────────── -->
-    <section class="archive section" id="archive" aria-roledescription="carousel" aria-label="Archive — studies in light and form">
+    <!-- ───────────── Gallery slider ───────────── -->
+    <section class="archive section" id="gallery" aria-roledescription="carousel" aria-label="Gallery: studies in light and form">
       <div class="wrap">
         <div class="section-head">
-          <p class="label mono"><span>(10)</span> Archive</p>
+          <p class="label mono"><span>(10)</span> Gallery</p>
           <h2 class="display" data-split>Studies in <em class="serif">light &amp; form</em></h2>
+          <p class="section-head__count mono">Every image rendered with code · (11)</p>
         </div>
         <div class="slider" tabindex="0" data-cursor="Drag">
           <div class="slider__count" aria-hidden="true">
@@ -389,43 +392,41 @@
       </div>
     </section>
 
-    <!-- ───────────── Clients marquee ───────────── -->
-    <section class="clients" aria-label="Clients">
-      <p class="wrap label mono"><span>(11)</span> Trusted by teams at</p>
+    <!-- ───────────── Toolkit marquee ───────────── -->
+    <section class="clients" aria-label="The toolkit">
+      <p class="wrap label mono"><span>(11)</span> The toolkit you'll master</p>
       <div class="marquee">
         <div class="marquee__track">
-          <span>Solace</span><i>✦</i><span class="serif">Meridian</span><i>✦</i><span>Umbra</span><i>✦</i><span class="serif">Basalt</span><i>✦</i><span>Sahra</span><i>✦</i><span class="serif">Iridia</span><i>✦</i><span>Halden</span><i>✦</i><span class="serif">Nordlys</span><i>✦</i>
+          <span>Three.js</span><i>✦</i><span class="serif">GSAP</span><i>✦</i><span>WebGL</span><i>✦</i><span class="serif">GLSL</span><i>✦</i><span>ScrollTrigger</span><i>✦</i><span class="serif">Lenis</span><i>✦</i><span>Vite</span><i>✦</i><span class="serif">Shaders</span><i>✦</i>
         </div>
       </div>
     </section>
 
-    <!-- ───────────── Contact ───────────── -->
-    <section class="contact" id="contact">
+    <!-- ───────────── Community ───────────── -->
+    <section class="contact" id="community">
       <div class="wrap">
-        <p class="label mono"><span>(12)</span> Contact</p>
+        <p class="label mono"><span>(12)</span> Community</p>
         <h2 class="contact__title" data-split>Let's build something <em class="serif">unreal.</em></h2>
         <div class="contact__row">
-          <a href="mailto:hello@nocturne.studio?subject=New%20project" class="contact__cta" data-magnetic data-cursor="Write">
-            <span>Start a<br />project</span>
+          <a href="https://discord.gg/CAXC9PJffX" target="_blank" rel="noopener noreferrer" class="contact__cta" data-magnetic data-cursor="Join">
+            <span>Join the<br />Discord</span>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
           </a>
           <div class="contact__info">
             <div>
-              <p class="mono">New business</p>
-              <a class="contact__mail" href="mailto:hello@nocturne.studio">hello@nocturne.studio</a>
-              <button class="copy mono" data-copy="hello@nocturne.studio">Copy email</button>
+              <p class="mono">Email</p>
+              <a class="contact__mail" href="mailto:WeenySnore@gmail.com">WeenySnore@gmail.com</a>
+              <button class="copy mono" data-copy="WeenySnore@gmail.com">Copy email</button>
             </div>
             <div>
-              <p class="mono">Studios</p>
-              <p>Lisbon · Berlin<br />Remote, worldwide</p>
+              <p class="mono">Discord</p>
+              <p>Ask questions, get feedback<br />and share what you build.</p>
             </div>
             <div>
               <p class="mono">Follow</p>
               <ul class="socials">
-                <li><a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" class="roll"><span data-text="Instagram">Instagram</span></a></li>
-                <li><a href="https://www.behance.net/" target="_blank" rel="noopener noreferrer" class="roll"><span data-text="Behance">Behance</span></a></li>
-                <li><a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" class="roll"><span data-text="LinkedIn">LinkedIn</span></a></li>
-                <li><a href="https://dribbble.com/" target="_blank" rel="noopener noreferrer" class="roll"><span data-text="Dribbble">Dribbble</span></a></li>
+                <li><a href="https://www.instagram.com/weenysnore/" target="_blank" rel="noopener noreferrer" class="roll"><span data-text="Instagram ↗">Instagram ↗</span></a></li>
+                <li><a href="https://discord.gg/CAXC9PJffX" target="_blank" rel="noopener noreferrer" class="roll"><span data-text="Discord ↗">Discord ↗</span></a></li>
               </ul>
             </div>
           </div>
@@ -433,13 +434,183 @@
       </div>
       <footer class="footer">
         <div class="wrap footer__row mono">
-          <span>© 2026 Nocturne Studio</span>
-          <span>Local time <span class="js-clock">--:--</span></span>
+          <span>© 2026 Nocturne</span>
+          <a href="https://www.instagram.com/weenysnore/" target="_blank" rel="noopener noreferrer" class="roll"><span data-text="Made by @weenysnore">Made by @weenysnore</span></a>
           <a href="#top" data-scroll-to class="roll"><span data-text="Back to top ↑">Back to top ↑</span></a>
         </div>
         <div class="footer__word" aria-hidden="true">NOCTURNE</div>
       </footer>
     </section>
   </main>
+
+  <!-- ───────────── Effect breakdown drawer ───────────── -->
+  <dialog class="lesson" id="lesson" aria-label="Effect breakdown">
+    <div class="lesson__scrim"></div>
+    <div class="lesson__panel">
+      <div class="lesson__top">
+        <span class="mono lesson__count">Breakdown 01 / 06</span>
+        <button class="lesson__close" aria-label="Close breakdown"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+      </div>
+      <div class="lesson__scroll" data-lenis-prevent>
+        <div class="lesson__body"></div>
+        <a class="lesson__ask" href="https://discord.gg/CAXC9PJffX" target="_blank" rel="noopener noreferrer">
+          <span class="mono">Stuck on this one?</span>
+          <span>Ask on the Discord ↗</span>
+        </a>
+      </div>
+      <div class="lesson__bar">
+        <button class="lesson__nav" data-dir="-1" aria-label="Previous breakdown"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+        <button class="lesson__live"><span class="pill__dot"></span>See it live</button>
+        <button class="lesson__nav" data-dir="1" aria-label="Next breakdown"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+      </div>
+    </div>
+  </dialog>
+
+  <template data-lesson data-target="#top">
+    <figure class="lesson__media"><img src="/media/chrome.webp" alt="Iridescent liquid chrome sculpture" /></figure>
+    <h2 class="lesson__title">Liquid Chrome</h2>
+    <ul class="tags mono"><li class="is-level">Intermediate</li><li>Three.js</li><li>Vertex shader</li><li>PBR</li></ul>
+    <p class="lesson__intro">The morphing blob behind the hero headline is one sphere. A few lines of noise in its vertex shader turn it into liquid, and a reflective material does the rest.</p>
+    <h3 class="lesson__h mono">How it works</h3>
+    <ol class="lesson__steps">
+      <li><b>Start with a dense sphere.</b> An icosahedron with lots of subdivisions gives the vertices room to move smoothly.</li>
+      <li><b>Push every vertex along its normal.</b> 3D simplex noise, sampled at the vertex direction and shifted over time, decides how far it moves.</li>
+      <li><b>Rebuild the normals.</b> Displace two nearby points too and take the cross product, so the lighting follows the new shape.</li>
+      <li><b>Make it chrome.</b> A fully metallic MeshPhysicalMaterial with iridescence reflects a custom environment of glowing light panels.</li>
+    </ol>
+    <h3 class="lesson__h mono">Key code</h3>
+    <pre class="lesson__code"><code>// vertex shader: move each vertex with 3D noise
+vec3 dispP(vec3 p) {
+  vec3 n = normalize(p);
+  float f = snoise(n * uFreq + uTime * 0.17);
+  return n * (1.0 + uAmp * f);
+}
+
+// material: polished metal + thin-film iridescence
+new THREE.MeshPhysicalMaterial({
+  metalness: 1, roughness: 0.14,
+  iridescence: 1, clearcoat: 1,
+});</code></pre>
+  </template>
+
+  <template data-lesson data-target="#journey">
+    <figure class="lesson__media"><img src="/media/arches.webp" alt="Sunlit arcade receding into depth" /></figure>
+    <h2 class="lesson__title">Scroll Tunnel</h2>
+    <ul class="tags mono"><li class="is-level">Intermediate</li><li>Three.js</li><li>ScrollTrigger</li><li>Fog</li></ul>
+    <p class="lesson__intro">"The journey" flies a camera through a corridor of floating images. The camera is the only thing that moves, and scroll position tells it where to be.</p>
+    <h3 class="lesson__h mono">How it works</h3>
+    <ol class="lesson__steps">
+      <li><b>Scatter planes in depth.</b> Each image is a textured plane. They sit at increasing distances, spiralling around a clear centre so the text stays readable.</li>
+      <li><b>Pin the section.</b> ScrollTrigger holds it on screen for a few viewport heights and reports a progress value from 0 to 1.</li>
+      <li><b>Ease, don't jump.</b> Every frame the camera moves a fraction of the way toward the scroll target, which feels like inertia.</li>
+      <li><b>Fade with fog.</b> Scene fog hides far images, and planes about to hit the lens fade out instead of clipping.</li>
+    </ol>
+    <h3 class="lesson__h mono">Key code</h3>
+    <pre class="lesson__code"><code>ScrollTrigger.create({
+  trigger: '.journey', pin: true, scrub: true,
+  end: '+=340%',
+  onUpdate: (self) =&gt; (target = self.progress),
+});
+
+// every frame: ease toward the scroll position
+progress += (target - progress) * 0.075;
+camera.position.z = lerp(START_Z, END_Z, progress);</code></pre>
+  </template>
+
+  <template data-lesson data-target="#craft">
+    <figure class="lesson__media"><img src="/media/dunes.webp" alt="Ember desert dunes at sunset" /></figure>
+    <h2 class="lesson__title">Particle Dissolve</h2>
+    <ul class="tags mono"><li class="is-level">Advanced</li><li>THREE.Points</li><li>GLSL</li><li>Canvas 2D</li></ul>
+    <p class="lesson__intro">The desert picture is tens of thousands of points, one for each pixel of a small copy of the image. A shader blows them away as you scroll and puts them back when you scroll up.</p>
+    <h3 class="lesson__h mono">How it works</h3>
+    <ol class="lesson__steps">
+      <li><b>Sample the image.</b> Draw it small on a hidden canvas and read every pixel's colour with getImageData.</li>
+      <li><b>One particle per pixel.</b> Lay the points out on a grid that exactly covers the screen, sized so they touch and look like a solid picture.</li>
+      <li><b>Sweep left to right.</b> Each particle waits for a delay based on its x-position, then drifts along a noise field and toward the camera.</li>
+      <li><b>Hand-off trick.</b> The sharp original image sits on top at the start and fades out the moment the particles begin to move.</li>
+    </ol>
+    <h3 class="lesson__h mono">Key code</h3>
+    <pre class="lesson__code"><code>// one particle per pixel of a downscaled copy
+ctx.drawImage(img, 0, 0, cols, rows);
+const data = ctx.getImageData(0, 0, cols, rows).data;
+
+// vertex shader: delay by x so it sweeps across
+float t = clamp((uProgress * 1.35 - aGrid.x * 0.55) / 0.55, 0.0, 1.0);
+float e = t * t * (3.0 - 2.0 * t);
+p += vec3(n1, n2, 0.0) * 2.4 * e + dir * e * vec3(2.6, 2.2, 7.0);</code></pre>
+  </template>
+
+  <template data-lesson data-target="#motion">
+    <figure class="lesson__media"><img src="/media/topo.webp" alt="Layered topographic contour lines" /></figure>
+    <h2 class="lesson__title">Kinetic Type</h2>
+    <ul class="tags mono"><li class="is-level">Beginner</li><li>DOM</li><li>CSS transforms</li><li>ScrollTrigger</li></ul>
+    <p class="lesson__intro">"MAKE IT MOVE" looks extruded in 3D, but it's plain HTML. The same word is stacked fifteen times, each copy nudged slightly further, and the angle turns as you scroll.</p>
+    <h3 class="lesson__h mono">How it works</h3>
+    <ol class="lesson__steps">
+      <li><b>Clone the word.</b> JavaScript writes the word into a stack of spans placed exactly on top of each other.</li>
+      <li><b>Stripe the depth.</b> Alternate ember shades with the background colour so the side of the letters reads as sliced layers.</li>
+      <li><b>Offset by depth.</b> Each layer moves depth × step along an angle. Only transforms change, so the GPU does the work.</li>
+      <li><b>Scrub it.</b> A ScrollTrigger turns scroll progress into the extrusion angle while the two rows slide in opposite directions.</li>
+    </ol>
+    <h3 class="lesson__h mono">Key code</h3>
+    <pre class="lesson__code"><code>// rotate the extrusion as you scroll
+const angle = (135 - progress * 90) * Math.PI / 180;
+const dx = Math.cos(angle) * step;
+const dy = Math.sin(angle) * step;
+
+layers.forEach((span, depth) =&gt; {
+  span.style.transform =
+    `translate3d(${dx * depth}px, ${dy * depth}px, 0)`;
+});</code></pre>
+  </template>
+
+  <template data-lesson data-target="#product">
+    <figure class="lesson__media"><img src="/media/spheres.webp" alt="Clay spheres studio render" /></figure>
+    <h2 class="lesson__title">3D Product Scroll</h2>
+    <ul class="tags mono"><li class="is-level">Intermediate</li><li>Three.js</li><li>LatheGeometry</li><li>Pinning</li></ul>
+    <p class="lesson__intro">The speaker in "Scroll stories" spins, travels and comes apart as you read. It's modelled in about forty lines of code, so there are no 3D files to load.</p>
+    <h3 class="lesson__h mono">How it works</h3>
+    <ol class="lesson__steps">
+      <li><b>Spin a profile.</b> Draw half the silhouette as a smooth curve, then LatheGeometry rotates it into a solid body.</li>
+      <li><b>Add details.</b> A cylinder with a dotted canvas texture becomes the grille, thin tori become ember rings, and a studio environment map lights it.</li>
+      <li><b>Map scroll to story.</b> The pinned section's progress drives rotation, position and an "exploded view" that peaks in chapter two.</li>
+      <li><b>Fake the shadow.</b> A radial-gradient texture on a flat plane gives a soft contact shadow for almost no cost.</li>
+    </ol>
+    <h3 class="lesson__h mono">Key code</h3>
+    <pre class="lesson__code"><code>// the body is a 2D profile spun around the Y axis
+const profile = new THREE.SplineCurve(points);
+const body = new THREE.LatheGeometry(profile.getPoints(100), 160);
+
+// exploded view peaks in the middle chapter
+const ex = smoothstep(0.28, 0.45, p) * (1 - smoothstep(0.6, 0.76, p));
+cap.position.y = 1.205 + ex * 0.55;
+device.rotation.y = p * Math.PI * 2.4;</code></pre>
+  </template>
+
+  <template data-lesson data-target="#interaction">
+    <figure class="lesson__media"><img src="/media/glass.webp" alt="Refractive glass torus" /></figure>
+    <h2 class="lesson__title">Metaball Cursor</h2>
+    <ul class="tags mono"><li class="is-level">Advanced</li><li>WebGL2</li><li>GLSL</li><li>Blend modes</li></ul>
+    <p class="lesson__intro">The ink that follows your pointer and flips the headline's colours is a field of soft circles merged by a fragment shader. One CSS blend mode makes it invert the text.</p>
+    <h3 class="lesson__h mono">How it works</h3>
+    <ol class="lesson__steps">
+      <li><b>Leave a trail.</b> As the pointer moves, drop circles behind it. Each one shrinks every frame until it disappears.</li>
+      <li><b>Sum the field.</b> For every pixel, add r² / d² from each circle. Where the total passes 1.0 you're inside the ink, so the blobs melt together.</li>
+      <li><b>Anti-alias with fwidth.</b> Dividing by the field's screen-space derivative gives a crisp, smooth edge at any size.</li>
+      <li><b>Blend to invert.</b> Draw the ink in white on a transparent canvas with mix-blend-mode: difference above black text on a light page.</li>
+    </ol>
+    <h3 class="lesson__h mono">Key code</h3>
+    <pre class="lesson__code"><code>// fragment shader: merge every blob, then threshold
+float f = 0.0;
+for (int i = 0; i &lt; uCount; i++) {
+  vec2 d = gl_FragCoord.xy - uPts[i].xy;
+  f += (uPts[i].z * uPts[i].z) / (dot(d, d) + 1.0);
+}
+float a = clamp((f - 1.0) / fwidth(f) + 0.5, 0.0, 1.0);
+o = vec4(vec3(a), a);
+
+/* CSS */
+.fluid__canvas { mix-blend-mode: difference; }</code></pre>
+  </template>
 </body>
 </html>
