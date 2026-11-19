@@ -5,6 +5,8 @@ import os
 import sqlite3
 import sys
 import tempfile
+import socket
+import struct
 import threading
 import unittest
 import urllib.error
@@ -208,6 +210,58 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(c.call('DELETE', '/api/save')[0], 405)
         s, _, _ = c.call('POST', '/api/auth/login', None, {'Content-Type': 'application/json'})
         self.assertIn(s, (400, 401))
+
+
+class FakeMinecraft:
+    """Answers the server list ping like a real server, for the status endpoint tests."""
+    def __init__(self, info):
+        self.info = info
+        self.sock = socket.socket()
+        self.sock.bind(('127.0.0.1', 0))
+        self.sock.listen(4)
+        self.port = self.sock.getsockname()[1]
+        threading.Thread(target=self.run, daemon=True).start()
+
+    def run(self):
+        while True:
+            try:
+                c, _ = self.sock.accept()
+            except OSError:
+                return
+            with c:
+                c.settimeout(2)
+                try:
+                    c.recv(256)
+                    js = json.dumps(self.info).encode()
+                    inner = b'\x00' + orbit_api._varint(len(js)) + js
+                    c.sendall(orbit_api._varint(len(inner)) + inner)
+                except OSError:
+                    pass
+
+    def close(self):
+        self.sock.close()
+
+
+class MinecraftStatusTest(unittest.TestCase):
+    def tearDown(self):
+        orbit_api._mc_cache.update(at=0.0, data={'online': False})
+
+    def test_ping_parses_a_server_reply(self):
+        fake = FakeMinecraft({'version': {'name': 'Velocity 1.7.2'}, 'players': {'online': 7, 'max': 100},
+                              'description': {'text': '\u00a7aOrbit ', 'extra': [{'text': 'Network'}, '\nJoin now']}})
+        try:
+            r = orbit_api.mc_ping('127.0.0.1', fake.port)
+        finally:
+            fake.close()
+        self.assertEqual(r['players'], {'online': 7, 'max': 100})
+        self.assertEqual(r['motd']['clean'], ['Orbit Network', 'Join now'])
+        self.assertEqual(r['version'], 'Velocity 1.7.2')
+        self.assertTrue(r['online'])
+
+    def test_offline_when_nothing_listens(self):
+        s = socket.socket(); s.bind(('127.0.0.1', 0)); port = s.getsockname()[1]; s.close()
+        orbit_api.MC.update(host='127.0.0.1', port=port)
+        self.assertEqual(orbit_api.mc_status(), {'online': False})
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-// Orbitnetwork.net live status (mcsrvstat.us) + one-click IP copy.
+// Orbitnetwork.net live status (the hub's own /api/mc/status, else mcsrvstat.us) + one-click IP copy.
 import { CONFIG } from './config.js';
 import { $$, copyText, toast, fmt } from './ui.js';
 import { audio } from './audio.js';
@@ -43,12 +43,7 @@ export class MinecraftPortal {
     this.setAll('[data-mc-refresh]', (el) => el.classList.add('spinning'));
     if (!this.data) this.renderState('checking');
     try {
-      const ctrl = new AbortController();
-      const timeout = setTimeout(() => ctrl.abort(), 9000);
-      const res = await fetch(CONFIG.statusApi + encodeURIComponent(CONFIG.serverIp.toLowerCase()), { signal: ctrl.signal, cache: 'no-store' });
-      clearTimeout(timeout);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      this.data = await res.json();
+      this.data = await this.fetchStatus();
       this.render();
       if (manual) toast('Server status refreshed', { icon: 'radar' });
     } catch (err) {
@@ -59,6 +54,31 @@ export class MinecraftPortal {
       this.loading = false;
       this.setAll('[data-mc-refresh]', (el) => el.classList.remove('spinning'));
     }
+  }
+
+  // The hub's own server pings the Minecraft server on the same VPS (live, no third party).
+  // If that isn't available (site hosted without the API), fall back to the public status service.
+  async fetchStatus() {
+    const get = async (url) => {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 9000);
+      try {
+        const res = await fetch(url, { signal: ctrl.signal, cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return await res.json();
+      } finally { clearTimeout(timeout); }
+    };
+    if (this.localApi !== false) {
+      try {
+        const d = await get(CONFIG.localStatusApi);
+        if (d && typeof d.online === 'boolean') { this.localApi = true; return d; }
+        throw new Error('not the status API');
+      } catch (err) {
+        if (this.localApi) throw err; // it worked before: a real outage, don't switch services
+        this.localApi = false;
+      }
+    }
+    return get(CONFIG.statusApi + encodeURIComponent(CONFIG.serverIp.toLowerCase()));
   }
 
   setAll(sel, fn) { $$(sel).forEach(fn); }

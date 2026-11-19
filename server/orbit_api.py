@@ -22,7 +22,9 @@ import json
 import os
 import re
 import secrets
+import socket
 import sqlite3
+import struct
 import sys
 import threading
 import time
@@ -193,6 +195,111 @@ def user_json(row):
     return {'username': row['username'], 'displayName': row['display_name'], 'createdAt': row['created_at'] * 1000}
 
 
+# ---------------------------------------------------------------- Minecraft status
+# The hub shows the live player count of the Minecraft server running on this machine. The server answers the
+# standard "server list ping" (what the multiplayer menu uses); only the fixed host/port below is ever contacted.
+MC = {'host': '127.0.0.1', 'port': 25565}
+_mc_cache = {'at': 0.0, 'data': {'online': False}}
+_mc_lock = threading.Lock()
+MC_CACHE_OK, MC_CACHE_DOWN, MC_MAX_PACKET = 8, 4, 120_000
+
+
+def _varint(n):
+    out = b''
+    while True:
+        b = n & 0x7F
+        n >>= 7
+        out += bytes([b | (0x80 if n else 0)])
+        if not n:
+            return out
+
+
+def _recv_exact(sock, n):
+    buf = b''
+    while len(buf) < n:
+        chunk = sock.recv(n - len(buf))
+        if not chunk:
+            raise ConnectionError('closed')
+        buf += chunk
+    return buf
+
+
+def _read_varint(read_byte):
+    n = 0
+    for i in range(5):
+        b = read_byte()[0]
+        n |= (b & 0x7F) << (7 * i)
+        if not b & 0x80:
+            return n
+    raise ValueError('bad varint')
+
+
+def _motd_text(node):
+    if isinstance(node, str):
+        return node
+    if isinstance(node, list):
+        return ''.join(_motd_text(x) for x in node)
+    if isinstance(node, dict):
+        return _motd_text(node.get('text', '')) + _motd_text(node.get('extra', []))
+    return ''
+
+
+def mc_ping(host, port, timeout=3):
+    with socket.create_connection((host, port), timeout=timeout) as sock:
+        sock.settimeout(timeout)
+        hb = host.encode()
+        hello = b'\x00' + _varint(765) + _varint(len(hb)) + hb + struct.pack('>H', port) + b'\x01'
+        sock.sendall(_varint(len(hello)) + hello + b'\x01\x00')
+        read1 = lambda: _recv_exact(sock, 1)  # noqa: E731
+        length = _read_varint(read1)
+        if not 3 <= length <= MC_MAX_PACKET:
+            raise ValueError('bad length')
+        body = _recv_exact(sock, length)
+    pos = 0
+
+    def take_varint():
+        nonlocal pos
+        n = 0
+        for i in range(5):
+            b = body[pos]
+            pos += 1
+            n |= (b & 0x7F) << (7 * i)
+            if not b & 0x80:
+                return n
+        raise ValueError('bad varint')
+
+    if take_varint() != 0:
+        raise ValueError('unexpected packet')
+    size = take_varint()
+    info = json.loads(body[pos:pos + size].decode('utf-8', 'replace'))
+    players = info.get('players') or {}
+    motd = re.sub('\u00a7.', '', _motd_text(info.get('description', '')))
+    lines = [l.strip() for l in motd.split('\n') if l.strip()][:3]
+    icon = info.get('favicon')
+    return {
+        'online': True,
+        'players': {'online': int(players.get('online') or 0), 'max': int(players.get('max') or 0)},
+        'version': re.sub('\u00a7.', '', str((info.get('version') or {}).get('name', '')))[:40],
+        'motd': {'clean': lines},
+        'icon': icon if isinstance(icon, str) and icon.startswith('data:image/png;base64,') and len(icon) < 60_000 else None,
+    }
+
+
+def mc_status():
+    now = time.time()
+    with _mc_lock:  # one ping at a time; visitors share the cached answer
+        age = now - _mc_cache['at']
+        ttl = MC_CACHE_OK if _mc_cache['data'].get('online') else MC_CACHE_DOWN
+        if age < ttl:
+            return _mc_cache['data']
+        try:
+            data = mc_ping(MC['host'], MC['port'])
+        except Exception:  # server down, restarting, or an unexpected reply
+            data = {'online': False}
+        _mc_cache.update(at=time.time(), data=data)
+        return data
+
+
 # ---------------------------------------------------------------- HTTP
 class Handler(SimpleHTTPRequestHandler):
     server_version = 'OrbitHub'
@@ -245,6 +352,7 @@ class Handler(SimpleHTTPRequestHandler):
         routes = {
             ('GET', '/api/health'): self.health,
             ('GET', '/api/auth/me'): self.me,
+            ('GET', '/api/mc/status'): self.mc,
             ('POST', '/api/auth/register'): self.register,
             ('POST', '/api/auth/login'): self.login,
             ('POST', '/api/auth/logout'): self.logout,
@@ -373,6 +481,9 @@ class Handler(SimpleHTTPRequestHandler):
     def health(self, con):
         return HTTPStatus.OK, {'ok': True}
 
+    def mc(self, con):
+        return HTTPStatus.OK, mc_status()
+
     def me(self, con):
         row = self.current_user(con, required=False)
         return HTTPStatus.OK, {'user': user_json(row) if row else None}
@@ -493,7 +604,10 @@ def main(argv=None):
     ap.add_argument('--db', default=os.environ.get('ORBIT_DB', '/var/lib/orbit-hub/hub.db'))
     ap.add_argument('--static', default=None, help='also serve this folder (local development)')
     ap.add_argument('--no-proxy', action='store_true', help='not behind nginx: ignore X-Real-IP / X-Forwarded-Proto')
+    ap.add_argument('--mc-host', default='127.0.0.1', help='Minecraft server to report on')
+    ap.add_argument('--mc-port', type=int, default=25565)
     args = ap.parse_args(argv)
+    MC.update(host=args.mc_host, port=args.mc_port)
     Handler.db = Database(args.db)
     Handler.static_dir = os.path.abspath(args.static) if args.static else None
     Handler.trust_proxy = not args.no_proxy

@@ -180,7 +180,7 @@ export class SpaceScene {
   }
 
   async buildSky(nextFrame) {
-    const sky = await createSkyCubeAsync(this.renderer, { size: this.lite ? 768 : 1536 }, nextFrame);
+    const sky = await createSkyCubeAsync(this.renderer, { size: this.lite ? 512 : 1536 }, nextFrame);
     await nextFrame();
     this.scene.background = sky;
     this._timed('sky reflections', () => {
@@ -246,19 +246,19 @@ export class SpaceScene {
   buildBackdrop() {
     const earth = makePlanet(this.renderer, {
       type: 'earth', radius: 70, seed: 3, sunDir: SUN_DIR, segments: 128,
-      atmosphere: { color: 0x5aa8ff, intensity: 1.6, power: 2.6, scale: 1.035 }, size: this.lite ? 768 : 2048,
+      atmosphere: { color: 0x5aa8ff, intensity: 1.6, power: 2.6, scale: 1.035 }, size: this.lite ? 512 : 2048,
     });
     earth.group.position.set(-330, -90, -520);
     earth.group.rotation.z = 0.41;
     this.scene.add(earth.group);
-    const moon = makePlanet(this.renderer, { type: 'rock', radius: 13, seed: 8, tint: '#a3a09a', size: this.lite ? 512 : 1024 });
+    const moon = makePlanet(this.renderer, { type: 'rock', radius: 13, seed: 8, tint: '#a3a09a', size: this.lite ? 384 : 1024 });
     moon.group.position.set(-205, -40, -455);
     this.scene.add(moon.group);
     this.backdrop = { earth, moon };
   }
 
   buildBelt() {
-    this.belt = makeAsteroidBelt({ count: this.lite ? 380 : 1100, inner: 100, outer: 128, thickness: 5, sizeMax: 1.1 });
+    this.belt = makeAsteroidBelt({ count: this.lite ? 260 : 1100, inner: 100, outer: 128, thickness: 5, sizeMax: 1.1 });
     this.belt.rotation.x = 0.04;
     this.scene.add(this.belt);
   }
@@ -412,7 +412,7 @@ export class SpaceScene {
 
   buildArcadePlanet() {
     const g = new THREE.Group();
-    const giant = makePlanet(this.renderer, { type: 'gas', radius: 5.2, seed: 21, palette: 'saturn', rings: true, sunDir: SUN_DIR, atmosphere: { color: 0xffe2b0, intensity: 0.5, power: 3.5, scale: 1.03 }, size: this.lite ? 512 : 1024 });
+    const giant = makePlanet(this.renderer, { type: 'gas', radius: 5.2, seed: 21, palette: 'saturn', rings: true, sunDir: SUN_DIR, atmosphere: { color: 0xffe2b0, intensity: 0.5, power: 3.5, scale: 1.03 }, size: this.lite ? 384 : 1024 });
     giant.group.rotation.set(0.5, 0, 0.32);
     g.add(giant.group);
     const moons = [];
@@ -434,7 +434,7 @@ export class SpaceScene {
 
   buildCommsPlanet() {
     const g = new THREE.Group();
-    const ice = makePlanet(this.renderer, { type: 'ice', radius: 3.4, seed: 77, sunDir: SUN_DIR, atmosphere: { color: 0x7fd4ff, intensity: 1.4, power: 2.6, scale: 1.06 }, size: this.lite ? 512 : 1024 });
+    const ice = makePlanet(this.renderer, { type: 'ice', radius: 3.4, seed: 77, sunDir: SUN_DIR, atmosphere: { color: 0x7fd4ff, intensity: 1.4, power: 2.6, scale: 1.06 }, size: this.lite ? 384 : 1024 });
     g.add(ice.group);
     // Relay satellite in orbit
     const satPivot = new THREE.Group();

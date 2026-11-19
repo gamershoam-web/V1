@@ -314,6 +314,11 @@ renderSound();
 setSector('hub');
 portal.start();
 initAccountUI();
-const sceneReady = initScene();
+// Phones / low-power devices: building the 3D scene competes with the intro animation for the same CPU and GPU,
+// so start it once the title has finished writing (the launch bar waits for it). Desktops build right away.
+const LITE = document.documentElement.classList.contains('lite');
+const sceneReady = LITE
+  ? new Promise((r) => setTimeout(r, Math.max(0, 2900 - performance.now()))).then(initScene)
+  : initScene();
 runIntro({ ready: sceneReady, onReveal: () => { introRunning = false; scene?.reveal(); } });
 showDiagnostics();
