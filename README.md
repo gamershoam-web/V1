@@ -60,7 +60,8 @@ site/                 static site served by nginx (no build needed on the server
 src/tailwind.css      Tailwind entry file
 server/orbit_api.py   account API (sign up, sign in, cloud saves; SQLite; Python standard library)
 server/test_orbit_api.py  API tests: python3 -m unittest server/test_orbit_api.py
-deploy/               deploy script, nginx config (+ shared locations snippet), systemd unit for the API
+deploy/               deploy script, nginx config (+ shared locations snippet), systemd unit for the API,
+                      inspect.sh (read-only look at the server: ports, Minecraft, nginx, firewall, DNS)
 ```
 
 ## Develop
@@ -97,6 +98,10 @@ It gets a free Let's Encrypt certificate (renewed automatically), serves the sit
 `http://` visitors there. The domain is remembered for later deploys. Until then the sign-in panel warns players that
 the connection isn't encrypted. Back up `/var/lib/orbit-hub/hub.db` to keep accounts safe; check the API with
 `systemctl status orbit-hub-api` and `journalctl -u orbit-hub-api`.
+
+A bare domain such as `orbitnetwork.cloud` also gets `www.` on the same certificate. To see what else runs on the
+server first (the deploy leaves Minecraft alone: it only uses ports 80, 443 and a local-only 8787), run
+`curl -fsSL https://raw.githubusercontent.com/gamershoam-web/V1/ccr-149e134a-e2c045/deploy/inspect.sh | bash`.
 
 ## Troubleshooting
 

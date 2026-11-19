@@ -49,10 +49,20 @@ nginx -t && systemctl enable --now nginx && systemctl reload nginx
 
 if [ -n "$DOMAIN" ]; then
   apt-get install -y certbot
+  # The HTTPS port has to be reachable. If this server runs the ufw firewall, open the web ports (nothing else is changed).
+  if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "^Status: active"; then
+    ufw allow 80/tcp >/dev/null && ufw allow 443/tcp >/dev/null && echo "ufw: web ports 80 and 443 are open"
+  fi
+  # A bare domain (orbitnetwork.cloud) also answers on www, so try to put both on the certificate.
+  NAMES="$DOMAIN"; WWW=""
+  [ "$(printf '%s' "$DOMAIN" | tr -cd '.' | wc -c)" -eq 1 ] && WWW="www.$DOMAIN"
   # The certificate challenge is answered from the site folder over plain HTTP (works on the IP-wide default server).
-  certbot certonly --webroot -w "$SITE" -d "$DOMAIN" --non-interactive --agree-tos --register-unsafely-without-email \
-    --keep-until-expiring --deploy-hook "systemctl reload nginx" \
-    || echo "Could not get a certificate for $DOMAIN yet. Check that its DNS A record points to this server, then run the deploy again."
+  CERTBOT="certbot certonly --webroot -w $SITE --expand --non-interactive --agree-tos --register-unsafely-without-email --keep-until-expiring --deploy-hook"
+  if [ -n "$WWW" ] && $CERTBOT "systemctl reload nginx" -d "$DOMAIN" -d "$WWW"; then
+    NAMES="$DOMAIN $WWW"
+  elif ! $CERTBOT "systemctl reload nginx" -d "$DOMAIN"; then
+    echo "Could not get a certificate for $DOMAIN yet. Check that its DNS A record points to this server (and that port 80 is open in the Hostinger firewall), then run the deploy again."
+  fi
   if [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
     cat >> /etc/nginx/sites-available/orbit-hub <<EOF
 
@@ -60,7 +70,7 @@ if [ -n "$DOMAIN" ]; then
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name $DOMAIN;
+    server_name $NAMES;
     ssl_certificate /etc/letsencrypt/live/$DOMAIN/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/$DOMAIN/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
@@ -72,7 +82,7 @@ server {
 server {
     listen 80;
     listen [::]:80;
-    server_name $DOMAIN;
+    server_name $NAMES;
     location ^~ /.well-known/acme-challenge/ { root $SITE; }
     location / { return 301 https://\$host\$request_uri; }
 }
