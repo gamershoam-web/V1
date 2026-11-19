@@ -5,7 +5,11 @@ import os
 import sqlite3
 import sys
 import tempfile
+import base64
+import hashlib
+import random
 import socket
+import time
 import struct
 import threading
 import unittest
@@ -69,7 +73,8 @@ class ApiTest(unittest.TestCase):
         c = self.client()
         s, b, h = c.call('POST', '/api/auth/register', {'username': 'Nova_1', 'password': 'correct horse', 'displayName': '  Nova  Star '})
         self.assertEqual(s, 201, b)
-        self.assertEqual(b['user'], {'username': 'Nova_1', 'displayName': 'Nova Star', 'createdAt': b['user']['createdAt']})
+        self.assertEqual(b['user'], {'username': 'Nova_1', 'displayName': 'Nova Star', 'createdAt': b['user']['createdAt'],
+                                     'email': None, 'emailVerified': False, 'google': False, 'hasPassword': True})
         cookie = h['Set-Cookie']
         self.assertIn('HttpOnly', cookie)
         self.assertIn('SameSite=Lax', cookie)
@@ -262,6 +267,211 @@ class MinecraftStatusTest(unittest.TestCase):
         s = socket.socket(); s.bind(('127.0.0.1', 0)); port = s.getsockname()[1]; s.close()
         orbit_api.MC.update(host='127.0.0.1', port=port)
         self.assertEqual(orbit_api.mc_status(), {'online': False})
+
+
+# ---------------------------------------------------------------- Google sign-in + password reset
+def _is_prime(n, rnd):
+    if n % 2 == 0:
+        return n == 2
+    d, r = n - 1, 0
+    while d % 2 == 0:
+        d //= 2
+        r += 1
+    for _ in range(24):
+        x = pow(rnd.randrange(2, n - 1), d, n)
+        if x in (1, n - 1):
+            continue
+        for _ in range(r - 1):
+            x = pow(x, 2, n)
+            if x == n - 1:
+                break
+        else:
+            return False
+    return True
+
+
+def make_rsa(bits=1024, seed=7):
+    rnd = random.Random(seed)
+    def prime():
+        while True:
+            c = rnd.getrandbits(bits // 2) | (1 << (bits // 2 - 1)) | 1
+            if all(c % s for s in (3, 5, 7, 11, 13, 17, 19, 23)) and _is_prime(c, rnd):
+                return c
+    e = 65537
+    while True:
+        p_, q_ = prime(), prime()
+        phi = (p_ - 1) * (q_ - 1)
+        if p_ != q_ and phi % e:
+            return p_ * q_, e, pow(e, -1, phi)
+
+
+KEY = make_rsa()
+
+
+def b64u(raw):
+    return base64.urlsafe_b64encode(raw).rstrip(b'=').decode()
+
+
+def google_token(claims, kid='k1', key=KEY):
+    n, e, d = key
+    head = b64u(json.dumps({'alg': 'RS256', 'kid': kid}).encode())
+    body = b64u(json.dumps(claims).encode())
+    k = (n.bit_length() + 7) // 8
+    digest = orbit_api.SHA256_PREFIX + hashlib.sha256((head + '.' + body).encode()).digest()
+    em = b'\x00\x01' + b'\xff' * (k - 3 - len(digest)) + b'\x00' + digest
+    sig = pow(int.from_bytes(em, 'big'), d, n).to_bytes(k, 'big')
+    return head + '.' + body + '.' + b64u(sig)
+
+
+CID = 'test-client.apps.googleusercontent.com'
+
+
+def claims(sub='g-1', email='nova@example.com', **kw):
+    c = {'iss': 'https://accounts.google.com', 'aud': CID, 'sub': sub, 'email': email, 'email_verified': True,
+         'exp': int(time.time()) + 600, 'iat': int(time.time()), 'given_name': 'Nova'}
+    c.update(kw)
+    return c
+
+
+class LoginFeaturesTest(ApiTest):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.sent = []
+        orbit_api.MAILER['send'] = lambda to, subject, text: cls.sent.append((to, subject, text))
+        orbit_api.load_settings({'ORBIT_GOOGLE_CLIENT_ID': CID, 'ORBIT_SMTP_HOST': 'smtp.example.com', 'ORBIT_SMTP_USER': 'noreply@example.com',
+                                 'ORBIT_SMTP_PASS': 'x', 'ORBIT_SITE_URL': 'https://hub.example.com/'})
+        orbit_api._google_keys.update(at=time.time(), ttl=3600, keys={'k1': (KEY[0], KEY[1])})
+
+    @classmethod
+    def tearDownClass(cls):
+        orbit_api.load_settings({})
+        orbit_api._google_keys.update(at=0.0, ttl=0, keys={})
+        super().tearDownClass()
+
+    def wait_mail(self, count):
+        for _ in range(100):
+            if len(self.sent) >= count:
+                return self.sent[count - 1]
+            time.sleep(0.02)
+        self.fail('no email sent')
+
+    def test_features_reported(self):
+        s, b, _ = self.client().call('GET', '/api/auth/me')
+        self.assertEqual(b['features'], {'google': CID, 'emailReset': True})
+
+    def test_token_checks(self):
+        ok = orbit_api.verify_google_token(google_token(claims()), CID)
+        self.assertEqual(ok['sub'], 'g-1')
+        bad = [google_token(claims(aud='someone-else')), google_token(claims(iss='evil.example')),
+               google_token(claims(exp=int(time.time()) - 3600)), google_token(claims(email_verified=False)),
+               google_token(claims(), kid='unknown-kid'), google_token(claims(), key=make_rsa(seed=99))]
+        tampered = google_token(claims()).split('.')
+        tampered[1] = b64u(json.dumps(claims(sub='admin')).encode())
+        bad.append('.'.join(tampered))
+        orbit_api._google_keys['at'] = time.time()  # no network refresh for the unknown kid
+        for tok in bad:
+            with self.assertRaises(Exception):
+                orbit_api.verify_google_token(tok, CID, key_lookup=lambda kid: orbit_api._google_keys['keys'].get(kid))
+
+    def test_google_creates_then_signs_in(self):
+        c = self.client()
+        s, b, _ = c.call('POST', '/api/auth/google', {'credential': google_token(claims(sub='g-new', email='star.pilot@example.com'))})
+        self.assertEqual(s, 201, b)
+        u = b['user']
+        self.assertEqual((u['username'], u['displayName'], u['email'], u['google'], u['hasPassword']), ('star.pilot', 'Nova', 'star.pilot@example.com', True, False))
+        c2 = self.client()
+        s, b, _ = c2.call('POST', '/api/auth/google', {'credential': google_token(claims(sub='g-new', email='star.pilot@example.com'))})
+        self.assertEqual((s, b['user']['username'], b['created']), (200, 'star.pilot', False))
+        # no password sign-in for a Google-only account
+        s, b, _ = self.client().call('POST', '/api/auth/login', {'username': 'star.pilot', 'password': '!'})
+        self.assertEqual(s, 401)
+        self.assertIn('Google', b['error'])
+        # bad token
+        s, _, _ = self.client().call('POST', '/api/auth/google', {'credential': 'a.b.c'})
+        self.assertEqual(s, 401)
+
+    def test_google_username_clash_and_unconfirmed_email(self):
+        c = self.client()
+        self.assertEqual(c.call('POST', '/api/auth/register', {'username': 'orion', 'password': 'password123', 'email': 'orion@example.com'})[0], 201)
+        # Someone signs in with Google using that address: a new account (the email was never confirmed), which takes the email
+        g = self.client()
+        s, b, _ = g.call('POST', '/api/auth/google', {'credential': google_token(claims(sub='g-orion', email='orion@example.com'))})
+        self.assertEqual(s, 201, b)
+        self.assertEqual((b['user']['username'], b['user']['email']), ('orion2', 'orion@example.com'))
+        self.assertIsNone(c.call('GET', '/api/auth/me')[1]['user']['email'])
+
+    def test_connect_google_to_signed_in_account(self):
+        c = self.client()
+        c.call('POST', '/api/auth/register', {'username': 'vega_link', 'password': 'password123'})
+        s, b, _ = c.call('POST', '/api/auth/google', {'credential': google_token(claims(sub='g-vega', email='vega@example.com'))})
+        self.assertEqual((s, b.get('linked'), b['user']['username'], b['user']['email'], b['user']['google']), (200, True, 'vega_link', 'vega@example.com', True))
+        s, b, _ = self.client().call('POST', '/api/auth/google', {'credential': google_token(claims(sub='g-vega', email='vega@example.com'))})
+        self.assertEqual(b['user']['username'], 'vega_link')
+
+    def test_forgot_and_reset_password(self):
+        c = self.client()
+        c.call('POST', '/api/auth/register', {'username': 'lyra', 'password': 'oldpassword1', 'email': 'Lyra@Example.com'})
+        before = len(self.sent)
+        s, b, _ = self.client().call('POST', '/api/auth/forgot', {'login': 'lyra@example.com'})
+        self.assertEqual((s, b), (200, {'ok': True}))
+        to, subject, text = self.wait_mail(before + 1)
+        self.assertEqual(to, 'Lyra@Example.com')
+        token = text.split('https://hub.example.com/#reset=')[1].split()[0]
+        # unknown accounts get the same answer and no email
+        self.assertEqual(self.client().call('POST', '/api/auth/forgot', {'login': 'nobody-here'})[:2], (200, {'ok': True}))
+        time.sleep(0.1)
+        self.assertEqual(len(self.sent), before + 1)
+        r = self.client()
+        self.assertEqual(r.call('POST', '/api/auth/reset', {'token': token, 'password': 'short'})[0], 400)
+        s, b, _ = r.call('POST', '/api/auth/reset', {'token': token, 'password': 'newpassword1'})
+        self.assertEqual((s, b['user']['username'], b['user']['emailVerified']), (200, 'lyra', True))
+        self.assertEqual(r.call('POST', '/api/auth/reset', {'token': token, 'password': 'another-pass1'})[0], 400)  # single use
+        self.assertIsNone(c.call('GET', '/api/auth/me')[1]['user'])  # old sessions signed out
+        self.assertEqual(self.client().call('POST', '/api/auth/login', {'username': 'lyra', 'password': 'oldpassword1'})[0], 401)
+        self.assertEqual(self.client().call('POST', '/api/auth/login', {'username': 'LYRA@example.com', 'password': 'newpassword1'})[0], 200)
+        # a confirmed email now links to Google sign-in with the same address
+        s, b, _ = self.client().call('POST', '/api/auth/google', {'credential': google_token(claims(sub='g-lyra', email='lyra@example.com'))})
+        self.assertEqual((s, b['user']['username']), (200, 'lyra'))
+        with sqlite3.connect(self.db_path) as con:
+            self.assertEqual(con.execute('SELECT COUNT(*) FROM resets').fetchone()[0], 0)
+        con.close()
+
+    def test_change_email_and_password_need_current_password(self):
+        c = self.client()
+        c.call('POST', '/api/auth/register', {'username': 'mira', 'password': 'password123'})
+        self.assertEqual(c.call('PATCH', '/api/account', {'email': 'mira@example.com', 'password': 'wrong-pass'})[0], 401)
+        self.assertEqual(c.call('PATCH', '/api/account', {'email': 'not-an-email', 'password': 'password123'})[0], 400)
+        s, b, _ = c.call('PATCH', '/api/account', {'email': 'mira@example.com', 'password': 'password123'})
+        self.assertEqual((s, b['user']['email']), (200, 'mira@example.com'))
+        other = self.client()
+        s, b, _ = other.call('POST', '/api/auth/register', {'username': 'mira2', 'password': 'password123', 'email': 'MIRA@example.com'})
+        self.assertEqual((s, b.get('field')), (409, 'email'))
+        s, _, _ = c.call('PATCH', '/api/account', {'newPassword': 'brand-new-pass', 'password': 'password123'})
+        self.assertEqual(s, 200)
+        self.assertEqual(self.client().call('POST', '/api/auth/login', {'username': 'mira', 'password': 'brand-new-pass'})[0], 200)
+
+    def test_delete_google_only_account(self):
+        c = self.client()
+        c.call('POST', '/api/auth/google', {'credential': google_token(claims(sub='g-del', email='gone@example.com'))})
+        self.assertEqual(c.call('POST', '/api/account/delete', {'confirm': 'nope'})[0], 400)
+        self.assertEqual(c.call('POST', '/api/account/delete', {'confirm': 'gone'})[0], 200)
+
+
+class MigrationTest(unittest.TestCase):
+    def test_old_database_gets_new_columns(self):
+        with tempfile.TemporaryDirectory() as d:
+            path = os.path.join(d, 'old.db')
+            con = sqlite3.connect(path)
+            con.executescript("CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT NOT NULL UNIQUE COLLATE NOCASE, display_name TEXT NOT NULL,"
+                              " pass_hash TEXT NOT NULL, created_at INTEGER NOT NULL, last_login INTEGER);"
+                              " INSERT INTO users (username, display_name, pass_hash, created_at) VALUES ('old', 'Old', 'x', 1);")
+            con.close()
+            db = orbit_api.Database(path)
+            con = db.connect()
+            row = con.execute('SELECT * FROM users').fetchone()
+            self.assertEqual((row['username'], row['email'], row['email_verified'], row['google_sub']), ('old', None, 0, None))
+            con.close()
 
 
 if __name__ == '__main__':

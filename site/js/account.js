@@ -25,7 +25,7 @@ let meta = readMeta();
 const writeMeta = () => ls.set(META_KEY, JSON.stringify(meta));
 
 const listeners = new Set();
-let state = { ready: false, available: false, user: null, status: 'idle', error: '', lastSync: meta.syncedAt || 0, conflicts: null };
+let state = { ready: false, available: false, features: { google: null, emailReset: false }, user: null, status: 'idle', error: '', lastSync: meta.syncedAt || 0, conflicts: null };
 function set(patch) {
   state = { ...state, ...patch };
   listeners.forEach((fn) => { try { fn(state); } catch (e) { console.error(e); } });
@@ -229,7 +229,7 @@ export const Account = {
     });
     try {
       const r = await api('GET', '/auth/me');
-      set({ ready: true, available: true, user: r.user || null });
+      set({ ready: true, available: true, user: r.user || null, features: r.features || state.features });
       if (r.user) await pull();
     } catch {
       set({ ready: true, available: false });
@@ -245,10 +245,40 @@ export const Account = {
     markDirty();
   },
 
-  async signUp({ username, password, displayName }) {
-    const r = await api('POST', '/auth/register', { username, password, displayName });
+  async signUp({ username, password, displayName, email }) {
+    const r = await api('POST', '/auth/register', { username, password, displayName, email });
     set({ user: r.user, error: '' });
     await pull();
+    return r.user;
+  },
+
+  // Google sign-in (the ID token from Google's button). Signed in already: connects Google to this account.
+  async signInWithGoogle(credential) {
+    const wasSignedIn = !!state.user;
+    const r = await api('POST', '/auth/google', { credential });
+    set({ user: r.user, error: '' });
+    if (!wasSignedIn) await pull();
+    return r;
+  },
+
+  // Emails a reset link if the account has an email address (same answer either way)
+  async forgotPassword(login) {
+    await api('POST', '/auth/forgot', { login });
+  },
+
+  async resetPassword(token, password) {
+    const r = await api('POST', '/auth/reset', { token, password });
+    const switching = state.user && state.user.username !== r.user.username;
+    if (switching) { clearTimeout(pushTimer); clearLocalProgress(); }
+    set({ user: r.user, error: '' });
+    await pull();
+    return r.user;
+  },
+
+  // { email?, newPassword?, password (current) }
+  async updateAccount(changes) {
+    const r = await api('PATCH', '/account', changes);
+    set({ user: r.user });
     return r.user;
   },
 
@@ -274,8 +304,8 @@ export const Account = {
     return r.user;
   },
 
-  async deleteAccount(password) {
-    await api('POST', '/account/delete', { password });
+  async deleteAccount(password, confirm) {
+    await api('POST', '/account/delete', { password, confirm });
     clearTimeout(pushTimer);
     set({ user: null, status: 'idle', conflicts: null, error: '' });
     clearLocalProgress();

@@ -6,6 +6,9 @@ After=network.target
 Type=simple
 User=orbit-hub
 Group=orbit-hub
+# Optional sign-in settings: site address (written by deploy.sh) and Google / email settings (deploy/setup-login.sh)
+EnvironmentFile=-/etc/orbit-hub/site.env
+EnvironmentFile=-/etc/orbit-hub/login.env
 ExecStart=/usr/bin/python3 /opt/orbit-hub/orbit_api.py --host 127.0.0.1 --port 8787 --db /var/lib/orbit-hub/hub.db
 Restart=always
 RestartSec=2

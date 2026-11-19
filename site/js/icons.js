@@ -27,6 +27,8 @@ const LINE = {
   pencil: '<path d="M4 20l4.2-1 11-11a2.1 2.1 0 0 0-3-3l-11 11Z"/><path d="m14.5 6.5 3 3"/>',
   eraser: '<path d="m7 21-4.3-4.3a2.4 2.4 0 0 1 0-3.4l9.6-9.6a2.4 2.4 0 0 1 3.4 0l5.6 5.6a2.4 2.4 0 0 1 0 3.4L13 21"/><path d="M22 21H7M5 11l9 9"/>',
   trash: '<path d="M4 7h16M9.5 7V4h5v3M6 7l1 13h10l1-13"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
+  key: '<circle cx="8" cy="14" r="4"/><path d="m11 11 9-9M17 5l2.5 2.5M14.5 7.5 16.5 9.5"/>',
   eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/>',
   skip: '<path d="m5 5 9 7-9 7Z"/><path d="M18 5v14"/>',
   flag: '<path d="M5 21V4"/><path d="M5 4h12l-2.5 4L17 12H5"/>',

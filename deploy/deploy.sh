@@ -91,6 +91,13 @@ EOF
   fi
 fi
 
+# Address used in password reset emails
+if [ -n "$DOMAIN" ] && [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then SITE_URL="https://$DOMAIN"
+elif [ -n "$DOMAIN" ]; then SITE_URL="http://$DOMAIN"
+else SITE_URL="http://$(curl -4 -s ifconfig.me)"; fi
+printf 'ORBIT_SITE_URL=%s\n' "$SITE_URL" > "$CONF/site.env"
+systemctl restart orbit-hub-api
+
 sleep 1
 if curl -fsS http://127.0.0.1:8787/api/health >/dev/null; then
   echo "Accounts API: running"
@@ -101,4 +108,8 @@ if [ -n "$DOMAIN" ] && [ -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; the
   echo "Done: https://$DOMAIN"
 else
   echo "Done: http://$(curl -4 -s ifconfig.me)"
+fi
+if [ ! -s "$CONF/login.env" ]; then
+  echo "Optional: turn on Google sign-in and password reset emails with:"
+  echo "  curl -fsSL https://raw.githubusercontent.com/gamershoam-web/V1/$BRANCH/deploy/setup-login.sh -o /tmp/setup-login.sh && bash /tmp/setup-login.sh"
 fi
