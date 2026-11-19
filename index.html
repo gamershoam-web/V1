@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en" class="is-loading">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Nocturne — Immersive 3D &amp; WebGL Studio</title>
+  <meta name="description" content="Nocturne is an independent studio designing and engineering real-time 3D websites, product launches and brand worlds for teams who refuse to blend in." />
+  <meta name="theme-color" content="#0b0b0c" />
+  <meta name="color-scheme" content="dark" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Nocturne — Immersive 3D & WebGL Studio" />
+  <meta property="og:description" content="Real-time 3D websites, product launches and brand worlds for teams who refuse to blend in." />
+  <meta property="og:image" content="/media/og-image.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="preload" href="/media/chrome.webp" as="image" type="image/webp" />
+  <script type="module" src="/src/main.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- ───────────── Preloader ───────────── -->
+  <div class="loader" id="loader" aria-hidden="true">
+    <div class="loader__top">
+      <span class="mono">Nocturne&nbsp;Studio</span>
+      <span class="mono">Loading experience</span>
+    </div>
+    <div class="loader__mark">
+      <span class="loader__word"><span>Light</span></span>
+      <span class="loader__word loader__word--serif"><span>&amp;</span></span>
+      <span class="loader__word"><span>Depth</span></span>
+    </div>
+    <div class="loader__bottom">
+      <div class="loader__bar"><span></span></div>
+      <div class="loader__count"><span class="loader__num">0</span><span class="loader__pct">%</span></div>
+    </div>
+  </div>
+
+  <!-- ───────────── Cursor ───────────── -->
+  <div class="cursor" aria-hidden="true">
+    <div class="cursor__ring"><span class="cursor__label"></span></div>
+    <div class="cursor__dot"></div>
+  </div>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scroll-progress" aria-hidden="true"><span></span></div>
+
+  <!-- ───────────── Header ───────────── -->
+  <header class="header" id="header">
+    <a href="#top" class="header__logo" data-scroll-to aria-label="Nocturne — back to top">
+      <svg class="header__mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="10.5" fill="none" stroke="currentColor" stroke-width="3"/><circle cx="20.5" cy="11.5" r="3.4" fill="var(--ember)"/></svg>
+      <span>Nocturne<sup>®</sup></span>
+    </a>
+    <nav class="header__nav" aria-label="Primary">
+      <a href="#work" data-scroll-to class="roll"><span data-text="Work">Work</span></a>
+      <a href="#studio" data-scroll-to class="roll"><span data-text="Studio">Studio</span></a>
+      <a href="#services" data-scroll-to class="roll"><span data-text="Services">Services</span></a>
+      <a href="#archive" data-scroll-to class="roll"><span data-text="Archive">Archive</span></a>
+    </nav>
+    <div class="header__right">
+      <span class="header__time mono" aria-label="Studio local time"><span class="js-clock">--:--</span> LIS</span>
+      <a href="#contact" data-scroll-to class="pill" data-magnetic>
+        <span class="pill__dot"></span><span class="roll"><span data-text="Start a project">Start a project</span></span>
+      </a>
+      <button class="burger" aria-label="Open menu" aria-expanded="false" aria-controls="menu"><span></span><span></span></button>
+    </div>
+  </header>
+
+  <div class="menu" id="menu" aria-hidden="true">
+    <nav class="menu__nav" aria-label="Mobile">
+      <a href="#work" data-scroll-to><span class="mono">01</span>Work</a>
+      <a href="#studio" data-scroll-to><span class="mono">02</span>Studio</a>
+      <a href="#services" data-scroll-to><span class="mono">03</span>Services</a>
+      <a href="#archive" data-scroll-to><span class="mono">04</span>Archive</a>
+      <a href="#contact" data-scroll-to><span class="mono">05</span>Contact</a>
+    </nav>
+    <div class="menu__foot mono">
+      <a href="mailto:hello@nocturne.studio">hello@nocturne.studio</a>
+      <span>Lisbon · Berlin · Remote</span>
+    </div>
+  </div>
+
+  <main id="main">
+    <!-- ───────────── Hero ───────────── -->
+    <section class="hero" id="top">
+      <canvas class="hero__canvas webgl" aria-hidden="true"></canvas>
+      <img class="hero__fallback" src="/media/chrome.webp" alt="" aria-hidden="true" />
+      <div class="hero__glow" aria-hidden="true"></div>
+      <div class="hero__inner">
+        <div class="hero__meta">
+          <p class="mono hero__fade">Immersive 3D &amp; WebGL Studio</p>
+          <p class="mono hero__fade hero__meta-r">Independent · Est. 2017<br />Lisbon / Worldwide</p>
+        </div>
+        <div class="hero__mid">
+          <h1 class="hero__title">
+            <span class="line"><span>We build</span></span>
+            <span class="line"><span><em class="serif">worlds</em> you can</span></span>
+            <span class="line"><span>scroll through.</span></span>
+          </h1>
+          <div class="hero__aside hero__fade">
+            <p>We design and engineer real-time 3D websites, product launches and brand worlds for teams who refuse to blend in.</p>
+            <a href="#work" data-scroll-to class="link-arrow"><span>Explore our work</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></a>
+          </div>
+        </div>
+        <div class="hero__word" aria-hidden="true">
+          <span>N</span><span>O</span><span>C</span><span>T</span><span>U</span><span>R</span><span>N</span><span>E</span>
+        </div>
+        <div class="hero__foot hero__fade">
+          <span class="mono">©2026</span>
+          <span class="scroll-cue mono"><i></i>Scroll to explore</span>
+          <span class="mono">Real-time · Since 2017</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── Manifesto ───────────── -->
+    <section class="manifesto section" id="studio">
+      <div class="wrap">
+        <p class="label mono"><span>(01)</span> Manifesto</p>
+        <p class="manifesto__text js-words">
+          The web is no longer a page. It is a <em class="serif">space</em> — and we build it like one. Light, depth, motion and sound, composed with intent, so every scroll feels like a <em class="serif">discovery</em> and every interaction leaves a trace.
+        </p>
+        <div class="manifesto__foot">
+          <p class="mono">Studio of 24 designers, 3D artists &amp; creative engineers</p>
+          <a href="#services" data-scroll-to class="link-arrow"><span>What we do</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── 3D tunnel ───────────── -->
+    <section class="journey" id="journey" aria-label="The journey">
+      <div class="journey__pin">
+        <canvas class="journey__canvas webgl" aria-hidden="true"></canvas>
+        <div class="journey__fallback" aria-hidden="true">
+          <img src="/media/monolith-sm.webp" alt="" loading="lazy" /><img src="/media/eclipse-sm.webp" alt="" loading="lazy" /><img src="/media/arches-sm.webp" alt="" loading="lazy" />
+        </div>
+        <p class="label mono journey__label"><span>(02)</span> The journey</p>
+        <div class="journey__phrases">
+          <h2 class="journey__phrase"><span class="mono">On scroll</span>An infinite universe <em class="serif">of moments unfolding</em></h2>
+          <h2 class="journey__phrase"><span class="mono">Chapter II</span>Every frame <em class="serif">is a decision</em></h2>
+          <h2 class="journey__phrase"><span class="mono">Chapter III</span>Built to be <em class="serif">remembered</em></h2>
+        </div>
+        <div class="journey__hud mono">
+          <span>Depth <b class="js-depth">000</b>m</span>
+          <span class="journey__track"><i></i></span>
+          <span>11 worlds</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── Fragments strip (light) ───────────── -->
+    <section class="fragments section" data-header="light" aria-label="Process">
+      <div class="wrap fragments__head">
+        <p class="label mono"><span>(03)</span> Process</p>
+        <p class="fragments__text" data-split>Ideas start as fragments — a texture, a sound, a feeling. We arrange them in sequence until they become a system that moves with purpose.</p>
+      </div>
+      <div class="fragments__strip" aria-hidden="true">
+        <div class="fragments__track">
+          <figure><img src="/media/arches-sm.webp" alt="" loading="lazy" /></figure>
+          <figure><img src="/media/chrome-sm.webp" alt="" loading="lazy" /></figure>
+          <figure><img src="/media/dunes-sm.webp" alt="" loading="lazy" /></figure>
+          <figure><img src="/media/eclipse-sm.webp" alt="" loading="lazy" /></figure>
+          <figure><img src="/media/spheres-sm.webp" alt="" loading="lazy" /></figure>
+          <figure><img src="/media/glass-sm.webp" alt="" loading="lazy" /></figure>
+          <figure><img src="/media/warp-sm.webp" alt="" loading="lazy" /></figure>
+          <figure><img src="/media/monolith-sm.webp" alt="" loading="lazy" /></figure>
+          <figure><img src="/media/ridges-sm.webp" alt="" loading="lazy" /></figure>
+          <figure><img src="/media/ripple-sm.webp" alt="" loading="lazy" /></figure>
+        </div>
+      </div>
+      <div class="wrap fragments__steps">
+        <div class="step" data-reveal><span class="mono">01</span><h3>Discover</h3><p>Workshops, research and a sharp point of view on what your audience should feel.</p></div>
+        <div class="step" data-reveal><span class="mono">02</span><h3>Compose</h3><p>Art direction, 3D look-development and motion language prototyped in the browser.</p></div>
+        <div class="step" data-reveal><span class="mono">03</span><h3>Engineer</h3><p>Production-grade WebGL, tuned for every device and handed over with care.</p></div>
+      </div>
+    </section>
+
+    <!-- ───────────── Work list ───────────── -->
+    <section class="work section" id="work">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="label mono"><span>(04)</span> Selected work</p>
+          <h2 class="display" data-split>Selected <em class="serif">work</em></h2>
+          <p class="section-head__count mono">2024 — 2026 · (06)</p>
+        </div>
+        <ul class="work__list">
+          <li class="work__item" data-index="0" data-cursor="View">
+            <a href="#archive" data-scroll-to data-slide="1">
+              <span class="work__num mono">01</span>
+              <span class="work__title">Solace Audio</span>
+              <span class="work__tags">Product launch · WebGL</span>
+              <span class="work__year mono">2026</span>
+              <img class="work__thumb" src="/media/glass-sm.webp" alt="Refractive glass torus artwork for Solace Audio" loading="lazy" />
+            </a>
+          </li>
+          <li class="work__item" data-index="1" data-cursor="View">
+            <a href="#archive" data-scroll-to data-slide="5">
+              <span class="work__num mono">02</span>
+              <span class="work__title">Meridian Atlas</span>
+              <span class="work__tags">Architecture · Art direction</span>
+              <span class="work__year mono">2026</span>
+              <img class="work__thumb" src="/media/arches-sm.webp" alt="Sunlit arcade render for Meridian Atlas" loading="lazy" />
+            </a>
+          </li>
+          <li class="work__item" data-index="2" data-cursor="View">
+            <a href="#archive" data-scroll-to data-slide="2">
+              <span class="work__num mono">03</span>
+              <span class="work__title">Umbra Records</span>
+              <span class="work__tags">Music label · Brand world</span>
+              <span class="work__year mono">2025</span>
+              <img class="work__thumb" src="/media/eclipse-sm.webp" alt="Eclipse artwork for Umbra Records" loading="lazy" />
+            </a>
+          </li>
+          <li class="work__item" data-index="3" data-cursor="View">
+            <a href="#archive" data-scroll-to data-slide="3">
+              <span class="work__num mono">04</span>
+              <span class="work__title">Basalt Capital</span>
+              <span class="work__tags">Fintech · Website</span>
+              <span class="work__year mono">2025</span>
+              <img class="work__thumb" src="/media/monolith-sm.webp" alt="Monolith render for Basalt Capital" loading="lazy" />
+            </a>
+          </li>
+          <li class="work__item" data-index="4" data-cursor="View">
+            <a href="#archive" data-scroll-to data-slide="4">
+              <span class="work__num mono">05</span>
+              <span class="work__title">Sahra Expeditions</span>
+              <span class="work__tags">Travel · Immersive story</span>
+              <span class="work__year mono">2024</span>
+              <img class="work__thumb" src="/media/dunes-sm.webp" alt="Ember dunes landscape for Sahra Expeditions" loading="lazy" />
+            </a>
+          </li>
+          <li class="work__item" data-index="5" data-cursor="View">
+            <a href="#archive" data-scroll-to data-slide="0">
+              <span class="work__num mono">06</span>
+              <span class="work__title">Iridia Labs</span>
+              <span class="work__tags">AI research · 3D identity</span>
+              <span class="work__year mono">2024</span>
+              <img class="work__thumb" src="/media/chrome-sm.webp" alt="Iridescent chrome sculpture for Iridia Labs" loading="lazy" />
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="work__preview" aria-hidden="true">
+        <div class="work__preview-inner">
+          <img src="/media/glass-sm.webp" alt="" loading="lazy" />
+          <img src="/media/arches-sm.webp" alt="" loading="lazy" />
+          <img src="/media/eclipse-sm.webp" alt="" loading="lazy" />
+          <img src="/media/monolith-sm.webp" alt="" loading="lazy" />
+          <img src="/media/dunes-sm.webp" alt="" loading="lazy" />
+          <img src="/media/chrome-sm.webp" alt="" loading="lazy" />
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── Particle dissolve ───────────── -->
+    <section class="dissolve" id="craft" aria-label="Craft">
+      <div class="dissolve__pin">
+        <canvas class="dissolve__canvas webgl" aria-hidden="true"></canvas>
+        <img class="dissolve__fallback" src="/media/dunes.webp" alt="" aria-hidden="true" loading="lazy" />
+        <p class="label mono dissolve__label"><span>(05)</span> Craft</p>
+        <h2 class="dissolve__title dissolve__title--a">Beyond <em class="serif">the surface</em></h2>
+        <h2 class="dissolve__title dissolve__title--b">Every pixel is a <em class="serif">particle of intent</em></h2>
+        <p class="dissolve__hint mono">Keep scrolling</p>
+      </div>
+    </section>
+
+    <!-- ───────────── Kinetic type (light) ───────────── -->
+    <section class="kinetic" data-header="light" aria-label="Make it move">
+      <div class="kinetic__row kinetic__row--a"><div class="stack" data-text="MAKE IT"></div></div>
+      <div class="wrap kinetic__copy">
+        <p class="mono">(06) Motion</p>
+        <p>Motion is our native language. We choreograph type, image and interface so brands don't just appear — <em class="serif">they arrive</em>.</p>
+      </div>
+      <div class="kinetic__row kinetic__row--b"><div class="stack" data-text="MOVE"></div></div>
+      <h2 class="visually-hidden">Make it move</h2>
+    </section>
+
+    <!-- ───────────── 3D product (light) ───────────── -->
+    <section class="product" id="product" data-header="light" aria-label="Digital products">
+      <div class="product__pin">
+        <canvas class="product__canvas webgl" aria-hidden="true"></canvas>
+        <img class="product__fallback" src="/media/spheres.webp" alt="" aria-hidden="true" loading="lazy" />
+        <div class="product__head">
+          <p class="label mono"><span>(07)</span> Product</p>
+          <h2 class="product__title">Digital<br />products</h2>
+          <p class="product__sub mono">For contemporary brands &amp; ambitious launches</p>
+        </div>
+        <div class="product__steps">
+          <article class="product__step">
+            <span class="mono">01 / Strategy</span>
+            <h3>We start with a question, <em class="serif">not a template.</em></h3>
+            <p>Research, positioning and a clear idea of what the experience must make people feel — before a single pixel moves.</p>
+          </article>
+          <article class="product__step">
+            <span class="mono">02 / Design</span>
+            <h3>Form follows <em class="serif">feeling.</em></h3>
+            <p>Art direction, 3D modelling and interface design, crafted as one continuous language across every touchpoint.</p>
+          </article>
+          <article class="product__step">
+            <span class="mono">03 / Engineering</span>
+            <h3>Real-time, at <em class="serif">sixty frames</em> per second.</h3>
+            <p>Performant WebGL, accessible markup and a clean handover your team will actually enjoy maintaining.</p>
+          </article>
+        </div>
+        <div class="product__spec mono">
+          <span>Solace One</span><span>Sound object · Ceramic &amp; anodised aluminium</span>
+        </div>
+        <div class="product__progress"><i></i></div>
+      </div>
+    </section>
+
+    <!-- ───────────── Fluid hover (light) ───────────── -->
+    <section class="fluid" data-header="light" aria-label="Interaction">
+      <div class="fluid__stage" data-cursor-hide>
+        <canvas class="fluid__canvas" aria-hidden="true"></canvas>
+        <div class="fluid__top mono"><span>(08) Interaction</span><span class="fluid__hint">Move your cursor ↘</span></div>
+        <h2 class="fluid__title">
+          <span>Design that</span>
+          <span>reacts to</span>
+          <span>every touch</span>
+        </h2>
+        <div class="fluid__bottom">
+          <p>Interfaces that respond, breathe and flow. Every hover, drag and tap is an opportunity to delight.</p>
+          <span class="mono">Real-time metaball field · 60fps</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── Services ───────────── -->
+    <section class="services section" id="services">
+      <div class="wrap services__grid">
+        <div class="services__aside">
+          <p class="label mono"><span>(09)</span> Services</p>
+          <h2 class="display" data-split>What we <em class="serif">do</em></h2>
+          <p class="services__intro">Small senior teams, embedded with yours. From the first spark to launch day and beyond.</p>
+        </div>
+        <div class="services__list">
+          <details class="service" open>
+            <summary><span class="mono">01</span><h3>Immersive websites</h3><i class="service__icon" aria-hidden="true"></i></summary>
+            <div class="service__body"><p>Award-calibre marketing sites with real-time 3D, scroll storytelling and buttery motion — fast on every device.</p><ul class="tags mono"><li>WebGL</li><li>Three.js</li><li>GSAP</li><li>Headless CMS</li></ul></div>
+          </details>
+          <details class="service">
+            <summary><span class="mono">02</span><h3>3D &amp; motion design</h3><i class="service__icon" aria-hidden="true"></i></summary>
+            <div class="service__body"><p>Product renders, animated identities and cinematic loops that hold up from a phone screen to a stadium display.</p><ul class="tags mono"><li>Modelling</li><li>Look-dev</li><li>Animation</li><li>Rendering</li></ul></div>
+          </details>
+          <details class="service">
+            <summary><span class="mono">03</span><h3>Product &amp; interface</h3><i class="service__icon" aria-hidden="true"></i></summary>
+            <div class="service__body"><p>Design systems and interfaces for apps and platforms, with motion and accessibility baked in from day one.</p><ul class="tags mono"><li>UX</li><li>UI</li><li>Prototyping</li><li>Design systems</li></ul></div>
+          </details>
+          <details class="service">
+            <summary><span class="mono">04</span><h3>Creative technology</h3><i class="service__icon" aria-hidden="true"></i></summary>
+            <div class="service__body"><p>Configurators, installations and interactive experiments that push what a browser can do.</p><ul class="tags mono"><li>R&amp;D</li><li>WebXR</li><li>Shaders</li><li>Real-time data</li></ul></div>
+          </details>
+        </div>
+      </div>
+      <div class="wrap stats">
+        <div class="stat"><b data-count="120">0</b><sup>+</sup><span class="mono">Launches shipped</span></div>
+        <div class="stat"><b data-count="38">0</b><span class="mono">International awards</span></div>
+        <div class="stat"><b data-count="14">0</b><span class="mono">Countries served</span></div>
+        <div class="stat"><b data-count="98">0</b><sup>%</sup><span class="mono">Clients who return</span></div>
+      </div>
+    </section>
+
+    <!-- ───────────── Archive slider ───────────── -->
+    <section class="archive section" id="archive" aria-roledescription="carousel" aria-label="Archive — studies in light and form">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="label mono"><span>(10)</span> Archive</p>
+          <h2 class="display" data-split>Studies in <em class="serif">light &amp; form</em></h2>
+        </div>
+        <div class="slider" tabindex="0" data-cursor="Drag">
+          <div class="slider__count" aria-hidden="true">
+            <span class="slider__cur"><span>01</span></span><span class="slider__sep">/</span><span class="slider__total">11</span>
+          </div>
+          <div class="slider__frame">
+            <div class="slider__slides"></div>
+          </div>
+          <div class="slider__info">
+            <div class="slider__caption" aria-live="polite"><h3 class="slider__name">Iridescent Loop</h3><p class="mono slider__cat">Real-time shader · 2026</p></div>
+            <div class="slider__nav">
+              <button class="slider__btn" data-dir="-1" aria-label="Previous slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+              <button class="slider__btn" data-dir="1" aria-label="Next slide"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button>
+            </div>
+          </div>
+          <div class="slider__thumbs" role="tablist" aria-label="Choose slide"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── Clients marquee ───────────── -->
+    <section class="clients" aria-label="Clients">
+      <p class="wrap label mono"><span>(11)</span> Trusted by teams at</p>
+      <div class="marquee">
+        <div class="marquee__track">
+          <span>Solace</span><i>✦</i><span class="serif">Meridian</span><i>✦</i><span>Umbra</span><i>✦</i><span class="serif">Basalt</span><i>✦</i><span>Sahra</span><i>✦</i><span class="serif">Iridia</span><i>✦</i><span>Halden</span><i>✦</i><span class="serif">Nordlys</span><i>✦</i>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── Contact ───────────── -->
+    <section class="contact" id="contact">
+      <div class="wrap">
+        <p class="label mono"><span>(12)</span> Contact</p>
+        <h2 class="contact__title" data-split>Let's build something <em class="serif">unreal.</em></h2>
+        <div class="contact__row">
+          <a href="mailto:hello@nocturne.studio?subject=New%20project" class="contact__cta" data-magnetic data-cursor="Write">
+            <span>Start a<br />project</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M8 7h9v9" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+          </a>
+          <div class="contact__info">
+            <div>
+              <p class="mono">New business</p>
+              <a class="contact__mail" href="mailto:hello@nocturne.studio">hello@nocturne.studio</a>
+              <button class="copy mono" data-copy="hello@nocturne.studio">Copy email</button>
+            </div>
+            <div>
+              <p class="mono">Studios</p>
+              <p>Lisbon · Berlin<br />Remote, worldwide</p>
+            </div>
+            <div>
+              <p class="mono">Follow</p>
+              <ul class="socials">
+                <li><a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" class="roll"><span data-text="Instagram">Instagram</span></a></li>
+                <li><a href="https://www.behance.net/" target="_blank" rel="noopener noreferrer" class="roll"><span data-text="Behance">Behance</span></a></li>
+                <li><a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" class="roll"><span data-text="LinkedIn">LinkedIn</span></a></li>
+                <li><a href="https://dribbble.com/" target="_blank" rel="noopener noreferrer" class="roll"><span data-text="Dribbble">Dribbble</span></a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <footer class="footer">
+        <div class="wrap footer__row mono">
+          <span>© 2026 Nocturne Studio</span>
+          <span>Local time <span class="js-clock">--:--</span></span>
+          <a href="#top" data-scroll-to class="roll"><span data-text="Back to top ↑">Back to top ↑</span></a>
+        </div>
+        <div class="footer__word" aria-hidden="true">NOCTURNE</div>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>
