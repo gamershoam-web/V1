@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V1 Settings</title>
+<link rel="stylesheet" href="assets/v1.css">
+<style>
+.shell{position:absolute;inset:40px 0 0 0;display:grid;grid-template-columns:220px minmax(0,1fr)}
+nav{padding:18px 12px;display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--line)}
+nav .brand{font-family:var(--display);font-stretch:125%;font-weight:850;font-size:22px;letter-spacing:-.01em;padding:4px 12px 18px}
+nav button{display:flex;align-items:center;gap:10px;border:0;background:transparent;border-radius:9px;padding:9px 12px;text-align:left;color:var(--muted);font-size:14px;position:relative;transition:background .2s,color .2s}
+nav button:hover{background:#ffffff08;color:var(--fg)}
+nav button[aria-current="page"]{background:var(--panel-2);color:var(--fg)}
+nav button[aria-current="page"]::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--accent)}
+nav svg{width:16px;height:16px;flex:none}
+nav .foot{margin-top:auto;padding:0 12px}
+main{position:relative;overflow:hidden}
+.panel{position:absolute;inset:0;overflow-y:auto;padding:26px 40px 40px;display:flex;flex-direction:column;gap:18px;opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .35s ease,transform .45s var(--ease),visibility 0s .35s}
+.panel.on{opacity:1;visibility:visible;transform:none;transition:opacity .35s ease,transform .45s var(--ease)}
+.panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.panel .h{font-size:34px;margin:0}
+.group{display:flex;flex-direction:column;gap:8px;max-width:760px}
+.preview{position:relative;flex:none;width:100%;border-radius:14px;overflow:hidden;border:1px solid var(--line-2);aspect-ratio:16/7;max-width:760px;background:#05080d}
+.panel > *{flex-shrink:0}
+.preview canvas{position:absolute;inset:0;width:100%;height:100%;display:block;transition:opacity .5s}
+.preview .still{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity .5s}
+.preview.static .still{opacity:1}
+.preview.static canvas{opacity:0}
+.preview .cap{position:absolute;left:14px;bottom:12px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#c9d6e4;text-shadow:0 1px 8px #000}
+.row{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end}
+.act{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 16px;align-items:center;padding:14px 16px;border-radius:12px;background:var(--panel-2);border:1px solid var(--line)}
+.act span{font-weight:500}
+.act small{grid-column:1;color:var(--muted);font-size:12.5px}
+.act > .btn{grid-row:1/3;grid-column:2}
+.confirm{grid-column:1/-1;margin-top:10px;padding:12px;border-radius:10px;border:1px solid color-mix(in srgb,var(--bad) 45%,transparent);background:color-mix(in srgb,var(--bad) 8%,transparent);display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px}
+.confirm p{margin:0;flex:1 1 260px;color:#ffd5db}
+dl{display:grid;grid-template-columns:160px minmax(0,1fr);gap:10px 16px;margin:0;max-width:760px}
+dt{color:var(--muted)}
+dd{margin:0;font-family:var(--mono);font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="titlebar">
+    <div class="drag"></div>
+    <div class="name"><i></i>V1 Settings</div>
+    <div class="wctl">
+      <button type="button" data-win="min" aria-label="Minimize"><svg viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor"/></svg></button>
+      <button type="button" class="x" data-win="close" aria-label="Close"><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor"/></svg></button>
+    </div>
+  </div>
+
+  <div class="shell">
+    <nav aria-label="Sections">
+      <div class="brand">V1</div>
+      <button type="button" data-p="wallpaper" aria-current="page"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="9" rx="1.5"/><path d="M5 14h6"/></svg>Wallpaper</button>
+      <button type="button" data-p="appearance"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6"/><path d="M8 2a6 6 0 000 12z" fill="currentColor"/></svg>Appearance</button>
+      <button type="button" data-p="maintenance"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2.5 8a5.5 5.5 0 109.6-3.6M12.5 1.5v3h-3"/></svg>Undo &amp; maintenance</button>
+      <button type="button" data-p="about"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="6"/><path d="M8 7v4M8 5v.01"/></svg>About</button>
+      <div class="foot note" id="ver">V1</div>
+    </nav>
+
+    <main>
+      <!-- wallpaper -->
+      <section class="panel on" id="p-wallpaper">
+        <header><div class="h">Wallpaper</div><span class="pill" id="wstatus">Off</span></header>
+        <div class="preview" id="preview">
+          <canvas id="gl"></canvas>
+          <div class="still" id="still"></div>
+          <span class="cap" id="cap">Live preview</span>
+        </div>
+        <div class="group">
+          <div class="opt"><span>Live wallpaper</span><small id="livehint">Animates your desktop. Turn it off and the same picture stays as a still wallpaper.</small><button type="button" class="sw" role="switch" id="sw-live" aria-checked="false" aria-label="Live wallpaper"></button></div>
+        </div>
+        <div class="group">
+          <p class="label">Style</p>
+          <div class="styles" id="styles" style="max-width:560px">
+            <button type="button" class="style" data-style="chrome" aria-pressed="false"><img src="assets/thumbs/chrome.jpg" alt=""><span>Chrome</span></button>
+            <button type="button" class="style" data-style="mono" aria-pressed="false"><img src="assets/thumbs/mono.jpg" alt=""><span>Mono</span></button>
+            <button type="button" class="style" data-style="void" aria-pressed="false"><img src="assets/thumbs/void.jpg" alt=""><span>Void</span></button>
+          </div>
+        </div>
+        <div class="group">
+          <div class="row">
+            <div><p class="label">Frame rate</p><div class="seg" id="seg-fps"><button type="button" data-v="30" aria-pressed="true">30 fps</button><button type="button" data-v="60" aria-pressed="false">60 fps</button></div></div>
+          </div>
+          <div class="opt"><span>Pause on battery</span><small>Shows a still frame while your laptop is unplugged.</small><button type="button" class="sw" role="switch" id="sw-battery" aria-checked="true" aria-label="Pause on battery"></button></div>
+          <p class="note">Live wallpaper stops drawing whenever a window is maximized or fullscreen, and while the PC is locked. 30 fps uses about half the GPU time of 60.</p>
+        </div>
+      </section>
+
+      <!-- appearance -->
+      <section class="panel" id="p-appearance">
+        <header><div class="h">Appearance</div></header>
+        <div class="group">
+          <p class="label">Accent</p>
+          <div class="swatches" id="swatches">
+            <button type="button" style="--c:#27c6ff" data-c="#27c6ff" aria-label="Cyan" aria-pressed="true"></button>
+            <button type="button" style="--c:#c6ff3d" data-c="#c6ff3d" aria-label="Lime" aria-pressed="false"></button>
+            <button type="button" style="--c:#ff6a5c" data-c="#ff6a5c" aria-label="Coral" aria-pressed="false"></button>
+            <button type="button" style="--c:#b48cff" data-c="#b48cff" aria-label="Lilac" aria-pressed="false"></button>
+            <button type="button" style="--c:#f2f4f7" data-c="#f2f4f7" aria-label="White" aria-pressed="false"></button>
+          </div>
+        </div>
+        <div class="group"><div class="row">
+          <div><p class="label">Theme</p><div class="seg" id="seg-theme"><button type="button" data-v="dark" aria-pressed="true">Dark</button><button type="button" data-v="light" aria-pressed="false">Light</button></div></div>
+          <div><p class="label">Taskbar</p><div class="seg" id="seg-taskbar"><button type="button" data-v="center" aria-pressed="true">Center</button><button type="button" data-v="left" aria-pressed="false">Left</button></div></div>
+          <div><p class="label">Transparency</p><div class="seg" id="seg-transparency"><button type="button" data-v="on" aria-pressed="true">On</button><button type="button" data-v="off" aria-pressed="false">Off</button></div></div>
+        </div></div>
+        <div class="group" style="flex-direction:row;align-items:center;gap:12px">
+          <button class="btn" type="button" id="apply-look">Apply</button>
+          <span class="note" id="look-note">Changes apply to your account straight away.</span>
+        </div>
+      </section>
+
+      <!-- maintenance -->
+      <section class="panel" id="p-maintenance">
+        <header><div class="h">Undo &amp; maintenance</div></header>
+        <div class="group">
+          <div class="act"><span>Run V1 Setup again</span><small>Pick a different profile or change what stays. Needs administrator approval.</small><button class="btn ghost" type="button" id="rerun">Open setup</button></div>
+          <div class="act" id="undo-row"><span>Undo all V1 changes</span><small>Restores every setting, service and task V1 changed, from the record saved before setup.</small><button class="btn ghost" type="button" id="undo">Undo changes</button>
+            <div class="confirm" id="confirm" hidden>
+              <p>Windows settings go back to how they were before V1. Removed apps stay removed, and you can reinstall them from the Microsoft Store. A restart finishes the undo.</p>
+              <button class="btn danger small" type="button" id="undo-yes">Undo everything</button>
+              <button class="btn ghost small" type="button" id="undo-no">Cancel</button>
+            </div>
+          </div>
+          <div class="act"><span>Logs</span><small>Every change V1 makes is written here, one line per step.</small><button class="btn ghost" type="button" id="logs">Open folder</button></div>
+        </div>
+      </section>
+
+      <!-- about -->
+      <section class="panel" id="p-about">
+        <header><div class="h">About</div></header>
+        <dl id="about"></dl>
+        <p class="note" style="max-width:620px">V1 changes settings on a genuine Windows 11 install. It never disables Microsoft Defender or security updates, and every change it makes is recorded so it can be undone.</p>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="assets/bridge.js"></script>
+<script src="assets/chrome.js"></script>
+<script>
+(function () {
+"use strict";
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var esc = function (s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function toast(msg, err) {
+  var t = $("#toast"); t.textContent = msg; t.classList.toggle("err", !!err); t.classList.add("show");
+  clearTimeout(toast.h); toast.h = setTimeout(function () { t.classList.remove("show"); }, 3200);
+}
+
+/* ---------- navigation ---------- */
+var panel = "wallpaper";
+function show(p) {
+  panel = p;
+  $$("nav [data-p]").forEach(function (b) { if (b.dataset.p === p) { b.setAttribute("aria-current", "page"); } else { b.removeAttribute("aria-current"); } });
+  $$(".panel").forEach(function (s) { s.classList.toggle("on", s.id === "p-" + p); });
+  updatePreview();
+}
+$$("nav [data-p]").forEach(function (b) { b.addEventListener("click", function () { show(b.dataset.p); }); });
+
+/* ---------- wallpaper ---------- */
+var wp = { enabled: false, style: "chrome", fps: 30, pauseOnBattery: true, status: "off" };
+var gl = V1Chrome($("#gl"), { cx: 0.42, cy: 0.0, size: 1.55, fps: 30, scale: 0.8 });
+var saving = false, queued = null;
+
+function renderWall() {
+  $("#sw-live").setAttribute("aria-checked", String(wp.enabled));
+  $("#sw-live").disabled = wp.style === "void";
+  $("#livehint").textContent = wp.style === "void" ? "Void is a still wallpaper. Pick Chrome or Mono to animate it." :
+    "Animates your desktop. Turn it off and the same picture stays as a still wallpaper.";
+  $$("#styles .style").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.style === wp.style)); });
+  $$("#seg-fps button").forEach(function (b) { b.setAttribute("aria-pressed", String(+b.dataset.v === wp.fps)); });
+  $("#sw-battery").setAttribute("aria-checked", String(wp.pauseOnBattery));
+  var st = $("#wstatus");
+  var s = wp.style === "void" || !wp.enabled ? "off" : (wp.status || "running");
+  st.className = "pill" + (s === "running" ? " on" : s === "paused" ? " paused" : "");
+  st.textContent = s === "running" ? "Live" : s === "paused" ? "Paused" : s === "starting" ? "Starting" : "Still";
+  $("#still").style.backgroundImage = "url(assets/thumbs/" + wp.style + ".jpg)";
+  gl.set("style", wp.style);
+  gl.set("fps", wp.fps);
+  updatePreview();
+}
+function updatePreview() {
+  var live = panel === "wallpaper" && wp.enabled && wp.style !== "void" && !reduce;
+  $("#preview").classList.toggle("static", wp.style === "void" || !gl.hasGL);
+  $("#cap").textContent = wp.style === "void" ? "Still wallpaper" : wp.enabled ? "Live preview · " + wp.fps + " fps" : "Still frame";
+  if (live) { gl.start(); } else { gl.stop(); gl.frame(7.5); }
+}
+async function saveWall(patch) {
+  Object.assign(wp, patch);
+  if (patch.style === "void") { wp.enabled = false; }
+  renderWall();
+  if (saving) { queued = Object.assign(queued || {}, wp); return; }
+  saving = true;
+  try {
+    var r = await V1.call("wallpaper.set", { enabled: wp.enabled, style: wp.style, fps: wp.fps, pauseOnBattery: wp.pauseOnBattery });
+    if (r) { wp.status = r.status; }
+  } catch (e) { toast(e.message, true); }
+  saving = false;
+  if (queued) { var q = queued; queued = null; await saveWall(q); return; }
+  renderWall();
+}
+$("#sw-live").addEventListener("click", function () { saveWall({ enabled: !wp.enabled }); });
+$("#sw-battery").addEventListener("click", function () { saveWall({ pauseOnBattery: !wp.pauseOnBattery }); });
+$$("#styles .style").forEach(function (b) { b.addEventListener("click", function () { saveWall({ style: b.dataset.style }); }); });
+$$("#seg-fps button").forEach(function (b) { b.addEventListener("click", function () { saveWall({ fps: +b.dataset.v }); }); });
+V1.on("wallpaper", function (m) { if (m && m.status) { wp.status = m.status; renderWall(); } });
+
+/* ---------- appearance ---------- */
+var look = { accent: "#27c6ff", theme: "dark", taskbar: "center", transparency: true };
+function renderLook() {
+  document.documentElement.style.setProperty("--accent", look.accent);
+  $$("#swatches button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.c === look.accent)); });
+  $$("#seg-theme button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.v === look.theme)); });
+  $$("#seg-taskbar button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.v === look.taskbar)); });
+  $$("#seg-transparency button").forEach(function (b) { b.setAttribute("aria-pressed", String((b.dataset.v === "on") === look.transparency)); });
+}
+$$("#swatches button").forEach(function (b) { b.addEventListener("click", function () { look.accent = b.dataset.c; renderLook(); }); });
+$$("#seg-theme button").forEach(function (b) { b.addEventListener("click", function () { look.theme = b.dataset.v; renderLook(); }); });
+$$("#seg-taskbar button").forEach(function (b) { b.addEventListener("click", function () { look.taskbar = b.dataset.v; renderLook(); }); });
+$$("#seg-transparency button").forEach(function (b) { b.addEventListener("click", function () { look.transparency = b.dataset.v === "on"; renderLook(); }); });
+$("#apply-look").addEventListener("click", async function () {
+  var btn = this; btn.disabled = true; btn.textContent = "Applying…";
+  try {
+    await V1.call("appearance", { look: Object.assign({ wallpaper: wp.style, live: wp.enabled }, look) });
+    toast("Appearance applied");
+  } catch (e) { toast(e.message, true); }
+  btn.disabled = false; btn.textContent = "Apply";
+});
+
+/* ---------- maintenance ---------- */
+$("#rerun").addEventListener("click", function () {
+  V1.call("elevate", { target: "setup" }).then(function (ok) { if (!ok) { toast("Setup needs administrator approval to run."); } }).catch(function (e) { toast(e.message, true); });
+});
+$("#undo").addEventListener("click", function () { $("#confirm").hidden = false; $("#undo-yes").focus(); });
+$("#undo-no").addEventListener("click", function () { $("#confirm").hidden = true; });
+$("#undo-yes").addEventListener("click", function () {
+  V1.call("elevate", { target: "revert" }).then(function (ok) {
+    if (ok) { $("#confirm").hidden = true; } else { toast("Undo needs administrator approval to run."); }
+  }).catch(function (e) { toast(e.message, true); });
+});
+$("#logs").addEventListener("click", function () { V1.call("openLogs").catch(function (e) { toast(e.message, true); }); });
+
+/* ---------- start ---------- */
+V1.call("info").then(function (i) {
+  $("#ver").textContent = "V1 " + (i.version || "");
+  if (i.wallpaper) { Object.assign(wp, i.wallpaper); }
+  var cfgLook = i.look || (i.state && i.state.config && i.state.config.look);
+  if (cfgLook) {
+    ["accent", "theme", "taskbar"].forEach(function (k) { if (cfgLook[k]) { look[k] = cfgLook[k]; } });
+    if (typeof cfgLook.transparency === "boolean") { look.transparency = cfgLook.transparency; }
+  }
+  var rows = [
+    ["Version", "V1 " + (i.version || "")],
+    ["Windows", i.windows ? i.windows.name + " " + i.windows.displayVersion + " (" + i.windows.build + ")" : "Unknown"],
+    ["Profile", i.state && i.state.profile ? i.state.profile : "Setup not run yet"],
+    ["Applied", i.state && i.state.appliedAt ? new Date(i.state.appliedAt).toLocaleString() : "Never"],
+    ["Installed in", "C:\\V1"],
+    ["Records", "C:\\ProgramData\\V1"]
+  ];
+  $("#about").innerHTML = rows.map(function (r) { return "<dt>" + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd>"; }).join("");
+  renderWall(); renderLook();
+  if (location.hash === "#appearance" || location.hash === "#maintenance" || location.hash === "#about") { show(location.hash.slice(1)); }
+}).catch(function (e) { toast(e.message, true); renderWall(); renderLook(); });
+renderWall(); renderLook();
+})();
+</script>
+</body>
+</html>

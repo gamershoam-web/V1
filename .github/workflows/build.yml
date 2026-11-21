@@ -1,0 +1,58 @@
+name: Build V1
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build V1App.exe
+        run: dotnet build src/V1App/V1App.csproj -c Release -o out
+
+      - name: Playbook round-trip tests (Windows PowerShell 5.1)
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Install-Module Pester -MinimumVersion 5.5.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          Import-Module Pester -MinimumVersion 5.5.0
+          $c = New-PesterConfiguration
+          $c.Run.Path = 'tests'
+          $c.Run.Exit = $true
+          $c.Output.Verbosity = 'Detailed'
+          Invoke-Pester -Configuration $c
+
+      - name: Syntax check every script with the Windows PowerShell 5.1 parser
+        shell: powershell
+        run: |
+          $bad = 0
+          Get-ChildItem payload, build, tests -Recurse -Include *.ps1, *.psm1 | ForEach-Object {
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errors) | Out-Null
+            foreach ($e in $errors) { Write-Host ('{0}:{1} {2}' -f $_.FullName, $e.Extent.StartLineNumber, $e.Message); $bad++ }
+          }
+          if ($bad) { exit 1 }
+
+      - name: Assemble the kit
+        shell: pwsh
+        run: |
+          New-Item kit/dist -ItemType Directory -Force | Out-Null
+          Copy-Item payload, build, tests, Build-ISO.cmd, Install-on-this-PC.cmd, README.md -Destination kit -Recurse
+          Copy-Item out/V1App.exe, out/V1App.exe.config, out/Microsoft.Web.WebView2.Core.dll, out/Microsoft.Web.WebView2.WinForms.dll -Destination kit/dist
+          Copy-Item out/runtimes -Destination kit/dist -Recurse
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: V1-kit
+          path: kit

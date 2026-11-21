@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V1 Setup</title>
+<link rel="stylesheet" href="assets/v1.css">
+<style>
+.screens{position:absolute;inset:0}
+.screen{position:absolute;inset:0;padding:64px 56px 88px;display:flex;flex-direction:column;visibility:hidden;opacity:0;transition:opacity .45s ease,visibility 0s .45s}
+.screen.on{visibility:visible;opacity:1;transition:opacity .45s ease}
+.screen.out{visibility:visible;animation:wipeOut .55s var(--ease-io) forwards}
+@keyframes wipeOut{to{clip-path:inset(0 0 0 100%);opacity:.3}}
+.screen:not(.on) .rise{animation:none}
+
+.rail{position:absolute;inset:auto 0 0;height:68px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 32px;border-top:1px solid var(--line);background:#0b121cf2;z-index:40}
+.dots{display:flex;gap:6px;align-items:center}
+.dots i{height:4px;width:22px;border-radius:4px;background:var(--line-2);transition:width .45s var(--ease),background .45s}
+.dots i.on{width:46px;background:var(--accent)}
+.dots i.done{background:color-mix(in srgb,var(--accent) 40%,transparent)}
+.steplabel{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.06em}
+.navs{display:flex;gap:8px}
+
+/* boot */
+.gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+#s-boot{padding:0;justify-content:flex-end}
+#s-boot::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,#060a10ee 0%,#060a1088 45%,#060a1000 70%),linear-gradient(0deg,#060a10 0%,#060a1000 35%)}
+#s-boot .content{position:relative;z-index:2;padding:0 56px 104px;display:flex;flex-direction:column;gap:16px}
+.mark{font-family:var(--display);font-stretch:125%;font-weight:900;font-size:clamp(90px,15vw,190px);line-height:.82;letter-spacing:-.045em;display:flex;align-items:center;gap:.04em}
+.mark .ch{display:inline-block;min-width:.3em;position:relative}
+.flip{display:inline-block;width:.62em;height:.78em;position:relative;transform-style:preserve-3d;transition:width .5s var(--ease-io)}
+.flip.gone{width:0}
+.flip span{position:absolute;inset:0;border-radius:.06em;box-shadow:0 .04em .12em #0008;transform-origin:50% 100%;opacity:0}
+.glitch::before,.glitch::after{content:attr(data-text);position:absolute;inset:0;pointer-events:none;opacity:0}
+.glitch.hit::before{color:#ff3e8a;animation:gl1 .5s steps(2) 1 forwards}
+.glitch.hit::after{color:#27c6ff;animation:gl2 .5s steps(2) 1 forwards}
+@keyframes gl1{0%{opacity:.85;clip-path:inset(10% 0 70% 0);transform:translate(-4px)}50%{clip-path:inset(60% 0 10% 0);transform:translate(5px)}99%{opacity:.85}100%{opacity:0}}
+@keyframes gl2{0%{opacity:.85;clip-path:inset(70% 0 5% 0);transform:translate(4px)}50%{clip-path:inset(5% 0 75% 0);transform:translate(-5px)}99%{opacity:.85}100%{opacity:0}}
+.tag{font-size:18px;color:#c9d6e4;max-width:44ch}
+.bootrow{display:flex;gap:10px;align-items:center}
+.bootmeta{position:absolute;right:32px;top:52px;z-index:2;font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right;line-height:1.7;text-transform:uppercase}
+
+/* check */
+.checks{list-style:none;padding:0;margin:24px 0 0;display:flex;flex-direction:column;gap:8px;max-width:600px}
+.checks li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2);opacity:0;transform:translateX(-12px);transition:opacity .5s var(--ease),transform .5s var(--ease),border-color .3s}
+.checks li.in{opacity:1;transform:none}
+.checks .st{width:20px;height:20px;border-radius:50%;border:2px solid var(--line-2)}
+.checks li.run .st{border-top-color:var(--accent);animation:spin .8s linear infinite}
+.checks li.ok .st,.checks li.warn .st,.checks li.fail .st{border:0;display:grid;place-items:center;animation:pop .35s cubic-bezier(.3,1.6,.5,1)}
+.checks li.ok .st{background:var(--ok)}
+.checks li.ok .st::after{content:"";width:8px;height:4px;border:2px solid #04140b;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.checks li.warn{border-color:color-mix(in srgb,var(--warn) 35%,transparent)}
+.checks li.warn .st{background:var(--warn)}
+.checks li.fail{border-color:color-mix(in srgb,var(--bad) 45%,transparent)}
+.checks li.fail .st{background:var(--bad)}
+.checks li.warn .st::after,.checks li.fail .st::after{content:"!";font:800 13px/1 var(--body);color:#1a1200}
+.checks small{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:right}
+@keyframes pop{from{transform:scale(.3)}}
+.checknote{margin-top:14px;font-size:13px;color:var(--warn);max-width:600px;min-height:20px}
+
+/* profiles */
+.flow{position:relative;flex:1;min-height:250px;perspective:1100px;margin-top:8px;touch-action:pan-y}
+.pcard{position:absolute;left:50%;top:50%;width:230px;height:min(280px,100%);margin:0;border-radius:16px;border:1px solid var(--line-2);background:var(--panel-2);padding:16px;display:flex;flex-direction:column;justify-content:flex-end;gap:6px;text-align:left;transition:transform .7s var(--ease),opacity .7s,border-color .4s,box-shadow .4s;overflow:hidden}
+.pcard .art{position:absolute;inset:0 0 46% 0}
+.pcard .art::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 40%,var(--panel-2))}
+.pcard b{font-family:var(--display);font-stretch:115%;font-weight:800;font-size:22px;position:relative}
+.pcard p{margin:0;font-size:12.5px;color:var(--muted);position:relative;line-height:1.45}
+.pcard[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 20px 60px -20px color-mix(in srgb,var(--accent) 60%,transparent)}
+.pcard .pick{position:absolute;top:12px;right:12px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;padding:4px 8px;border-radius:99px;background:var(--accent);color:var(--accent-ink);opacity:0;transition:opacity .3s}
+.pcard[aria-pressed="true"] .pick{opacity:1}
+
+/* options */
+.optgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 22px;margin-top:14px;overflow:auto;padding:0 6px 4px 0;min-height:0;align-items:start}
+.optcol{display:flex;flex-direction:column;gap:6px;min-width:0}
+.optgroup{display:flex;flex-direction:column;gap:6px;min-width:0}
+.optgroup + .optgroup{margin-top:8px}
+.optgroup .label{margin:4px 0 0}
+#s-options .opt{padding:8px 12px}
+#s-options .opt > span{font-size:13.5px}
+#s-options .opt > small{font-size:11.5px}
+
+/* look */
+.lookgrid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:26px;margin-top:16px;flex:1;min-height:0}
+.desk{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line-2);background:#05080d}
+.desk .void{position:absolute;inset:0;background:url("assets/thumbs/void.jpg") center/cover;opacity:0;transition:opacity .5s}
+.desk.is-void .void{opacity:1}
+.desk canvas{transition:opacity .5s}
+.desk.is-void canvas{opacity:0}
+.desk.light .tb{background:#f3f5f8d0;border-color:#0000001a}
+.desk.light .tb i{background:#c9d2de}
+.tb{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:8px;padding:7px 10px;border-radius:12px;background:#121a26cc;backdrop-filter:blur(14px);border:1px solid #ffffff14;z-index:3;transition:left .6s var(--ease),transform .6s var(--ease),background .4s}
+.desk.left .tb{left:12px;transform:none}
+.desk.solid .tb{backdrop-filter:none;background:#121a26}
+.desk.solid.light .tb{background:#eef1f5}
+.tb i{width:20px;height:20px;border-radius:6px;background:#2a3a50;transition:background .4s}
+.tb i:first-child{background:var(--accent)}
+.desk .livebadge{position:absolute;top:10px;left:10px;z-index:3}
+.looks{display:flex;flex-direction:column;gap:16px;min-width:0;overflow:auto;padding-right:4px}
+
+/* apply */
+#s-apply{padding:0}
+#s-apply .content{position:relative;z-index:2;flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;padding:64px 56px 140px;background:linear-gradient(90deg,#060a10f2 0%,#060a10cc 55%,#060a1000)}
+.pct{font-family:var(--display);font-stretch:125%;font-weight:900;font-size:136px;line-height:.85;letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin-top:8px}
+.pct sup{font-size:.3em;vertical-align:top;color:var(--accent);margin-left:.05em}
+.bar{height:3px;background:var(--line);border-radius:3px;overflow:hidden;margin:18px 0 12px;max-width:420px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#c5f3ff);box-shadow:0 0 18px var(--accent);transition:width .5s var(--ease)}
+.stagelist{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px;font-size:13px}
+.stagelist li{display:flex;gap:10px;align-items:center;color:var(--dim);transition:color .3s}
+.stagelist li::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--line-2);transition:background .3s,box-shadow .3s}
+.stagelist li.now{color:var(--fg)}
+.stagelist li.now::before{background:var(--accent);box-shadow:0 0 10px var(--accent)}
+.stagelist li.done{color:var(--muted)}
+.stagelist li.done::before{background:var(--ok)}
+.log{font-family:var(--mono);font-size:11.5px;line-height:1.75;color:#9fb0c3;align-self:end;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 40%);mask-image:linear-gradient(transparent,#000 40%);min-width:0}
+.log div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:logIn .35s ease both}
+.log b{color:var(--ok);font-weight:600}
+.log b.w{color:var(--warn)}
+@keyframes logIn{from{transform:translateX(-10px);opacity:0}}
+.strip{position:absolute;left:-5%;right:-5%;bottom:92px;z-index:1;transform:rotate(-4deg);overflow:hidden;pointer-events:none}
+.strip .row{display:flex;gap:10px;width:max-content;animation:marquee 30s linear infinite}
+.strip span{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:7px 12px;border-radius:8px;background:#0d1725;border:1px solid var(--line-2);color:#b9c7d7;white-space:nowrap}
+@keyframes marquee{to{transform:translateX(-50%)}}
+
+/* done */
+/* Opaque so the ink's difference blend has a backdrop even while the screen fades in (opacity < 1 isolates it). */
+#s-done{justify-content:center;background:var(--panel)}
+.done-wrap{position:relative;align-self:flex-start;margin:8px 0 22px}
+.done-wrap .inkwrap{position:absolute;inset:-18px -40px;background:#000;filter:blur(10px) contrast(28);mix-blend-mode:difference;pointer-events:none;z-index:3}
+.done-wrap .inkwrap canvas{width:100%;height:100%;display:block}
+.done-mark{font-family:var(--display);font-stretch:125%;font-weight:900;font-size:104px;line-height:.88;letter-spacing:-.04em;margin:0}
+.done-mark span{display:block;white-space:nowrap}
+.done-mark span:last-child{color:transparent;-webkit-text-stroke:1.5px var(--accent);padding-left:8%}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-width:760px}
+.stat{padding:14px;border-radius:12px;border:1px solid var(--line);background:var(--panel-2)}
+.stat b{display:block;font-family:var(--display);font-stretch:115%;font-weight:800;font-size:28px;font-variant-numeric:tabular-nums}
+.stat small{color:var(--muted);font-size:12px}
+.donerow{display:flex;gap:10px;margin-top:22px;align-items:center;flex-wrap:wrap;position:relative;z-index:4}
+.donenote{margin-top:14px;color:var(--muted);font-size:13px;max-width:62ch}
+.donenote.w{color:var(--warn)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="titlebar">
+    <div class="drag"></div>
+    <div class="name"><i></i>V1 Setup</div>
+    <div class="wctl">
+      <button type="button" data-win="min" aria-label="Minimize"><svg viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor"/></svg></button>
+      <button type="button" class="x" data-win="close" id="btn-close" aria-label="Close"><svg viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor"/></svg></button>
+    </div>
+  </div>
+
+  <div class="screens">
+    <!-- 0 welcome -->
+    <section class="screen on" id="s-boot" data-label="Welcome">
+      <canvas class="gl" id="gl-boot"></canvas>
+      <div class="bootmeta" id="bootmeta">Windows 11</div>
+      <div class="content">
+        <div class="mark" aria-label="V1 OS">
+          <span class="ch glitch" data-text="V">V</span>
+          <span class="flip" id="flip" aria-hidden="true"></span>
+          <span class="ch glitch" data-text="1">1</span>
+          <span class="ch glitch" style="margin-left:.18em" data-text="O">O</span>
+          <span class="ch glitch" data-text="S">S</span>
+        </div>
+        <div class="tag rise" style="--i:3">Windows 11, rebuilt lean. Fewer background processes, no ads, no AI you didn't ask for. Takes about five minutes, and you can undo all of it.</div>
+        <div class="bootrow rise" style="--i:4">
+          <button class="btn" type="button" id="begin">Begin setup</button>
+          <span class="note" id="previewnote" hidden>Preview mode: nothing on this computer changes.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 1 checks -->
+    <section class="screen" id="s-check" data-label="System check">
+      <div class="eyebrow rise">Step 1 of 5</div>
+      <div class="h rise" style="--i:1">Checking this PC</div>
+      <p class="sub rise" style="--i:2">V1 saves a restore point and a record of every setting it changes, so you can undo all of it later from V1 Settings.</p>
+      <ul class="checks" id="checks"></ul>
+      <div class="checknote" id="checknote"></div>
+    </section>
+
+    <!-- 2 profile -->
+    <section class="screen" id="s-profile" data-label="Profile">
+      <div class="eyebrow rise">Step 2 of 5</div>
+      <div class="h rise" style="--i:1">How do you use this PC?</div>
+      <p class="sub rise" style="--i:2">This picks the defaults on the next screen. You can change any of them.</p>
+      <div class="flow" id="flow" role="listbox" aria-label="Profiles"></div>
+    </section>
+
+    <!-- 3 options -->
+    <section class="screen" id="s-options" data-label="Options">
+      <div class="eyebrow rise">Step 3 of 5</div>
+      <div class="h rise" style="--i:1">Choose what stays</div>
+      <div class="optgrid rise" style="--i:2" id="opts"></div>
+    </section>
+
+    <!-- 4 look -->
+    <section class="screen" id="s-look" data-label="Look">
+      <div class="eyebrow rise">Step 4 of 5</div>
+      <div class="h rise" style="--i:1">Make it yours</div>
+      <div class="lookgrid rise" style="--i:2">
+        <div class="desk" id="desk">
+          <canvas class="gl" id="gl-desk"></canvas>
+          <div class="void"></div>
+          <span class="pill on livebadge" id="livebadge">Live</span>
+          <div class="tb"><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="looks">
+          <div><p class="label">Wallpaper</p>
+            <div class="styles" id="styles">
+              <button type="button" class="style" data-style="chrome" aria-pressed="true"><img src="assets/thumbs/chrome.jpg" alt=""><span>Chrome</span></button>
+              <button type="button" class="style" data-style="mono" aria-pressed="false"><img src="assets/thumbs/mono.jpg" alt=""><span>Mono</span></button>
+              <button type="button" class="style" data-style="void" aria-pressed="false"><img src="assets/thumbs/void.jpg" alt=""><span>Void</span></button>
+            </div>
+          </div>
+          <div class="opt" id="liveopt"><span>Live wallpaper</span><small>Animates the desktop. Pauses when a window is maximized or fullscreen. Turn off anytime in V1 Settings.</small><button type="button" class="sw" role="switch" id="sw-live" aria-checked="true" aria-label="Live wallpaper"></button></div>
+          <div><p class="label">Accent</p>
+            <div class="swatches" id="swatches">
+              <button type="button" style="--c:#27c6ff" data-c="#27c6ff" aria-label="Cyan" aria-pressed="true"></button>
+              <button type="button" style="--c:#c6ff3d" data-c="#c6ff3d" aria-label="Lime" aria-pressed="false"></button>
+              <button type="button" style="--c:#ff6a5c" data-c="#ff6a5c" aria-label="Coral" aria-pressed="false"></button>
+              <button type="button" style="--c:#b48cff" data-c="#b48cff" aria-label="Lilac" aria-pressed="false"></button>
+              <button type="button" style="--c:#f2f4f7" data-c="#f2f4f7" aria-label="White" aria-pressed="false"></button>
+            </div></div>
+          <div style="display:flex;gap:18px;flex-wrap:wrap">
+            <div><p class="label">Theme</p><div class="seg" id="seg-theme"><button type="button" data-v="dark" aria-pressed="true">Dark</button><button type="button" data-v="light" aria-pressed="false">Light</button></div></div>
+            <div><p class="label">Taskbar</p><div class="seg" id="seg-taskbar"><button type="button" data-v="center" aria-pressed="true">Center</button><button type="button" data-v="left" aria-pressed="false">Left</button></div></div>
+            <div><p class="label">Transparency</p><div class="seg" id="seg-transparency"><button type="button" data-v="on" aria-pressed="true">On</button><button type="button" data-v="off" aria-pressed="false">Off</button></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 apply -->
+    <section class="screen" id="s-apply" data-label="Applying">
+      <canvas class="gl" id="gl-apply"></canvas>
+      <div class="strip"><div class="row" id="strip"></div></div>
+      <div class="content">
+        <div>
+          <div class="eyebrow" id="apply-eyebrow">Step 5 of 5 · keep your PC on</div>
+          <div class="pct" id="pct">0<sup>%</sup></div>
+          <div class="bar"><i id="barfill"></i></div>
+          <ul class="stagelist" id="stages"></ul>
+        </div>
+        <div class="log" id="log" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- 6 done -->
+    <section class="screen" id="s-done" data-label="Done">
+      <div class="eyebrow rise" id="done-eyebrow">Finished</div>
+      <div class="done-wrap">
+        <div class="done-mark rise" style="--i:1" id="done-mark"><span>Clean.</span><span>Fast. Yours.</span></div>
+        <div class="inkwrap" aria-hidden="true"><canvas id="ink"></canvas></div>
+      </div>
+      <div class="stats" id="stats"></div>
+      <p class="donenote rise" style="--i:6" id="donenote">Restart to finish. Your live wallpaper starts after you sign in.</p>
+      <div class="donerow rise" style="--i:7">
+        <button class="btn" type="button" id="restart">Restart now</button>
+        <button class="btn ghost" type="button" id="later">Later</button>
+        <button class="btn ghost" type="button" id="openlog">Open log</button>
+      </div>
+    </section>
+  </div>
+
+  <div class="rail" id="rail">
+    <div class="dots" id="dots"></div>
+    <span class="steplabel" id="steplabel">Welcome</span>
+    <div class="navs">
+      <button class="btn ghost" type="button" id="back">Back</button>
+      <button class="btn" type="button" id="next">Next</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="assets/bridge.js"></script>
+<script src="assets/chrome.js"></script>
+<script>
+(function () {
+"use strict";
+var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+var $ = function (s, r) { return (r || document).querySelector(s); };
+var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+var REVERT = location.hash === "#revert";
+
+function toast(msg, err) {
+  var t = $("#toast"); t.textContent = msg; t.classList.toggle("err", !!err); t.classList.add("show");
+  clearTimeout(toast.h); toast.h = setTimeout(function () { t.classList.remove("show"); }, 3200);
+}
+
+/* ---------------- choices ---------------- */
+var PROFILES = [
+  { id: "gaming", n: "Gaming", d: "Ultimate Performance on desktops, background recording off, raw mouse input. Xbox apps kept.",
+    a: "radial-gradient(circle at 70% 30%,#ff6a5c,transparent 55%),conic-gradient(from 90deg at 30% 70%,#27c6ff,#0b1520,#ff7ad9,#0b1520)",
+    o: { keepStore: true, keepXbox: true, keepOneDrive: true, browser: false, memoryIntegrity: false, securityOnly: true, skipDrivers: false }, live: true },
+  { id: "balanced", n: "Balanced", d: "Lean and quiet without giving anything up. Battery-friendly on laptops. The safe pick.",
+    a: "conic-gradient(from 200deg,#27c6ff,#e8fbff,#7aa7c4,#0b1520,#27c6ff)",
+    o: { keepStore: true, keepXbox: true, keepOneDrive: true, browser: false, memoryIntegrity: true, securityOnly: true, skipDrivers: false }, live: true },
+  { id: "work", n: "Work", d: "Keeps OneDrive, Office and printing working. Removes the noise around them.",
+    a: "linear-gradient(150deg,#c6ff3d,#0f2a14 60%)",
+    o: { keepStore: true, keepXbox: false, keepOneDrive: true, browser: false, memoryIntegrity: true, securityOnly: true, skipDrivers: false }, live: true },
+  { id: "minimal", n: "Minimal", d: "Removes everything optional, the Microsoft Store included. For people who know what they need.",
+    a: "repeating-linear-gradient(115deg,#f2f4f7 0 2px,#0b1520 2px 14px)",
+    o: { keepStore: false, keepXbox: false, keepOneDrive: false, browser: false, memoryIntegrity: true, securityOnly: true, skipDrivers: false }, live: false }
+];
+var OPTS = [
+  ["Privacy", [
+    ["telemetry", "Turn off telemetry", "Diagnostic uploads, feedback prompts and advertising ID"],
+    ["ads", "Remove ads and suggestions", "Start, lock screen, Settings, search and Edge's new tab feed"],
+    ["ai", "Remove Copilot and Recall", "The Copilot app and button, and Recall snapshots"]]],
+  ["Apps", [
+    ["keepStore", "Keep Microsoft Store", "Some games and apps need it to install and update"],
+    ["keepXbox", "Keep Xbox apps", "Game Pass and Game Bar. Xbox sign-in for games always stays"],
+    ["keepOneDrive", "Keep OneDrive", "Off removes OneDrive. Files already on this PC stay"],
+    ["browser", "Install another browser", "Edge stays, because Windows needs it, but runs quieter"]]],
+  ["Security", [
+    ["defender", "Microsoft Defender", "Stays on. V1 never disables it."],
+    ["memoryIntegrity", "Memory integrity", "Keeps the Windows kernel protected from malicious drivers"]]],
+  ["Updates", [
+    ["securityOnly", "Hold feature upgrades", "Security updates keep coming. New Windows versions wait for you"],
+    ["skipDrivers", "Skip driver updates", "Keep the drivers you installed yourself"]]]
+];
+var sel = 1;
+var choice = { profile: "balanced", options: Object.assign({ telemetry: true, ads: true, ai: true, browserName: "firefox" }, PROFILES[1].o),
+  look: { wallpaper: "chrome", live: true, accent: "#27c6ff", theme: "dark", taskbar: "center", transparency: true } };
+
+/* ---------------- steps ---------------- */
+var screens = $$(".screen"), cur = 0, busy = false, info = null;
+var dots = $("#dots");
+screens.forEach(function (s, i) { if (i < 5) { dots.appendChild(document.createElement("i")); } });
+
+function go(i) {
+  if (i === cur || i < 0 || i >= screens.length) { return; }
+  if (cur === 4 && i === 5 && !busy && !finished) { startRun("apply"); return; }
+  var prev = screens[cur];
+  if (prev.classList.contains("on")) {
+    prev.classList.remove("on"); prev.classList.add("out");
+    setTimeout(function () { prev.classList.remove("out"); }, 560);
+  }
+  cur = i;
+  var s = screens[i]; s.classList.remove("on"); void s.offsetWidth; s.classList.add("on");
+  $$("i", dots).forEach(function (d, j) { d.classList.toggle("on", j === i); d.classList.toggle("done", j < i); });
+  $("#steplabel").textContent = s.dataset.label;
+  $("#rail").hidden = i >= 5;
+  if (bootGL) { if (i === 0 && !reduce) { bootGL.start(); } else { bootGL.stop(); } }
+  if (deskGL && i !== 4) { deskGL.stop(); }
+  updateNav();
+  if (enter[s.id]) { enter[s.id](); }
+}
+function updateNav() {
+  $("#back").disabled = cur === 0 || busy;
+  $("#back").style.visibility = cur === 0 ? "hidden" : "visible";
+  var n = $("#next");
+  n.textContent = cur === 4 ? "Apply" : cur === 0 ? "Begin" : "Next";
+  n.disabled = busy || (cur === 1 && !checksDone);
+}
+$("#next").addEventListener("click", function () { if (!busy) { go(cur + 1); } });
+$("#back").addEventListener("click", function () { if (!busy) { go(cur - 1); } });
+$("#begin").addEventListener("click", function () { go(1); });
+document.addEventListener("keydown", function (e) {
+  if (cur === 2 && (e.key === "ArrowRight" || e.key === "ArrowLeft")) { pick(sel + (e.key === "ArrowRight" ? 1 : -1)); e.preventDefault(); }
+  if (e.key === "Enter" && cur < 5 && !busy && document.activeElement === document.body) { go(cur + 1); }
+});
+
+var enter = {
+  "s-boot": bootIntro,
+  "s-check": runChecks,
+  "s-profile": function () { layoutFlow(true); },
+  "s-look": function () { renderDesk(); },
+  "s-apply": function () { },
+  "s-done": function () { }
+};
+
+/* ---------------- welcome ---------------- */
+var GLYPHS = "▓▒░/\\|#%&@01<>";
+function scramble(el, final, dur) {
+  if (reduce) { el.textContent = final; return; }
+  var s = performance.now();
+  (function f(n) {
+    var p = Math.min((n - s) / dur, 1);
+    el.textContent = p < 1 ? GLYPHS[Math.random() * GLYPHS.length | 0] : final;
+    if (p < 1) { requestAnimationFrame(f); }
+  })(s);
+}
+var CARD_BG = ["conic-gradient(from 30deg,#27c6ff,#e8fbff,#ff7ad9,#27c6ff)", "linear-gradient(135deg,#ff6a5c,#2a0b10)", "linear-gradient(160deg,#c6ff3d,#0f2a14)",
+  "radial-gradient(circle at 30% 30%,#fff,#7aa7c4 40%,#0b1520)", "linear-gradient(200deg,#b48cff,#130b26)", "conic-gradient(from 180deg,#111,#ffd36b,#111)"];
+var flip = $("#flip");
+CARD_BG.forEach(function (g) { var s = document.createElement("span"); s.style.background = g; flip.appendChild(s); });
+function bootIntro() {
+  var chars = $$("#s-boot .mark .ch");
+  var cards = $$("span", flip);
+  flip.classList.remove("gone");
+  cards.forEach(function (c) { c.style.transition = "none"; c.style.opacity = 0; c.style.transform = "none"; });
+  chars.forEach(function (c, i) {
+    c.textContent = "";
+    setTimeout(function () {
+      scramble(c, c.dataset.text, 500 + i * 90);
+      setTimeout(function () { c.classList.remove("hit"); void c.offsetWidth; c.classList.add("hit"); }, 520 + i * 90);
+    }, i * 110);
+  });
+  if (reduce) { flip.classList.add("gone"); return; }
+  cards.forEach(function (c, i) {
+    setTimeout(function () {
+      c.style.transition = "transform .35s var(--ease),opacity .2s";
+      c.style.opacity = 1;
+      c.style.transform = "rotate(" + ((i - 2.5) * 9) + "deg) translateY(" + (-i * 2) + "px)";
+    }, 200 + i * 110);
+  });
+  setTimeout(function () { cards.forEach(function (c) { c.style.transform = "rotateX(80deg) translateY(30%)"; c.style.opacity = 0; }); }, 1350);
+  setTimeout(function () { flip.classList.add("gone"); }, 1550);
+}
+
+/* ---------------- checks ---------------- */
+var CHECKS = [
+  ["windows", "Windows 11"], ["admin", "Running as administrator"], ["space", "Free disk space"],
+  ["reboot", "No restart pending"], ["internet", "Internet connection"], ["restore", "Restore point created"]
+];
+var checksDone = false;
+async function runChecks() {
+  if (checksDone) { return; }
+  busy = true; updateNav();
+  var ul = $("#checks"); ul.innerHTML = "";
+  var lis = CHECKS.map(function (c) {
+    var li = document.createElement("li");
+    li.innerHTML = '<span class="st"></span><span>' + esc(c[1]) + '</span><small></small>';
+    ul.appendChild(li); return li;
+  });
+  lis.forEach(function (li, i) { setTimeout(function () { li.classList.add("in"); }, 150 + i * 110); });
+  await wait(300);
+  var fail = false, warns = [];
+  for (var i = 0; i < CHECKS.length; i++) {
+    var li = lis[i]; li.classList.add("run");
+    var r;
+    try { r = await V1.call("check", { id: CHECKS[i][0] }); } catch (e) { r = { status: "warn", detail: e.message }; }
+    li.classList.remove("run"); li.classList.add(r.status);
+    $("small", li).textContent = r.detail || "";
+    if (r.status === "fail") { fail = true; }
+    if (r.status !== "ok" && r.hint) { warns.push(r.hint); }
+    await wait(120);
+  }
+  busy = false; checksDone = !fail;
+  $("#checknote").textContent = fail ? "Setup can't continue. Fix the item marked in red, then open V1 Setup again." : warns.join(" ");
+  updateNav();
+}
+
+/* ---------------- profiles ---------------- */
+var flowEl = $("#flow");
+PROFILES.forEach(function (p, i) {
+  var c = document.createElement("button");
+  c.type = "button"; c.className = "pcard"; c.setAttribute("role", "option");
+  c.innerHTML = '<span class="art" style="background:' + p.a + '"></span><span class="pick">SELECTED</span><b>' + p.n + "</b><p>" + p.d + "</p>";
+  c.addEventListener("click", function () { if (!dragged) { pick(i); } });
+  flowEl.appendChild(c);
+});
+function pick(i) {
+  sel = Math.max(0, Math.min(PROFILES.length - 1, i));
+  var p = PROFILES[sel];
+  choice.profile = p.id;
+  Object.assign(choice.options, p.o);
+  choice.look.live = p.live && choice.look.wallpaper !== "void";
+  syncOptions(); syncLook(); layoutFlow();
+}
+function layoutFlow(intro) {
+  var w = flowEl.clientWidth || 800, sp = Math.min(190, w * 0.26);
+  $$(".pcard", flowEl).forEach(function (c, i) {
+    var o = i - sel, a = Math.abs(o);
+    var tf = "translate(-50%,-50%) translateX(" + (o * sp) + "px) translateZ(" + (-a * 160) + "px) rotateY(" + (-o * 32) + "deg)";
+    var op = a > 2 ? 0 : 1 - a * 0.22;
+    c.setAttribute("aria-pressed", String(o === 0));
+    c.style.zIndex = 10 - a;
+    if (intro && !reduce) {
+      c.style.transition = "none"; c.style.opacity = 0;
+      c.style.transform = "translate(-50%,-50%) translateY(60px) rotateX(50deg) scale(.7)";
+      requestAnimationFrame(function () { requestAnimationFrame(function () {
+        c.style.transition = ""; c.style.transitionDelay = (i * 80 + 150) + "ms";
+        c.style.transform = tf; c.style.opacity = op;
+        setTimeout(function () { c.style.transitionDelay = ""; }, 1300);
+      }); });
+    } else { c.style.transform = tf; c.style.opacity = op; }
+  });
+}
+var sx = null, dragged = false;
+flowEl.addEventListener("pointerdown", function (e) { sx = e.clientX; dragged = false; });
+flowEl.addEventListener("pointermove", function (e) { if (sx !== null && Math.abs(e.clientX - sx) > 8) { dragged = true; } });
+flowEl.addEventListener("pointerup", function (e) {
+  if (sx === null) { return; }
+  var dx = e.clientX - sx; sx = null;
+  if (Math.abs(dx) > 40) { pick(sel + (dx < 0 ? 1 : -1)); }
+  setTimeout(function () { dragged = false; }, 0);
+});
+window.addEventListener("resize", function () { layoutFlow(); });
+
+/* ---------------- options ---------------- */
+var optsEl = $("#opts");
+var optCols = [document.createElement("div"), document.createElement("div")];
+optCols.forEach(function (c) { c.className = "optcol"; optsEl.appendChild(c); });
+OPTS.forEach(function (g, gi) {
+  var d = document.createElement("div"); d.className = "optgroup";
+  d.innerHTML = '<p class="label">' + g[0] + "</p>";
+  g[1].forEach(function (it) {
+    var o = document.createElement("div"); o.className = "opt"; o.id = "opt-" + it[0];
+    o.innerHTML = "<span>" + it[1] + "</span><small data-base=\"" + esc(it[2]) + "\">" + it[2] + "</small>" +
+      '<button type="button" class="sw" role="switch" id="sw-' + it[0] + '" aria-label="' + esc(it[1]) + '" aria-checked="true"' + (it[0] === "defender" ? " disabled" : "") + "></button>" +
+      (it[0] === "browser" ? '<div class="extra chips" id="browsers" hidden><button type="button" data-b="firefox" aria-pressed="true">Firefox</button><button type="button" data-b="brave" aria-pressed="false">Brave</button><button type="button" data-b="chrome" aria-pressed="false">Chrome</button></div>' : "");
+    d.appendChild(o);
+  });
+  // Left column: Privacy, Security. Right column: Apps, Updates.
+  optCols[gi === 0 || gi === 2 ? 0 : 1].appendChild(d);
+});
+optsEl.addEventListener("click", function (e) {
+  var sw = e.target.closest(".sw");
+  if (sw && !sw.disabled) { var k = sw.id.slice(3); choice.options[k] = !choice.options[k]; syncOptions(); return; }
+  var b = e.target.closest("#browsers button");
+  if (b) { choice.options.browserName = b.dataset.b; syncOptions(); }
+});
+function syncOptions() {
+  Object.keys(choice.options).forEach(function (k) { var sw = $("#sw-" + k); if (sw) { sw.setAttribute("aria-checked", String(!!choice.options[k])); } });
+  $("#sw-defender").setAttribute("aria-checked", "true");
+  $("#browsers").hidden = !choice.options.browser;
+  $$("#browsers button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.b === choice.options.browserName)); });
+  var mi = $("#opt-memoryIntegrity"), mis = $("small", mi);
+  mi.classList.toggle("warn", !choice.options.memoryIntegrity);
+  mis.textContent = choice.options.memoryIntegrity ? mis.dataset.base : "Off can add a few FPS in some games, but lowers protection against malicious drivers";
+  var st = $("#opt-keepStore"), sts = $("small", st);
+  st.classList.toggle("warn", !choice.options.keepStore);
+  sts.textContent = choice.options.keepStore ? sts.dataset.base : "Hard to get back. Only turn off if you never install Store apps";
+}
+
+/* ---------------- look ---------------- */
+var desk = $("#desk"), deskGL = null;
+function segs(id, key, map) {
+  $$("#" + id + " button").forEach(function (b) {
+    b.addEventListener("click", function () { choice.look[key] = map ? map(b.dataset.v) : b.dataset.v; syncLook(); });
+  });
+}
+segs("seg-theme", "theme"); segs("seg-taskbar", "taskbar"); segs("seg-transparency", "transparency", function (v) { return v === "on"; });
+$$("#styles .style").forEach(function (b) {
+  b.addEventListener("click", function () {
+    choice.look.wallpaper = b.dataset.style;
+    if (b.dataset.style === "void") { choice.look.live = false; } else if (!choice.look.liveTouched) { choice.look.live = PROFILES[sel].live; }
+    syncLook();
+  });
+});
+$$("#swatches button").forEach(function (b) { b.addEventListener("click", function () { choice.look.accent = b.dataset.c; syncLook(); }); });
+$("#sw-live").addEventListener("click", function () {
+  if (choice.look.wallpaper === "void") { toast("Void is a still wallpaper. Pick Chrome or Mono for live."); return; }
+  choice.look.live = !choice.look.live; choice.look.liveTouched = true; syncLook();
+});
+function syncLook() {
+  var L = choice.look;
+  document.documentElement.style.setProperty("--accent", L.accent);
+  $$("#styles .style").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.style === L.wallpaper)); });
+  $$("#swatches button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.c === L.accent)); });
+  $$("#seg-theme button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.v === L.theme)); });
+  $$("#seg-taskbar button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.v === L.taskbar)); });
+  $$("#seg-transparency button").forEach(function (b) { b.setAttribute("aria-pressed", String((b.dataset.v === "on") === L.transparency)); });
+  $("#sw-live").setAttribute("aria-checked", String(L.live));
+  $("#sw-live").disabled = L.wallpaper === "void";
+  desk.classList.toggle("left", L.taskbar === "left");
+  desk.classList.toggle("light", L.theme === "light");
+  desk.classList.toggle("solid", !L.transparency);
+  desk.classList.toggle("is-void", L.wallpaper === "void");
+  $("#livebadge").hidden = !L.live;
+  if (deskGL) { deskGL.set("style", L.wallpaper); }
+  renderDesk();
+}
+function renderDesk() {
+  if (!deskGL) { deskGL = V1Chrome($("#gl-desk"), { style: choice.look.wallpaper, cx: 0.22, cy: 0.04, size: 0.9, fps: 30, scale: 0.8 }); }
+  if (cur === 4 && choice.look.live && !reduce) { deskGL.start(); } else { deskGL.stop(); deskGL.frame(7.5); }
+}
+
+/* ---------------- apply / revert ---------------- */
+var applyGL = null, bootGL = null, logEl = $("#log"), stageEls = [], summary = null, finished = false;
+function chipsFor() {
+  var c = ["no ads", "no telemetry", "defender on", "security updates", "undo anytime"];
+  if (choice.options.ai) { c.push("no copilot"); }
+  if (choice.profile === "gaming") { c.push("ultimate performance", "raw mouse input"); }
+  c.push(choice.look.theme + " mode", choice.look.live ? "live wallpaper" : "still wallpaper", choice.profile + " profile");
+  return c;
+}
+V1.on("ps", function (m) {
+  if (cur !== 5 || !m) { return; }
+  if (m.t === "stages") {
+    $("#stages").innerHTML = m.names.map(function (n) { return "<li>" + esc(n) + "</li>"; }).join("");
+    stageEls = $$("#stages li");
+  } else if (m.t === "stage") {
+    stageEls.forEach(function (l, i) { l.className = i < m.i ? "done" : i === m.i ? "now" : ""; });
+  } else if (m.t === "log") {
+    var d = document.createElement("div");
+    d.innerHTML = (m.ok ? "<b>✓</b> " : '<b class="w">!</b> ') + esc(m.msg);
+    logEl.appendChild(d);
+    while (logEl.children.length > 16) { logEl.removeChild(logEl.firstChild); }
+  } else if (m.t === "pct") {
+    setPct(m.v);
+  } else if (m.t === "summary") {
+    summary = m;
+  }
+});
+V1.on("finished", function (m) {
+  if (finished) { return; }
+  finished = true; busy = false;
+  stageEls.forEach(function (l) { l.className = "done"; });
+  setPct(100);
+  setTimeout(function () { showDone(m && m.exitCode === 0 && summary); }, 900);
+});
+function setPct(v) {
+  v = Math.max(0, Math.min(100, Math.round(v)));
+  $("#pct").firstChild.textContent = v;
+  $("#barfill").style.width = v + "%";
+}
+async function startRun(kind) {
+  finished = false; summary = null; busy = true;
+  $("#btn-close").disabled = true;
+  logEl.innerHTML = ""; setPct(0); $("#stages").innerHTML = "";
+  var chips = kind === "revert" ? ["restoring settings", "services", "scheduled tasks", "wallpaper", "power plan", "undo complete"] : chipsFor();
+  $("#strip").innerHTML = chips.concat(chips).map(function (c) { return "<span>" + esc(c) + "</span>"; }).join("");
+  go(5);
+  if (!applyGL) { applyGL = V1Chrome($("#gl-apply"), { cx: 0.42, cy: 0.02, scale: 0.75, fps: 60 }); }
+  if (!reduce) { applyGL.start(); } else { applyGL.frame(5); }
+  try {
+    await V1.call(kind, kind === "apply" ? { config: choice } : {});
+  } catch (e) {
+    busy = false; $("#btn-close").disabled = false;
+    toast(e.message, true);
+    finished = true;
+    showDone(false, e.message);
+  }
+}
+/* ---------------- done ---------------- */
+function count(el, n) {
+  var s = performance.now();
+  (function f(t) { var p = Math.min((t - s) / 1400, 1); el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3))); if (p < 1) { requestAnimationFrame(f); } })(s);
+}
+function showDone(ok, err) {
+  if (applyGL) { applyGL.stop(); }
+  $("#btn-close").disabled = false;
+  var stats = $("#stats"), note = $("#donenote");
+  if (REVERT) {
+    $("#done-eyebrow").textContent = ok ? "Undo complete" : "Undo stopped early";
+    $("#done-mark").innerHTML = "<span>Restored.</span><span>As it was.</span>";
+  } else if (!ok) {
+    $("#done-eyebrow").textContent = "Setup stopped early";
+    $("#done-mark").innerHTML = "<span>Not quite.</span><span>Check the log.</span>";
+  }
+  var rows = !summary ? [] : REVERT
+    ? [["restored", "settings restored"], ["services", "services restored"], ["tasks", "tasks re-enabled"], ["warnings", "skipped"]]
+    : [["apps", "apps removed"], ["tweaks", "settings changed"], ["services", "services disabled"], ["tasks", "tasks disabled"]];
+  stats.innerHTML = rows.map(function (r, i) { return '<div class="stat rise" style="--i:' + (i + 2) + '"><b data-n="' + (summary[r[0]] || 0) + '">0</b><small>' + r[1] + "</small></div>"; }).join("");
+  if (ok && summary) {
+    var w = summary.warnings || 0;
+    note.className = "donenote rise" + (w ? " w" : "");
+    note.textContent = (w ? w + (w === 1 ? " step was" : " steps were") + " skipped (details in the log). " : "") +
+      (REVERT ? "Restart to finish. Removed apps can be reinstalled from the Microsoft Store." :
+       "Restart to finish." + (choice.look.live ? " Your live wallpaper starts after you sign in." : ""));
+  } else {
+    note.className = "donenote rise w";
+    note.textContent = (err ? err + " " : "") + "Nothing was left half-done: every finished step is recorded, and V1 Settings can undo them.";
+  }
+  go(6);
+  $$("#stats b").forEach(function (b) { count(b, +b.dataset.n); });
+  startInk();
+}
+$("#restart").addEventListener("click", function () { V1.call("restart").catch(function (e) { toast(e.message, true); }); });
+$("#later").addEventListener("click", function () { V1.call("close"); });
+$("#openlog").addEventListener("click", function () { V1.call("openLogs").catch(function (e) { toast(e.message, true); }); });
+
+/* ink cursor over the closing headline */
+var inkOn = false;
+function startInk() {
+  if (inkOn || reduce) { return; }
+  inkOn = true;
+  var cv = $("#ink"), ctx = cv.getContext("2d"), pts = [], px = null, py = null, lastMove = 0;
+  var host = $("#s-done");
+  host.addEventListener("pointermove", function (e) {
+    var R = cv.getBoundingClientRect(); px = (e.clientX - R.left) / R.width; py = (e.clientY - R.top) / R.height; lastMove = performance.now();
+  });
+  var t0 = performance.now();
+  (function f(now) {
+    if (cur !== 6) { inkOn = false; return; }
+    requestAnimationFrame(f);
+    var t = (now - t0) / 1000, w = cv.clientWidth, h = cv.clientHeight;
+    if (!w) { return; }
+    if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+    var x, y;
+    if (px !== null && now - lastMove < 2500) { x = px; y = py; }
+    else { x = 0.5 + 0.36 * Math.sin(t * 0.6); y = 0.5 + 0.22 * Math.sin(t * 1.1 + 1.3); }
+    pts.push({ x: x * w, y: y * h, r: h * (0.3 + 0.05 * Math.sin(t * 3)), life: 1 });
+    if (pts.length > 36) { pts.shift(); }
+    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, w, h); ctx.fillStyle = "#fff";
+    pts.forEach(function (p) { p.life -= 0.024; var r = p.r * Math.max(p.life, 0); if (r > 0) { ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 7); ctx.fill(); } });
+    for (var i = 0; i < 3; i++) { var a = t * 1.3 + i * 2.1; ctx.beginPath(); ctx.arc(x * w + Math.cos(a) * h * 0.45, y * h + Math.sin(a * 1.2) * h * 0.3, h * 0.06, 0, 7); ctx.fill(); }
+  })(t0);
+}
+
+/* ---------------- render loop for the welcome shader ---------------- */
+function bootShader() {
+  if (!bootGL) { bootGL = V1Chrome($("#gl-boot"), { cx: 0.42, cy: 0.06, scale: 0.8, fps: 60 }); }
+  if (reduce) { bootGL.frame(4); } else { bootGL.start(); }
+}
+/* ---------------- start ---------------- */
+V1.call("info").then(function (i) {
+  info = i;
+  if (i.windows) { $("#bootmeta").innerHTML = esc(i.windows.name) + "<br>" + esc(i.windows.displayVersion) + " · build " + esc(i.windows.build); }
+  $("#previewnote").hidden = !i.preview;
+  if (i.hasBattery) { PROFILES[0].d = "Background recording off, raw mouse input, Game Mode. Xbox apps kept. Power plan stays Balanced on laptops."; $$(".pcard p")[0].textContent = PROFILES[0].d; }
+}).catch(function () {});
+
+pick(1); syncOptions(); syncLook(); updateNav();
+$$("i", dots)[0].classList.add("on");
+if (REVERT) {
+  screens[0].classList.remove("on"); cur = 0;
+  startRun("revert");
+  $("#apply-eyebrow").textContent = "Undoing V1 changes · keep your PC on";
+} else {
+  bootShader();
+  setTimeout(bootIntro, 150);
+}
+})();
+</script>
+</body>
+</html>
