@@ -86,7 +86,15 @@ def main(argv: list[str] | None = None) -> int:
         if not (out / "run.sh").exists():
             print(f"== installing Forge {full}", flush=True)
             download(f"{FORGE_MAVEN}/{full}/forge-{full}-installer.jar", installer)
-            subprocess.run(["java", "-jar", installer.name, "--installServer"], cwd=out, check=True)
+            log_path = out / "forge-installer-output.log"
+            with log_path.open("w", encoding="utf-8") as fh:
+                result = subprocess.run(["java", "-jar", installer.name, "--installServer"], cwd=out,
+                                        stdout=fh, stderr=subprocess.STDOUT)
+            if result.returncode != 0:
+                print("\n".join(log_path.read_text(encoding="utf-8", errors="replace").splitlines()[-60:]))
+                print("!! Forge installer failed", file=sys.stderr)
+                return 1
+            log_path.unlink()
             installer.unlink(missing_ok=True)
             for leftover in out.glob("*installer.jar.log"):
                 leftover.unlink()

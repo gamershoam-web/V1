@@ -1,5 +1,5 @@
 {
-  "_doc": "Every mod in WYRMFALL. tools/build.py resolves each slug on Modrinth for the pack's Minecraft version and loader, pulls in required dependencies, and writes the .mrpack. Fields: slug (Modrinth slug), alts (other slugs to try), side (auto | both | client | server), optional (true = skip with a warning if Modrinth has no compatible build), type (mod | shader | resourcepack), pin (exact version_number or version id), why (shown in the report).",
+  "_doc": "Every mod in WYRMFALL. tools/build.py resolves each slug on Modrinth for the pack's Minecraft version and loader, pulls in required dependencies, and writes the .mrpack. Fields: slug (Modrinth slug), alts (other slugs to try), side (auto | both | client | server), optional (true = skip with a warning if Modrinth has no compatible build), type (mod | shader | resourcepack), pin (exact version_number or version id), extra_deps (dependencies the mod needs but does not declare on Modrinth; each item is a slug or a list of alternative slugs), why (shown in the report).",
   "mods": [
     { "category": "Engine", "slug": "kubejs", "side": "both", "why": "Runs WYRMFALL's own Heart Crystal system, items and recipes" },
     { "category": "Engine", "slug": "embeddium", "alts": ["rubidium"], "side": "client", "optional": true, "why": "Sodium-class renderer: big FPS gains" },
@@ -26,7 +26,7 @@
     { "category": "Combat", "slug": "epic-knights-shields-armor-and-weapons", "alts": ["epic-knights"], "side": "both", "optional": true, "why": "Medieval armor, shields and weapons" },
     { "category": "Combat", "slug": "simply-swords", "side": "both", "optional": true, "why": "Unique legendary weapons with abilities" },
     { "category": "Combat", "slug": "mariums-soulslike-weaponry", "side": "both", "optional": true, "why": "Soulslike boss weapons" },
-    { "category": "Combat", "slug": "irons-spells-n-spellbooks", "alts": ["irons-spells-and-spellbooks"], "side": "both", "optional": true, "why": "Full magic system: spellbooks, scrolls, mana" },
+    { "category": "Combat", "slug": "irons-spells-n-spellbooks", "alts": ["irons-spells-and-spellbooks"], "extra_deps": [["irons-lib", "irons-library", "ironslib"]], "side": "both", "optional": true, "why": "Full magic system: spellbooks, scrolls, mana" },
     { "category": "Combat", "slug": "parcool", "side": "both", "optional": true, "why": "Parkour: wall-run, vault, climb, roll" },
 
     { "category": "Monsters", "slug": "ice-and-fire-dragons", "alts": ["iceandfire", "ice-and-fire", "iceandfire-ce", "ice-and-fire-ce", "ice-and-fire-community-edition"], "side": "both", "optional": true, "why": "THE dragons. Fire, ice and lightning wyrms, plus hydras, cyclopes and gorgons" },

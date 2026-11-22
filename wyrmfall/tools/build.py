@@ -189,6 +189,8 @@ class Resolver:
                 return
             before_nodes, before_edges, before_errors = set(self.nodes), len(self.edges), len(self.errors)
             self._add_node(project, version, ctype, sides, entry=entry)
+            for extra in entry.get("extra_deps", []):
+                self._add_extra_dependency(project["id"], extra if isinstance(extra, list) else [extra])
             if entry.get("optional") and len(self.errors) > before_errors:
                 # An optional mod whose dependencies cannot be met is dropped
                 # as a whole instead of failing the build.
@@ -207,6 +209,22 @@ class Resolver:
             self.missing_optional.append({"entry": entry, "reason": msg})
         else:
             self.errors.append("REQUIRED mod unavailable: " + msg)
+
+    def _add_extra_dependency(self, parent_pid: str, slugs: list[str]) -> None:
+        """A dependency the mod needs at runtime but does not declare on Modrinth."""
+        for slug in slugs:
+            project = self.api.project(slug)
+            if project is None:
+                continue
+            version = pick_version(self.api.versions(project["id"], self.loader, self.gv))
+            if version is None:
+                continue
+            self.edges.append((parent_pid, project["id"]))
+            self._add_node(project, version, "mod", set(), parent=parent_pid)
+            return
+        self.errors.append(
+            f"{self.nodes[parent_pid]['project']['slug']}: undeclared dependency {' / '.join(slugs)} has no {self.loader} {self.gv} build"
+        )
 
     def _add_node(self, project, version, ctype, sides, entry=None, parent=None):
         pid = project["id"]

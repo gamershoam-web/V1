@@ -165,6 +165,18 @@ class BuildTests(unittest.TestCase):
         report = (dist / "report.md").read_text()
         self.assertIn("fabric-only", report)
 
+    def test_extra_deps(self):
+        code, dist = self.run_build([
+            {"slug": "core", "extra_deps": [["nope", "shinylib"]]},
+            {"slug": "new-name", "optional": True, "extra_deps": ["nope"]},
+        ])
+        self.assertEqual(code, 0)
+        index, _ = self.index(dist)
+        files = {f["path"]: f for f in index["files"]}
+        self.assertEqual(sorted(files), ["mods/P_CORE-5.0.jar", "mods/P_LIB-2.0.jar", "mods/P_SHINYLIB-0.9.jar"])
+        self.assertEqual(files["mods/P_SHINYLIB-0.9.jar"]["env"], {"client": "required", "server": "required"})
+        self.assertIn("undeclared dependency nope", (dist / "report.md").read_text())
+
     def test_pin(self):
         code, dist = self.run_build([{"slug": "lib", "pin": "1.0"}, {"slug": "core"}])
         self.assertEqual(code, 0)
