@@ -38,8 +38,9 @@ public final class AiDrawCommand {
 
     private static int setKey(CommandContext<CommandSourceStack> ctx, String rawKey) {
         final String key = rawKey.trim();
-        if (!key.isEmpty() && !key.startsWith("sk-ant-") && !key.startsWith("AIza")) {
-            ctx.getSource().sendFailure(Component.literal("That doesn't look like a Gemini key (starts with AIza) or an Anthropic key (starts with sk-ant-)."));
+        // Google has several key formats (AIza..., AQ....), so only sanity-check the shape.
+        if (!key.isEmpty() && (key.length() < 20 || key.length() > 300 || !key.matches("[A-Za-z0-9._\\-]+"))) {
+            ctx.getSource().sendFailure(Component.literal("That doesn't look like an API key. Copy the whole key from aistudio.google.com/apikey and try again."));
             return 0;
         }
         AiConfig.get().apiKey = key;

@@ -12,7 +12,13 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Google Gemini (free tier, key from aistudio.google.com) as the drawing AI.
@@ -34,6 +40,12 @@ public final class GeminiClient {
             ABILITY is one of: EXPLOSION, NUKE, LIGHTNING, FIRE, SHOOT_ARROW, SHOOT_FIREBALL, BEAM, METEOR_SHOWER, SHOCKWAVE, \
             DASH, LAUNCH_UP, TELEPORT, FLY, FREEZE, BLACK_HOLE, SUMMON, HEAL, EFFECT_SELF, EFFECT_AREA, KNOCKBACK, LIFESTEAL.""";
 
+    /** Tried in order when a model is overloaded, rate-limited or retired. The configured model goes first. */
+    private static final String[] BACKUP_MODELS = {"gemini-flash-latest", "gemini-flash-lite-latest", "gemini-3.8-flash", "gemini-3.5-flash-lite"};
+    /** Models that recently failed are skipped for a while so players don't keep waiting on them. */
+    private static final Map<String, Long> BENCHED_UNTIL = new ConcurrentHashMap<>();
+    private static final long BENCH_MS = 5 * 60 * 1000;
+
     public static CompletableFuture<DrawingResult> classify(byte[] pixels, String hint) {
         AiConfig cfg = AiConfig.get();
         String png;
@@ -42,16 +54,53 @@ public final class GeminiClient {
         } catch (Exception e) {
             return CompletableFuture.failedFuture(e);
         }
-        String model = cfg.geminiModel == null || cfg.geminiModel.isBlank() ? "gemini-flash-latest" : cfg.geminiModel.trim();
+        Set<String> order = new LinkedHashSet<>();
+        if (cfg.geminiModel != null && !cfg.geminiModel.isBlank()) order.add(cfg.geminiModel.trim());
+        order.addAll(List.of(BACKUP_MODELS));
+        List<String> models = new ArrayList<>();
+        long now = System.currentTimeMillis();
+        for (String m : order) if (BENCHED_UNTIL.getOrDefault(m, 0L) < now) models.add(m);
+        if (models.isEmpty()) { BENCHED_UNTIL.clear(); models.addAll(order); } // everything benched: try again anyway
+        String body = buildBody(png, hint).toString();
+        return attempt(models, 0, body, cfg.key(), null);
+    }
+
+    private static CompletableFuture<DrawingResult> attempt(List<String> models, int i, String body, String key, RuntimeException last) {
+        if (i >= models.size()) {
+            return CompletableFuture.failedFuture(last != null ? last : new RuntimeException("No Gemini model available"));
+        }
+        String model = models.get(i);
         String url = "https://generativelanguage.googleapis.com/v1beta/models/"
                 + URLEncoder.encode(model, StandardCharsets.UTF_8) + ":generateContent";
+        boolean lastChance = i == models.size() - 1;
         HttpRequest req = HttpRequest.newBuilder(URI.create(url))
-                .timeout(Duration.ofSeconds(90))
+                // Overloaded models can hang for a minute before saying so; don't make the player wait that long.
+                .timeout(Duration.ofSeconds(lastChance ? 90 : 35))
                 .header("content-type", "application/json")
-                .header("x-goog-api-key", cfg.key())
-                .POST(HttpRequest.BodyPublishers.ofString(buildBody(png, hint).toString()))
+                .header("x-goog-api-key", key)
+                .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
-        return HTTP.sendAsync(req, HttpResponse.BodyHandlers.ofString()).thenApply(GeminiClient::parse);
+        return HTTP.sendAsync(req, HttpResponse.BodyHandlers.ofString()).handle((resp, err) -> {
+            if (err != null) {
+                AiDrawMod.LOGGER.warn("Gemini model {} did not answer: {}", model, err.toString());
+                BENCHED_UNTIL.put(model, System.currentTimeMillis() + BENCH_MS);
+                return attempt(models, i + 1, body, key, new RuntimeException("Gemini didn't answer in time"));
+            }
+            int status = resp.statusCode();
+            if (status == 404 || status == 429 || status == 500 || status == 503) {
+                AiDrawMod.LOGGER.warn("Gemini model {} unavailable ({}), trying the next one", model, status);
+                BENCHED_UNTIL.put(model, System.currentTimeMillis() + (status == 404 ? 24L * 3600 * 1000 : BENCH_MS));
+                RuntimeException e;
+                try { parseBody(status, resp.body()); e = new RuntimeException("Gemini error " + status); }
+                catch (RuntimeException ex) { e = ex; }
+                return attempt(models, i + 1, body, key, e);
+            }
+            try {
+                return CompletableFuture.completedFuture(parseBody(status, resp.body()));
+            } catch (RuntimeException ex) {
+                return CompletableFuture.<DrawingResult>failedFuture(ex);
+            }
+        }).thenCompose(f -> f);
     }
 
     static JsonObject buildBody(String pngBase64, String hint) {
@@ -94,10 +143,6 @@ public final class GeminiClient {
         return a;
     }
 
-    static DrawingResult parse(HttpResponse<String> resp) {
-        return parseBody(resp.statusCode(), resp.body());
-    }
-
     static DrawingResult parseBody(int status, String body) {
         if (status != 200) {
             AiDrawMod.LOGGER.error("Gemini API error {}: {}", status, body);
@@ -106,7 +151,7 @@ public final class GeminiClient {
                 case 403 -> "Gemini key not allowed (is the Generative Language API enabled?)";
                 case 404 -> "Gemini model not found (change geminiModel in config/aidraw.json)";
                 case 429 -> "Free Gemini limit reached, try again in a minute";
-                case 500, 503 -> "Gemini is busy, try again soon";
+                case 500, 503 -> "Gemini is very busy right now, try again soon";
                 default -> "Gemini error " + status;
             };
             throw new RuntimeException(msg);

@@ -59,6 +59,8 @@ class GeminiTest {
             var ex = assertThrows(CompletionException.class, () -> AiRouter.classify(new byte[Palette.SIZE * Palette.SIZE], "sword").join());
             System.out.println("Live Gemini answer: " + ex.getCause().getMessage());
             assertTrue(ex.getCause().getMessage().contains("Invalid Gemini key"), ex.getCause().getMessage());
+            cfg.apiKey = "AQ.Ab8newFormatGoogleKey-example_123";
+            assertEquals(AiRouter.Provider.GEMINI, AiRouter.provider());
             cfg.apiKey = "sk-ant-test";
             assertEquals(AiRouter.Provider.CLAUDE, AiRouter.provider());
         } finally {

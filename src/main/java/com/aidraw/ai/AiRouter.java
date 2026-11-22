@@ -2,7 +2,7 @@ package com.aidraw.ai;
 
 import java.util.concurrent.CompletableFuture;
 
-/** Picks the AI from the key's format: Gemini keys start with "AIza", Anthropic keys with "sk-ant-". */
+/** Picks the AI from the key: Anthropic keys start with "sk-ant-"; every other key is a Google Gemini key (AIza..., AQ...., ...). */
 public final class AiRouter {
     public enum Provider { NONE, GEMINI, CLAUDE }
 
