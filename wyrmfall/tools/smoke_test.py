@@ -24,7 +24,7 @@ BOOT_TIMEOUT = 25 * 60
 CHECKS = [
     # (console command, text that must appear, text that must NOT appear)
     ("difficulty", "The difficulty is Hard", None),
-    ("scoreboard objectives list", "wf_hearts", None),
+    ("scoreboard objectives list", "[Heart Crystals]", None),
     ("function wyrmfall:hearts/sync", "Executed", "Unknown function"),
     ("function wyrmfall:hearts/apply", "Executed", "Unknown function"),
     ("give @a kubejs:heart_crystal", "No player was found", "Unknown item"),

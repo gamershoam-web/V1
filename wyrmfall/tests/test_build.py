@@ -177,6 +177,21 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(files["mods/P_SHINYLIB-0.9.jar"]["env"], {"client": "required", "server": "required"})
         self.assertIn("undeclared dependency nope", (dist / "report.md").read_text())
 
+    def test_server_only_mods_also_ship_to_client(self):
+        # Modrinth says "client unsupported" for worldgen mods, but singleplayer
+        # runs an integrated server, so the client instance needs them too.
+        PROJECTS.append(project("P_WG", "worldgen", client="unsupported"))
+        VERSIONS["P_WG"] = [version("V_WG", "P_WG", "1.0", deps=[dep("P_SHINYLIB")])]
+        try:
+            code, dist = self.run_build([{"slug": "worldgen"}])
+        finally:
+            PROJECTS.pop()
+            del VERSIONS["P_WG"]
+        self.assertEqual(code, 0)
+        index, _ = self.index(dist)
+        for f in index["files"]:
+            self.assertEqual(f["env"], {"client": "required", "server": "required"}, f["path"])
+
     def test_pin(self):
         code, dist = self.run_build([{"slug": "lib", "pin": "1.0"}, {"slug": "core"}])
         self.assertEqual(code, 0)

@@ -304,6 +304,11 @@ class Resolver:
             if not node["sides"]:
                 self.warnings.append(f"{node['project']['slug']}: not needed on any side; left out")
                 continue
+            # Singleplayer runs an integrated server inside the client, so
+            # every server-side mod (worldgen, structures, mob AI...) must be
+            # installed in the player's instance too, whatever the project
+            # page says about client support.
+            node["sides"].add("client")
             result.append(node)
         # Incompatibilities between resolved projects.
         for node in result:

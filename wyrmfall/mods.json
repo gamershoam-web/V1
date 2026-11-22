@@ -7,7 +7,6 @@
     { "category": "Engine", "slug": "ferrite-core", "side": "both", "why": "Cuts memory use" },
     { "category": "Engine", "slug": "modernfix", "side": "both", "why": "Faster launch, less RAM" },
     { "category": "Engine", "slug": "entityculling", "side": "client", "optional": true, "why": "Skips rendering hidden mobs and chests" },
-    { "category": "Engine", "slug": "immediatelyfast", "side": "client", "optional": true, "why": "Faster HUD and text rendering" },
     { "category": "Engine", "slug": "clumps", "side": "both", "optional": true, "why": "Merges XP orbs, saves TPS during mob grinds" },
     { "category": "Engine", "slug": "ai-improvements", "side": "both", "optional": true, "why": "Lighter mob AI for big mob counts" },
 
@@ -35,7 +34,6 @@
     { "category": "Monsters", "slug": "alexs-mobs", "side": "both", "optional": true, "why": "Over 80 creatures, many of them hostile" },
     { "category": "Monsters", "slug": "l_enders-cataclysm", "alts": ["lenders-cataclysm", "cataclysm"], "side": "both", "optional": true, "why": "Endgame bosses: Ignis, the Leviathan, the Harbinger" },
     { "category": "Monsters", "slug": "mutant-monsters", "side": "both", "optional": true, "why": "Mutant zombies, skeletons, creepers and endermen" },
-    { "category": "Monsters", "slug": "born-in-chaos", "alts": ["born-in-chaos-v1"], "side": "both", "optional": true, "why": "Horror mobs that spawn at night and on special nights" },
     { "category": "Monsters", "slug": "the-graveyard", "alts": ["the-graveyard-forge"], "side": "both", "optional": true, "why": "Crypts, ghouls, revenants and a Lich boss" },
     { "category": "Monsters", "slug": "illager-invasion", "side": "both", "optional": true, "why": "New illagers and illager fortresses" },
     { "category": "Monsters", "slug": "friends-and-foes", "alts": ["friends-and-foes-forge"], "side": "both", "optional": true, "why": "Mobs from the mob votes, including the Wildfire" },
@@ -66,7 +64,6 @@
     { "category": "Gear & Travel", "slug": "artifacts", "side": "both", "optional": true, "why": "Rare trinkets found in dungeons (Curios slots)" },
     { "category": "Gear & Travel", "slug": "waystones", "side": "both", "why": "Fast travel between waystones you have found" },
     { "category": "Gear & Travel", "slug": "sophisticated-backpacks", "side": "both", "why": "Upgradeable backpacks" },
-    { "category": "Gear & Travel", "slug": "map-atlases", "side": "both", "optional": true, "why": "No minimap: chart the world with an atlas" },
     { "category": "Gear & Travel", "slug": "skills", "alts": ["pufferfishs-skills"], "side": "both", "optional": true, "why": "Skill trees and leveling" },
     { "category": "Gear & Travel", "slug": "default-skill-trees", "alts": ["pufferfishs-default-skill-trees", "puffish-skills-default"], "side": "both", "optional": true, "why": "Default skill trees for leveling" },
 

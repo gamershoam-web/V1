@@ -25,7 +25,7 @@ Soulslike combat and dungeons that want you dead.
 | 🌕 **Blood moons** | The moon turns red and the horde comes (Enhanced Celestials). Mobs break doors, use gear and get stronger over time (Improved Mobs). |
 | ⚔️ **Combat** | Better Combat swings and combos, dodge rolls, medieval arms, legendary blades and spellbooks. Parkour to escape. |
 | 🏰 **The world** | Huge mountains (Tectonic, Terralith), sky fortresses (When Dungeons Arise), catacombs (YUNG's), taverns, villages for every biome, and per-player loot. |
-| 🗺️ **No minimap** | Chart the land with an atlas and link waystones. Your corpse keeps your loot, so go back for it. |
+| 🗺️ **No minimap** | Find your way with paper maps and the waystones you've discovered. Your corpse keeps your loot, so go back for it. |
 
 ## ❤ The Heart Crystal system (WYRMFALL-only)
 
