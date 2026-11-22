@@ -6,6 +6,7 @@ import com.aidraw.Palette;
 import com.aidraw.ai.AiConfig;
 import com.aidraw.ai.ClaudeClient;
 import com.aidraw.ai.DrawingResult;
+import com.aidraw.ai.OfflineDesigner;
 import com.aidraw.item.ItemFactory;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
@@ -38,8 +39,10 @@ public final class DrawingHandler {
         for (byte b : pixels) if (b != 0) { empty = false; break; }
         if (empty) { say(player, "Draw something first!", ChatFormatting.YELLOW); return; }
 
-        if (!cfg.hasKey()) {
-            say(player, "The AI isn't set up. Put your Anthropic API key in config/aidraw.json (\"apiKey\") and restart.", ChatFormatting.RED);
+        String hint = payload.hint() == null ? "" : payload.hint().strip();
+        if (!cfg.hasKey() && hint.isEmpty()) {
+            say(player, "Offline mode: type what you drew in the box under the canvas (e.g. \"atom bomb\", \"crazy fire sword\").", ChatFormatting.YELLOW);
+            say(player, "For AI that looks at your drawing, the server owner runs: /aidraw key <anthropic-api-key>", ChatFormatting.GRAY);
             return;
         }
         if (IN_FLIGHT.contains(id)) { say(player, "Still working on your last drawing...", ChatFormatting.YELLOW); return; }
@@ -49,20 +52,31 @@ public final class DrawingHandler {
             say(player, "The paint is still drying... wait " + (wait / 1000 + 1) + "s", ChatFormatting.YELLOW);
             return;
         }
+        LAST_USE.put(id, now);
+
+        if (!cfg.hasKey()) {
+            give(player, OfflineDesigner.design(hint));
+            return;
+        }
 
         IN_FLIGHT.add(id);
-        LAST_USE.put(id, now);
         say(player, "✎ Claude is looking at your drawing...", ChatFormatting.AQUA);
 
-        ClaudeClient.classify(pixels, payload.hint()).whenComplete((result, error) -> server.execute(() -> {
+        ClaudeClient.classify(pixels, hint).whenComplete((result, error) -> server.execute(() -> {
             IN_FLIGHT.remove(id);
             ServerPlayer target = server.getPlayerList().getPlayer(id);
             if (target == null) return; // logged off
             if (error != null) {
                 Throwable cause = error.getCause() != null ? error.getCause() : error;
                 AiDrawMod.LOGGER.warn("Drawing failed for {}", target.getName().getString(), cause);
-                say(target, "The drawing fizzled: " + cause.getMessage(), ChatFormatting.RED);
-                LAST_USE.remove(id); // don't punish failures with a cooldown
+                DrawingResult offline = OfflineDesigner.design(hint);
+                if (offline != null) {
+                    say(target, "AI unavailable (" + cause.getMessage() + ") — using offline mode.", ChatFormatting.GRAY);
+                    give(target, offline);
+                } else {
+                    say(target, "The drawing fizzled: " + cause.getMessage(), ChatFormatting.RED);
+                    LAST_USE.remove(id); // don't punish failures with a cooldown
+                }
                 return;
             }
             give(target, result);

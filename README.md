@@ -37,22 +37,37 @@ Super jump, Teleport, Flight, Freeze, Black hole, Summon, Heal, Self power (any 
 Mega knockback, Lifesteal, plus any potion effect while you hold the item.
 Each power is listed in the item's tooltip. You get no fall damage after dashes, jumps, flights and teleports.
 
-## Setup (required: AI key)
-The AI is Claude (Anthropic API). The mod sends the drawing image to the API; each drawing costs a fraction of a cent.
+## Two modes
 
-1. Get an API key at <https://console.anthropic.com/>.
-2. Install Fabric Loader for 1.21.11 + Fabric API, put `ai-drawing-board-1.0.0.jar` in `mods/`.
-3. Launch once, then edit `config/aidraw.json`:
-   ```json
-   { "apiKey": "sk-ant-...", "model": "claude-opus-5-5", "effort": "medium",
-     "cooldownSeconds": 15, "maxVanillaItemCount": 16, "allowBossMobs": false, "allowVanillaItems": true,
-     "allowNukes": true, "maxNukeRadius": 40, "blockDamage": true, "maxAttackDamage": 30 }
-   ```
-   - `maxNukeRadius`: crater size of a Lv 10 nuke (40 is huge; go up to ~64 if your PC can handle it).
-   - `blockDamage: false`: explosions and nukes still hurt mobs but never break blocks (good for servers).
-   (Or set the `ANTHROPIC_API_KEY` environment variable.) Restart the game.
+**Free offline mode (no key, works out of the box).** Type what you drew in the box under the canvas, such as
+"atom bomb", "crazy fire sword", "fighter jet", "dog" or "diamonds". The item is built from those words.
+Words like *crazy / ultimate / god / mega / epic* make it stronger. About 45 kinds of item are built in.
 
-On a multiplayer server only the **server** needs the key; all players need the mod installed.
+**AI mode (Claude actually looks at your drawing).** Only the **server host** needs an Anthropic API key
+(get one at <https://console.anthropic.com/>; each drawing costs a fraction of a cent).
+In game, as an operator (or in singleplayer/LAN with cheats on):
+```
+/aidraw key sk-ant-xxxxxxxx      turns the AI on instantly, no restart, saved to config/aidraw.json
+/aidraw key clear                back to offline mode
+/aidraw status                   check which mode is on (anyone can run this)
+```
+The key stays on the server. Friends who join never see it and never need their own.
+If the AI is down, drawings with a typed hint fall back to offline mode automatically.
+
+## Playing with friends
+- **Dedicated server / Aternos-style host:** install Fabric 1.21.11 + Fabric API + this jar on the server,
+  run `/aidraw key ...` once from the console or as an operator. Every player installs the same mod + Fabric API.
+- **LAN / singleplayer opened to LAN:** the host's game is the server, so the host sets the key. Friends just join.
+
+## Config (`config/aidraw.json`)
+```json
+{ "apiKey": "", "model": "claude-opus-5-5", "effort": "medium",
+  "cooldownSeconds": 15, "maxVanillaItemCount": 16, "allowBossMobs": false, "allowVanillaItems": true,
+  "allowNukes": true, "maxNukeRadius": 40, "blockDamage": true, "maxAttackDamage": 30 }
+```
+- `maxNukeRadius`: crater size of a Lv 10 nuke (40 is huge; go up to ~64 if your PC can handle it).
+- `blockDamage: false`: explosions and nukes still hurt mobs but never break blocks (good for servers).
+- You can also set the key with the `ANTHROPIC_API_KEY` environment variable.
 
 ## Building
 ```

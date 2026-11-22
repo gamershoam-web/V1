@@ -18,8 +18,9 @@ public class AiDrawMod implements ModInitializer {
         AiConfig.load();
         ModItems.register();
         com.aidraw.ability.ServerTasks.init();
+        AiDrawCommand.register();
         PayloadTypeRegistry.playC2S().register(SubmitDrawingPayload.TYPE, SubmitDrawingPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(SubmitDrawingPayload.TYPE, DrawingHandler::handle);
-        LOGGER.info("AI Drawing Board loaded. AI {}.", AiConfig.get().hasKey() ? "ready" : "NOT configured (set apiKey in config/aidraw.json)");
+        LOGGER.info("AI Drawing Board loaded. AI {}.", AiConfig.get().hasKey() ? "ready" : "in free offline mode (use /aidraw key <key> to enable)");
     }
 }

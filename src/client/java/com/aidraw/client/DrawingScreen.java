@@ -52,7 +52,7 @@ public class DrawingScreen extends Screen {
 
         hintBox = new EditBox(this.font, left, bottom, bw, 18, Component.literal("hint"));
         hintBox.setMaxLength(100);
-        hintBox.setHint(Component.literal("What did you draw? (optional, e.g. \"laser gun\")"));
+        hintBox.setHint(Component.literal("What did you draw? e.g. \"atom bomb\", \"crazy fire sword\""));
         hintBox.setValue(savedHint);
         addRenderableWidget(hintBox);
 

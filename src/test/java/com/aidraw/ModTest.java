@@ -121,4 +121,41 @@ class ModTest {
         assertTrue(mods.toString().contains("29"), mods.toString()); // 30 dmg cap (1 base + 29)
         System.out.println(stack.get(net.minecraft.core.component.DataComponents.LORE).lines());
     }
+
+    private static com.aidraw.ability.ItemSpec offline(String hint) {
+        return com.aidraw.item.ItemFactory.buildSpec(com.aidraw.ai.OfflineDesigner.design(hint).raw());
+    }
+
+    @Test
+    void offlineMode() {
+        assertNull(com.aidraw.ai.OfflineDesigner.design("  "));
+        var nuke = offline("an ATOM bomb!!");
+        assertEquals(com.aidraw.ability.AbilityType.NUKE, nuke.use().get(0).type());
+        assertEquals(10, nuke.use().get(0).strength());
+
+        var sword = com.aidraw.ai.OfflineDesigner.design("crazy fire sword");
+        assertEquals("SWORD", sword.category());
+        assertTrue(sword.attackDamage() > 12);
+        var swordSpec = com.aidraw.item.ItemFactory.buildSpec(sword.raw());
+        assertTrue(swordSpec.hit().stream().anyMatch(a -> a.type() == com.aidraw.ability.AbilityType.LIGHTNING));
+        assertTrue(swordSpec.hit().stream().anyMatch(a -> a.type() == com.aidraw.ability.AbilityType.FIRE));
+
+        var jet = offline("fighter jet");
+        assertTrue(jet.flies());
+        assertTrue(jet.use().stream().anyMatch(a -> a.type() == com.aidraw.ability.AbilityType.SHOOT_ARROW));
+
+        assertEquals("minecraft:pig", com.aidraw.ai.OfflineDesigner.design("pig").mobId());
+        assertEquals("minecraft:diamond", com.aidraw.ai.OfflineDesigner.design("diamonds").vanillaId());
+        assertEquals("CHARM", com.aidraw.ai.OfflineDesigner.design("banana phone").category());
+        var dog = offline("my dog");
+        assertEquals("minecraft:wolf", dog.use().get(0).entityId());
+        // every recipe produces a valid, non-empty spec
+        for (String h : new String[]{"tnt", "laser", "minigun", "bow", "plane", "rocket", "wings", "dragon", "hammer", "katana", "axe",
+                "pickaxe", "black hole", "meteor", "lightning", "fire", "ice", "tornado", "wand", "teleport", "shoes", "spring", "heart",
+                "shield", "crown", "ghost", "glasses", "fish", "muscle", "clover", "cat", "robot", "poison", "pizza", "potion", "mini nuke"}) {
+            var r = com.aidraw.ai.OfflineDesigner.design(h);
+            var spec = com.aidraw.item.ItemFactory.buildSpec(r.raw());
+            assertFalse(spec.use().isEmpty() && spec.hit().isEmpty() && spec.passive().isEmpty(), h);
+        }
+    }
 }

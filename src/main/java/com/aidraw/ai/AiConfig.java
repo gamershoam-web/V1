@@ -38,8 +38,21 @@ public final class AiConfig {
 
     public boolean hasKey() { return !key().isEmpty(); }
 
+    private static Path path() { return FabricLoader.getInstance().getConfigDir().resolve("aidraw.json"); }
+
+    /** Saves the current settings (used by /aidraw key). */
+    public static boolean save() {
+        try {
+            Files.writeString(path(), GSON.toJson(INSTANCE));
+            return true;
+        } catch (Exception e) {
+            AiDrawMod.LOGGER.error("Could not save {}", path(), e);
+            return false;
+        }
+    }
+
     public static void load() {
-        Path path = FabricLoader.getInstance().getConfigDir().resolve("aidraw.json");
+        Path path = path();
         try {
             if (Files.exists(path)) {
                 AiConfig loaded = GSON.fromJson(Files.readString(path), AiConfig.class);
