@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "WWW",
+    "SSS",
+    "SSS"
+  ],
+  "key": {
+    "W": "#minecraft:wool",
+    "S": "minecraft:stick"
+  },
+  "result": {
+    "id": "aidraw:painting_board",
+    "count": 1
+  }
+}

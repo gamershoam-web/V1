@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "aidraw",
+  "version": "${version}",
+  "name": "AI Drawing Board",
+  "description": "Draw anything on a Painting Board and Claude AI turns it into a real item.",
+  "authors": ["gamershoam-web"],
+  "license": "MIT",
+  "icon": "assets/aidraw/textures/item/painting_board.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.aidraw.AiDrawMod"],
+    "client": ["com.aidraw.client.AiDrawClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.17.0",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
