@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420">
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="78%" r="80%">
+      <stop offset="0" stop-color="#7a1608"/>
+      <stop offset="0.35" stop-color="#3a0a0c"/>
+      <stop offset="0.75" stop-color="#12060a"/>
+      <stop offset="1" stop-color="#07040a"/>
+    </radialGradient>
+    <radialGradient id="moon" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffb08a"/>
+      <stop offset="0.55" stop-color="#e0301e"/>
+      <stop offset="1" stop-color="#7a0f0f"/>
+    </radialGradient>
+    <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ff3b1f" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ff3b1f" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fire" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff3c4"/>
+      <stop offset="0.28" stop-color="#ffc24a"/>
+      <stop offset="0.6" stop-color="#ff5a1f"/>
+      <stop offset="1" stop-color="#9c0f0f"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-40%" width="140%" height="180%">
+      <feGaussianBlur stdDeviation="9" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="haze">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012 0.04" numOctaves="3" seed="7"/>
+      <feColorMatrix values="0 0 0 0 0.9  0 0 0 0 0.25  0 0 0 0 0.1  0 0 0 0.35 0"/>
+    </filter>
+  </defs>
+
+  <rect width="1280" height="420" fill="url(#sky)"/>
+  <rect width="1280" height="420" filter="url(#haze)" opacity="0.6"/>
+
+  <!-- blood moon -->
+  <circle cx="1140" cy="78" r="120" fill="url(#moonGlow)"/>
+  <circle cx="1140" cy="78" r="46" fill="url(#moon)"/>
+  <circle cx="1126" cy="66" r="7" fill="#9c1a10" opacity="0.45"/>
+  <circle cx="1156" cy="94" r="9" fill="#9c1a10" opacity="0.35"/>
+
+  <!-- dragon silhouette crossing the moon -->
+  <g fill="#0a0406" transform="translate(1062 46) scale(0.72)">
+    <path d="M70 40 C 95 36, 120 38, 140 44 C 150 47, 160 46, 168 41 L 178 36 L 172 47 C 165 55, 150 58, 136 55 C 118 52, 96 52, 80 56 Z"/>
+    <path d="M98 45 C 88 20, 70 2, 40 -8 C 52 4, 56 12, 54 20 C 44 12, 30 8, 14 10 C 28 18, 34 26, 34 34 C 24 30, 12 30, 0 34 C 30 40, 60 46, 98 50 Z"/>
+    <path d="M110 46 C 120 22, 136 6, 160 -6 C 152 8, 150 16, 152 24 C 160 16, 172 12, 186 12 C 174 20, 168 28, 168 36 Z"/>
+    <path d="M72 50 C 50 56, 30 66, 6 70 C 26 72, 44 68, 60 62 Z"/>
+  </g>
+
+  <!-- mountains -->
+  <path d="M0 330 L90 262 L150 300 L240 214 L330 296 L400 250 L470 300 L560 236 L640 310 L720 258 L790 292 L880 220 L960 300 L1040 252 L1120 300 L1200 246 L1280 290 L1280 420 L0 420 Z" fill="#1a070b"/>
+  <path d="M0 370 L120 318 L210 352 L320 300 L430 360 L540 322 L650 368 L760 318 L880 360 L990 320 L1100 364 L1200 330 L1280 352 L1280 420 L0 420 Z" fill="#0c0407"/>
+
+  <!-- embers -->
+  <g fill="#ffb347">
+    <circle cx="120" cy="300" r="2.2" opacity="0.9"/><circle cx="210" cy="250" r="1.6" opacity="0.7"/>
+    <circle cx="300" cy="190" r="2" opacity="0.6"/><circle cx="380" cy="320" r="1.4" opacity="0.8"/>
+    <circle cx="460" cy="140" r="1.8" opacity="0.5"/><circle cx="560" cy="290" r="2.4" opacity="0.8"/>
+    <circle cx="700" cy="100" r="1.5" opacity="0.5"/><circle cx="760" cy="230" r="2" opacity="0.7"/>
+    <circle cx="840" cy="330" r="1.7" opacity="0.9"/><circle cx="930" cy="270" r="2.2" opacity="0.6"/>
+    <circle cx="1150" cy="300" r="1.8" opacity="0.8"/><circle cx="1220" cy="210" r="1.4" opacity="0.6"/>
+    <circle cx="60" cy="160" r="1.3" opacity="0.5"/><circle cx="640" cy="360" r="2" opacity="0.9"/>
+  </g>
+
+  <!-- title -->
+  <g text-anchor="middle" font-family="Impact, Haettenschweiler, 'Arial Narrow Bold', 'Arial Black', sans-serif">
+    <text x="640" y="232" font-size="150" letter-spacing="18" fill="url(#fire)" filter="url(#glow)">WYRMFALL</text>
+    <text x="640" y="232" font-size="150" letter-spacing="18" fill="none" stroke="#2a0606" stroke-width="2" opacity="0.6">WYRMFALL</text>
+    <text x="640" y="290" font-size="19" letter-spacing="5" fill="#f2c9a8" font-family="Georgia, 'Times New Roman', serif" font-style="italic">THE SKY BURNS · THE LAND HUNGERS · YOU WERE NEVER MEANT TO SURVIVE</text>
+    <text x="640" y="392" font-size="17" letter-spacing="6" fill="#c46a4a" font-family="'Segoe UI', Verdana, sans-serif">FORGE 1.20.1 · RLCRAFT-INSPIRED HARDCORE SURVIVAL</text>
+  </g>
+</svg>
