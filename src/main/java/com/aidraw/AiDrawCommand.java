@@ -29,7 +29,7 @@ public final class AiDrawCommand {
     private static int status(CommandContext<CommandSourceStack> ctx) {
         AiConfig cfg = AiConfig.get();
         if (cfg.hasKey()) {
-            ctx.getSource().sendSuccess(() -> Component.literal("AI Drawing: ON — " + com.aidraw.ai.AiRouter.name() + " (" + (com.aidraw.ai.AiRouter.provider() == com.aidraw.ai.AiRouter.Provider.CLAUDE ? cfg.model : cfg.geminiModel) + ") looks at every drawing.").withStyle(ChatFormatting.GREEN), false);
+            ctx.getSource().sendSuccess(() -> Component.literal("AI Drawing: ON — " + com.aidraw.ai.AiRouter.name() + " (" + (com.aidraw.ai.AiRouter.provider() == com.aidraw.ai.AiRouter.Provider.CLAUDE ? cfg.model : (cfg.geminiModel.isBlank() ? "auto: fastest free model" : cfg.geminiModel)) + ") looks at every drawing.").withStyle(ChatFormatting.GREEN), false);
         } else {
             ctx.getSource().sendSuccess(() -> Component.literal("AI Drawing: OFFLINE mode — type what you drew in the hint box. For free AI, get a Gemini key at aistudio.google.com and an operator runs /aidraw key <key>").withStyle(ChatFormatting.YELLOW), false);
         }

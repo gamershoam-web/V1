@@ -13,7 +13,8 @@ public final class AiConfig {
     /** Free Gemini key (AIza...) from aistudio.google.com, or an Anthropic key (sk-ant-...). */
     public String apiKey = "";
     public String model = "claude-opus-5-5";
-    public String geminiModel = "gemini-flash-latest";
+    /** "" = automatic (fastest free model that's available). Set a model name to force it first. */
+    public String geminiModel = "";
     public String effort = "medium";
     public int cooldownSeconds = 15;
     public int maxVanillaItemCount = 16;
@@ -62,6 +63,8 @@ public final class AiConfig {
             if (Files.exists(path)) {
                 AiConfig loaded = GSON.fromJson(Files.readString(path), AiConfig.class);
                 if (loaded != null) INSTANCE = loaded;
+                // Migrate the old default, which is often overloaded on the free tier, to automatic.
+                if ("gemini-flash-latest".equals(INSTANCE.geminiModel)) INSTANCE.geminiModel = "";
             }
             Files.writeString(path, GSON.toJson(INSTANCE)); // writes defaults / adds new fields
         } catch (Exception e) {

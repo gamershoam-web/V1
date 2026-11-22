@@ -44,4 +44,21 @@ class GeminiLiveTest {
         System.out.println("ATOM BOMB -> " + r.category() + " | " + r.name() + " | " + spec);
         assertTrue(spec.use().stream().anyMatch(a -> a.type() == com.aidraw.ability.AbilityType.NUKE), spec.toString());
     }
+
+    @Test
+    void manyDrawingsInARow() {
+        String[] hints = {"", "laser gun", "", "fighter jet", "crazy sword", ""};
+        int ok = 0;
+        for (String h : hints) {
+            long t = System.currentTimeMillis();
+            try {
+                DrawingResult r = AiRouter.classify(swordDrawing(), h).join();
+                ok++;
+                System.out.println("ROW '" + h + "' -> " + r.category() + " | " + r.name() + " in " + (System.currentTimeMillis() - t) + "ms");
+            } catch (Exception e) {
+                System.out.println("ROW '" + h + "' FAILED in " + (System.currentTimeMillis() - t) + "ms: " + e.getCause().getMessage());
+            }
+        }
+        assertEquals(hints.length, ok);
+    }
 }

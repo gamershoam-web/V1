@@ -68,13 +68,14 @@ If the AI is down or the free limit is hit, drawings with a typed hint fall back
 
 ## Config (`config/aidraw.json`)
 ```json
-{ "apiKey": "", "model": "claude-opus-5-5", "geminiModel": "gemini-flash-latest", "effort": "medium",
+{ "apiKey": "", "model": "claude-opus-5-5", "geminiModel": "", "effort": "medium",
   "cooldownSeconds": 15, "maxVanillaItemCount": 16, "allowBossMobs": false, "allowVanillaItems": true,
   "allowNukes": true, "maxNukeRadius": 40, "blockDamage": true, "maxAttackDamage": 30 }
 ```
 - `maxNukeRadius`: crater size of a Lv 10 nuke (40 is huge; go up to ~64 if your PC can handle it).
 - `blockDamage: false`: explosions and nukes still hurt mobs but never break blocks (good for servers).
-- `geminiModel`: which Gemini model to use (default always points at Google's latest Flash model).
+- `geminiModel`: leave empty for automatic. The mod uses Google's fast free "lite" models, retries them when they're
+  briefly busy, and only then falls back to the bigger models. Set a model name to always try that one first.
 - You can also set the key with the `GEMINI_API_KEY` or `ANTHROPIC_API_KEY` environment variable.
 
 ## Building

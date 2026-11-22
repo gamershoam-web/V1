@@ -75,6 +75,7 @@ public final class DrawingHandler {
                     give(target, offline);
                 } else {
                     say(target, "The drawing fizzled: " + cause.getMessage(), ChatFormatting.RED);
+                    say(target, "Tip: type what you drew in the box and it will still work even when the AI is busy.", ChatFormatting.GRAY);
                     LAST_USE.remove(id); // don't punish failures with a cooldown
                 }
                 return;
