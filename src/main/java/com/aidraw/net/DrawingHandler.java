@@ -4,7 +4,7 @@ import com.aidraw.AiDrawMod;
 import com.aidraw.ModItems;
 import com.aidraw.Palette;
 import com.aidraw.ai.AiConfig;
-import com.aidraw.ai.ClaudeClient;
+import com.aidraw.ai.AiRouter;
 import com.aidraw.ai.DrawingResult;
 import com.aidraw.ai.OfflineDesigner;
 import com.aidraw.item.ItemFactory;
@@ -42,7 +42,7 @@ public final class DrawingHandler {
         String hint = payload.hint() == null ? "" : payload.hint().strip();
         if (!cfg.hasKey() && hint.isEmpty()) {
             say(player, "Offline mode: type what you drew in the box under the canvas (e.g. \"atom bomb\", \"crazy fire sword\").", ChatFormatting.YELLOW);
-            say(player, "For AI that looks at your drawing, the server owner runs: /aidraw key <anthropic-api-key>", ChatFormatting.GRAY);
+            say(player, "For FREE AI that looks at your drawing: get a Gemini key at aistudio.google.com, then the host runs /aidraw key <key>", ChatFormatting.GRAY);
             return;
         }
         if (IN_FLIGHT.contains(id)) { say(player, "Still working on your last drawing...", ChatFormatting.YELLOW); return; }
@@ -60,9 +60,9 @@ public final class DrawingHandler {
         }
 
         IN_FLIGHT.add(id);
-        say(player, "✎ Claude is looking at your drawing...", ChatFormatting.AQUA);
+        say(player, "✎ " + AiRouter.name() + " is looking at your drawing...", ChatFormatting.AQUA);
 
-        ClaudeClient.classify(pixels, hint).whenComplete((result, error) -> server.execute(() -> {
+        AiRouter.classify(pixels, hint).whenComplete((result, error) -> server.execute(() -> {
             IN_FLIGHT.remove(id);
             ServerPlayer target = server.getPlayerList().getPlayer(id);
             if (target == null) return; // logged off

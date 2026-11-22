@@ -43,16 +43,23 @@ Each power is listed in the item's tooltip. You get no fall damage after dashes,
 "atom bomb", "crazy fire sword", "fighter jet", "dog" or "diamonds". The item is built from those words.
 Words like *crazy / ultimate / god / mega / epic* make it stronger. About 45 kinds of item are built in.
 
-**AI mode (Claude actually looks at your drawing).** Only the **server host** needs an Anthropic API key
-(get one at <https://console.anthropic.com/>; each drawing costs a fraction of a cent).
+**AI mode: the AI actually looks at your drawing.** Only the **server host** needs a key.
+
+- **Free: Google Gemini.** Go to <https://aistudio.google.com/apikey>, sign in with a Google account,
+  click *Create API key* (no credit card). The free tier allows a generous number of drawings per day.
+  Note: on Google's free tier, Google may use the requests to improve its products.
+- **Paid: Claude** (Anthropic, <https://console.anthropic.com/>), if you prefer.
+
 In game, as an operator (or in singleplayer/LAN with cheats on):
 ```
-/aidraw key sk-ant-xxxxxxxx      turns the AI on instantly, no restart, saved to config/aidraw.json
+/aidraw key AIza...              Gemini (free); the mod detects which AI from the key
+/aidraw key sk-ant-...           Claude (paid)
 /aidraw key clear                back to offline mode
 /aidraw status                   check which mode is on (anyone can run this)
 ```
+It takes effect instantly with no restart and is saved to `config/aidraw.json`.
 The key stays on the server. Friends who join never see it and never need their own.
-If the AI is down, drawings with a typed hint fall back to offline mode automatically.
+If the AI is down or the free limit is hit, drawings with a typed hint fall back to offline mode automatically.
 
 ## Playing with friends
 - **Dedicated server / Aternos-style host:** install Fabric 1.21.11 + Fabric API + this jar on the server,
@@ -61,13 +68,14 @@ If the AI is down, drawings with a typed hint fall back to offline mode automati
 
 ## Config (`config/aidraw.json`)
 ```json
-{ "apiKey": "", "model": "claude-opus-5-5", "effort": "medium",
+{ "apiKey": "", "model": "claude-opus-5-5", "geminiModel": "gemini-flash-latest", "effort": "medium",
   "cooldownSeconds": 15, "maxVanillaItemCount": 16, "allowBossMobs": false, "allowVanillaItems": true,
   "allowNukes": true, "maxNukeRadius": 40, "blockDamage": true, "maxAttackDamage": 30 }
 ```
 - `maxNukeRadius`: crater size of a Lv 10 nuke (40 is huge; go up to ~64 if your PC can handle it).
 - `blockDamage: false`: explosions and nukes still hurt mobs but never break blocks (good for servers).
-- You can also set the key with the `ANTHROPIC_API_KEY` environment variable.
+- `geminiModel`: which Gemini model to use (default always points at Google's latest Flash model).
+- You can also set the key with the `GEMINI_API_KEY` or `ANTHROPIC_API_KEY` environment variable.
 
 ## Building
 ```

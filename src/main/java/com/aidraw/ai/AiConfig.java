@@ -10,8 +10,10 @@ import java.nio.file.Path;
 
 /** config/aidraw.json — created on first launch. */
 public final class AiConfig {
+    /** Free Gemini key (AIza...) from aistudio.google.com, or an Anthropic key (sk-ant-...). */
     public String apiKey = "";
     public String model = "claude-opus-5-5";
+    public String geminiModel = "gemini-flash-latest";
     public String effort = "medium";
     public int cooldownSeconds = 15;
     public int maxVanillaItemCount = 16;
@@ -32,8 +34,11 @@ public final class AiConfig {
 
     public String key() {
         if (apiKey != null && !apiKey.isBlank()) return apiKey.trim();
-        String env = System.getenv("ANTHROPIC_API_KEY");
-        return env == null ? "" : env.trim();
+        for (String var : new String[]{"GEMINI_API_KEY", "ANTHROPIC_API_KEY"}) {
+            String env = System.getenv(var);
+            if (env != null && !env.isBlank()) return env.trim();
+        }
+        return "";
     }
 
     public boolean hasKey() { return !key().isEmpty(); }

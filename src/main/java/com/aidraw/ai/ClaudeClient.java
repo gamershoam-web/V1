@@ -22,7 +22,7 @@ public final class ClaudeClient {
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(20)).build();
     private static final String URL = "https://api.anthropic.com/v1/messages";
 
-    private static final String SYSTEM = """
+    static final String SYSTEM = """
             You are the magic inside a Minecraft "Painting Board". A player drew a picture on a 32x32 pixel canvas \
             (shown enlarged), optionally with a hint. Work out what it is (doodles are rough: guess the most likely intent; \
             the hint is very important) and DESIGN a Minecraft item whose powers really match it. Be faithful and dramatic: \
@@ -215,13 +215,17 @@ public final class ClaudeClient {
         for (var el : root.getAsJsonArray("content")) {
             JsonObject block = el.getAsJsonObject();
             if (!"text".equals(block.get("type").getAsString())) continue; // skip thinking blocks
-            JsonObject j = JsonParser.parseString(block.get("text").getAsString()).getAsJsonObject();
-            return new DrawingResult(
-                    getStr(j, "category"), getStr(j, "name"), getStr(j, "description"),
-                    getStr(j, "vanilla_id"), getStr(j, "mob_id"),
-                    getInt(j, "count", 1), getInt(j, "attack_damage", 0), j);
+            return toResult(JsonParser.parseString(block.get("text").getAsString()).getAsJsonObject());
         }
         throw new RuntimeException("AI gave no answer");
+    }
+
+    /** Builds a result from the item-design JSON (same shape for every AI provider). */
+    static DrawingResult toResult(JsonObject j) {
+        return new DrawingResult(
+                getStr(j, "category"), getStr(j, "name"), getStr(j, "description"),
+                getStr(j, "vanilla_id"), getStr(j, "mob_id"),
+                getInt(j, "count", 1), getInt(j, "attack_damage", 0), j);
     }
 
     private static String getStr(JsonObject j, String k) {

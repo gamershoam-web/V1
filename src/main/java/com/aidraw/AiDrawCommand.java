@@ -29,17 +29,17 @@ public final class AiDrawCommand {
     private static int status(CommandContext<CommandSourceStack> ctx) {
         AiConfig cfg = AiConfig.get();
         if (cfg.hasKey()) {
-            ctx.getSource().sendSuccess(() -> Component.literal("AI Drawing: ON — Claude (" + cfg.model + ") looks at every drawing.").withStyle(ChatFormatting.GREEN), false);
+            ctx.getSource().sendSuccess(() -> Component.literal("AI Drawing: ON — " + com.aidraw.ai.AiRouter.name() + " (" + (com.aidraw.ai.AiRouter.provider() == com.aidraw.ai.AiRouter.Provider.CLAUDE ? cfg.model : cfg.geminiModel) + ") looks at every drawing.").withStyle(ChatFormatting.GREEN), false);
         } else {
-            ctx.getSource().sendSuccess(() -> Component.literal("AI Drawing: OFFLINE mode — type what you drew in the hint box. An operator can turn on the AI with /aidraw key <anthropic-api-key>").withStyle(ChatFormatting.YELLOW), false);
+            ctx.getSource().sendSuccess(() -> Component.literal("AI Drawing: OFFLINE mode — type what you drew in the hint box. For free AI, get a Gemini key at aistudio.google.com and an operator runs /aidraw key <key>").withStyle(ChatFormatting.YELLOW), false);
         }
         return 1;
     }
 
     private static int setKey(CommandContext<CommandSourceStack> ctx, String rawKey) {
         final String key = rawKey.trim();
-        if (!key.isEmpty() && !key.startsWith("sk-ant-")) {
-            ctx.getSource().sendFailure(Component.literal("That doesn't look like an Anthropic API key (they start with sk-ant-)."));
+        if (!key.isEmpty() && !key.startsWith("sk-ant-") && !key.startsWith("AIza")) {
+            ctx.getSource().sendFailure(Component.literal("That doesn't look like a Gemini key (starts with AIza) or an Anthropic key (starts with sk-ant-)."));
             return 0;
         }
         AiConfig.get().apiKey = key;
@@ -48,7 +48,7 @@ public final class AiDrawCommand {
         // Feedback goes only to the sender (false = not broadcast to other operators), and the key is masked.
         ctx.getSource().sendSuccess(() -> Component.literal(key.isEmpty()
                 ? "AI key removed. Drawings now use free offline mode."
-                : "AI key set (" + shown + "). Claude will now look at every drawing — no restart needed!"
+                : "AI key set (" + shown + "). " + com.aidraw.ai.AiRouter.name() + " will now look at every drawing — no restart needed!"
                 + (saved ? "" : " (couldn't save to config — it will reset on restart)")).withStyle(ChatFormatting.GREEN), false);
         return 1;
     }
