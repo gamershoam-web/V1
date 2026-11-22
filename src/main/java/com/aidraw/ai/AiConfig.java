@@ -12,11 +12,18 @@ import java.nio.file.Path;
 public final class AiConfig {
     public String apiKey = "";
     public String model = "claude-opus-5-5";
-    public String effort = "low";
+    public String effort = "medium";
     public int cooldownSeconds = 15;
     public int maxVanillaItemCount = 16;
     public boolean allowBossMobs = false;
     public boolean allowVanillaItems = true;
+    /** Nukes from atom-bomb drawings. Radius at max strength (blocks). */
+    public boolean allowNukes = true;
+    public int maxNukeRadius = 40;
+    /** false = explosions/nukes hurt mobs but never break blocks. */
+    public boolean blockDamage = true;
+    /** Highest melee damage a drawn weapon may have. */
+    public int maxAttackDamage = 30;
 
     private static AiConfig INSTANCE = new AiConfig();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

@@ -27,14 +27,14 @@ public final class ModItems {
 
     public static void register() {
         PAINTING_BOARD = reg("painting_board", PaintingBoardItem::new, new Item.Properties().stacksTo(1));
-        DRAWN_GUN = reg("drawn_gun", GunItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.RARE));
-        DRAWN_PLANE = reg("drawn_plane", PlaneItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.RARE));
-        DRAWN_SWORD = reg("drawn_sword", Item::new, new Item.Properties().sword(ToolMaterial.NETHERITE, 3.0F, -2.4F).rarity(Rarity.RARE));
-        DRAWN_TOOL = reg("drawn_tool", Item::new, new Item.Properties().pickaxe(ToolMaterial.DIAMOND, 1.0F, -2.8F).rarity(Rarity.RARE));
-        DRAWN_BOMB = reg("drawn_bomb", BombItem::new, new Item.Properties().stacksTo(16).rarity(Rarity.UNCOMMON));
-        DRAWN_WAND = reg("drawn_wand", WandItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC));
-        DRAWN_FOOD = reg("drawn_food", Item::new, new Item.Properties().food(new FoodProperties(6, 0.6F, false)));
-        DRAWN_CHARM = reg("drawn_charm", CharmItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
+        DRAWN_GUN = reg("drawn_gun", DrawnItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.RARE));
+        DRAWN_PLANE = reg("drawn_plane", DrawnItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.RARE));
+        DRAWN_SWORD = reg("drawn_sword", DrawnItem::new, new Item.Properties().sword(ToolMaterial.NETHERITE, 3.0F, -2.4F).rarity(Rarity.RARE));
+        DRAWN_TOOL = reg("drawn_tool", DrawnItem::new, new Item.Properties().pickaxe(ToolMaterial.NETHERITE, 1.0F, -2.8F).rarity(Rarity.RARE));
+        DRAWN_BOMB = reg("drawn_bomb", DrawnItem::new, new Item.Properties().stacksTo(16).rarity(Rarity.EPIC));
+        DRAWN_WAND = reg("drawn_wand", DrawnItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.EPIC));
+        DRAWN_FOOD = reg("drawn_food", DrawnItem::new, new Item.Properties().food(new FoodProperties(6, 0.6F, false)));
+        DRAWN_CHARM = reg("drawn_charm", DrawnItem::new, new Item.Properties().stacksTo(1).rarity(Rarity.UNCOMMON));
 
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.TOOLS_AND_UTILITIES).register(e -> e.accept(PAINTING_BOARD));
     }

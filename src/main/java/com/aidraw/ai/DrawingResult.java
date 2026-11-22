@@ -1,5 +1,7 @@
 package com.aidraw.ai;
 
-/** What Claude decided the drawing is. */
-public record DrawingResult(String category, String name, String description, int power,
-                            String vanillaId, int count, String effectId, String mobId) {}
+import com.google.gson.JsonObject;
+
+/** What Claude designed for the drawing. {@code raw} is the full validated-by-schema JSON answer. */
+public record DrawingResult(String category, String name, String description, String vanillaId, String mobId,
+                            int count, int attackDamage, JsonObject raw) {}

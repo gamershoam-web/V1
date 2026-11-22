@@ -16,20 +16,26 @@ S S S
 4. Press **Bring it to life!** — a few seconds later the item appears in your inventory.
 
 ## What drawings become
-| You draw | You get |
-|---|---|
-| Gun, blaster, cannon | **Drawn Gun** – right-click shoots bullets, no ammo |
-| Plane, jet, rocket, wings | **Drawn Plane** – hold right-click to fly where you look, no fall damage while held |
-| Sword, knife, spear | **Drawn Sword** – netherite-level weapon |
-| Pickaxe, drill, hammer | **Drawn Tool** – diamond-level pickaxe |
-| Bomb, dynamite, grenade | **Drawn Bomb** – right-click blows up the spot you're looking at |
-| Wand, staff, lightning | **Drawn Wand** – right-click calls lightning |
-| Pizza, burger, ice cream… | **Drawn Food** – edible |
-| Shoes, heart, ghost, feather… | **Drawn Charm** – gives a matching power (speed, regen, invisibility, slow falling…) |
-| An animal / mob (pig, wolf…) | Its spawn egg |
-| Anything already in Minecraft (diamond, apple, armor, boat…) | That item |
+Claude doesn't pick from a fixed list. It **designs each item's powers** from 21 building blocks, combines them,
+and sets each one's strength from 1 to 10 to match what you drew.
 
-Each item gets an AI-chosen name, description and a **Power ★1–5** — better drawings are stronger.
+| You draw | Example of what Claude builds |
+|---|---|
+| Atom bomb | **NUKE Lv 10**: 3-second countdown, a crater 40 blocks across, burning scorched rim, shockwave that throws and kills mobs, mushroom cloud |
+| Crazy flaming sword | 20 damage, *on hit:* firestorm + lightning + mega knockback, *right-click:* shockwave + dash, *while held:* Strength + Fire Resistance |
+| Fighter jet | Hold right-click to fly + shoots bullets while flying |
+| Laser gun | Piercing laser beam |
+| Thor's hammer | *On hit:* lightning, *right-click:* lightning storm + super jump |
+| Black hole orb | Sucks every mob in and crushes them |
+| Magic boots | Speed + Jump Boost while held |
+| Wolf whistle | Summons tamed wolves |
+| Pig / cow / any mob | That mob's spawn egg |
+| Diamond, apple, boat… | That vanilla item |
+
+**All abilities:** Explosion, Nuke, Lightning, Fire, Bullets, Fireball, Laser beam, Meteor shower, Shockwave, Dash,
+Super jump, Teleport, Flight, Freeze, Black hole, Summon, Heal, Self power (any effect), Curse area (any effect on mobs),
+Mega knockback, Lifesteal, plus any potion effect while you hold the item.
+Each power is listed in the item's tooltip. You get no fall damage after dashes, jumps, flights and teleports.
 
 ## Setup (required: AI key)
 The AI is Claude (Anthropic API). The mod sends the drawing image to the API; each drawing costs a fraction of a cent.
@@ -38,9 +44,12 @@ The AI is Claude (Anthropic API). The mod sends the drawing image to the API; ea
 2. Install Fabric Loader for 1.21.11 + Fabric API, put `ai-drawing-board-1.0.0.jar` in `mods/`.
 3. Launch once, then edit `config/aidraw.json`:
    ```json
-   { "apiKey": "sk-ant-...", "model": "claude-opus-5-5", "effort": "low",
-     "cooldownSeconds": 15, "maxVanillaItemCount": 16, "allowBossMobs": false, "allowVanillaItems": true }
+   { "apiKey": "sk-ant-...", "model": "claude-opus-5-5", "effort": "medium",
+     "cooldownSeconds": 15, "maxVanillaItemCount": 16, "allowBossMobs": false, "allowVanillaItems": true,
+     "allowNukes": true, "maxNukeRadius": 40, "blockDamage": true, "maxAttackDamage": 30 }
    ```
+   - `maxNukeRadius`: crater size of a Lv 10 nuke (40 is huge; go up to ~64 if your PC can handle it).
+   - `blockDamage: false`: explosions and nukes still hurt mobs but never break blocks (good for servers).
    (Or set the `ANTHROPIC_API_KEY` environment variable.) Restart the game.
 
 On a multiplayer server only the **server** needs the key; all players need the mod installed.

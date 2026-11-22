@@ -24,34 +24,47 @@ public final class ClaudeClient {
 
     private static final String SYSTEM = """
             You are the magic inside a Minecraft "Painting Board". A player drew a picture on a 32x32 pixel canvas \
-            (shown enlarged). Decide what it depicts and turn it into the best in-game item. Be generous and creative: \
-            kids' doodles are rough, so guess the most likely intent. The player's hint, if given, is very important.
+            (shown enlarged), optionally with a hint. Work out what it is (doodles are rough: guess the most likely intent; \
+            the hint is very important) and DESIGN a Minecraft item whose powers really match it. Be faithful and dramatic: \
+            an atom bomb must be a real nuke, a "crazy" or "ultimate" sword must have crazy powers, a fighter jet flies AND shoots.
 
-            Pick exactly one category:
-            - GUN: any gun, blaster, cannon, bow-like shooter. Shoots bullets.
-            - PLANE: plane, jet, rocket, helicopter, wings, broom, any flying vehicle. Lets the player fly.
-            - SWORD: sword, knife, axe used as a weapon, spear, any melee weapon.
-            - TOOL: pickaxe, shovel, drill, hammer, any mining tool.
-            - BOMB: bomb, dynamite, grenade, missile, explosive.
-            - WAND: wand, staff, lightning, magic stick, thunder.
-            - FOOD: any food or drink not in vanilla Minecraft (pizza, burger, ice cream, soda...).
-            - EFFECT: things that give a power: shoes/boots (minecraft:speed), heart (minecraft:regeneration), \
-            shield (minecraft:resistance), fire (minecraft:fire_resistance), fish/bubbles (minecraft:water_breathing), \
-            eye/glasses (minecraft:night_vision), spring/frog (minecraft:jump_boost), muscle (minecraft:strength), \
-            feather/balloon (minecraft:slow_falling), ghost (minecraft:invisibility), pickaxe-hand (minecraft:haste), clover (minecraft:luck).
-            - MOB: an animal or creature that exists in Minecraft (pig, cow, cat, wolf, horse, creeper, zombie, villager, axolotl...). \
-            Put its id in mob_id, e.g. "minecraft:pig".
-            - VANILLA_ITEM: something that already exists as a Minecraft item or block (apple, diamond, house->oak_planks, tree->oak_sapling, \
-            boat, bucket, torch, bed, cake, armor, shield, bow, trident, boat, minecart...). Put its exact id in vanilla_id, \
-            e.g. "minecraft:diamond_chestplate", and a sensible count (1 for tools/armor, up to 16 for materials).
-            - OTHER: none of the above fits. It becomes a decorative charm; still pick a fitting effect_id.
+            category = what it looks like in game:
+            GUN, PLANE (any flying thing: jet, rocket, wings, broom, carpet), SWORD (any melee weapon), TOOL (pickaxe, drill, hammer), \
+            BOMB (any explosive), WAND (staffs, magic, orbs, gauntlets), FOOD (non-vanilla food/drink), CHARM (anything else: \
+            shoes, rings, hearts, crowns, armor pieces with powers, gadgets, creatures you want as a power), \
+            MOB (the drawing is just a Minecraft animal/mob: set mob_id, e.g. "minecraft:wolf"; no abilities needed), \
+            VANILLA_ITEM (it's simply an existing Minecraft item/block with nothing special: set vanilla_id + count; no abilities needed).
 
-            Rules: prefer GUN/PLANE/SWORD/TOOL/BOMB/WAND/FOOD over VANILLA_ITEM when the drawing is clearly that kind of thing \
-            and not a vanilla item. power is 1-5: how detailed/impressive the drawing is (more effort = stronger). \
-            name: a fun short item name (max 30 chars) like "Blue Laser Blaster". description: one short sentence (max 60 chars). \
-            Unused id fields must be empty strings; unused count = 1. Ids must be lowercase namespaced Minecraft ids.""";
+            Powers. Each ability = {type, strength 1-10, effect_id, entity_id}.
+            use_abilities run on right-click (at the block/mob the player looks at, up to 100 blocks), \
+            hit_abilities run when hitting a mob in melee (at the victim). Combine several for complex items.
+            - EXPLOSION: TNT-like blast at target (10 = huge). NUKE: nuclear bomb, carves a crater, mushroom cloud \
+            (strength 10 = city-destroying atom bomb; 5 = mini-nuke). LIGHTNING: strength = number of bolts. FIRE: firestorm. \
+            SHOOT_ARROW: bullets (strength = damage & count; for guns). SHOOT_FIREBALL: ghast fireballs. BEAM: laser that pierces mobs. \
+            METEOR_SHOWER: fireballs rain from the sky. SHOCKWAVE: blasts all nearby mobs away from the player. \
+            DASH: launch forward. LAUNCH_UP: super jump. TELEPORT: blink to where you look. FLY: hold right-click to fly \
+            (strength = speed; other use_abilities also fire while flying). FREEZE: freezes mobs, water to ice. \
+            BLACK_HOLE: sucks in and crushes mobs. SUMMON: spawns entity_id allies (e.g. "minecraft:wolf", "minecraft:iron_golem"); \
+            tamable ones become pets. HEAL: heal yourself. EFFECT_SELF: give yourself effect_id. \
+            EFFECT_AREA: give effect_id to mobs around target (e.g. "minecraft:poison", "minecraft:wither", "minecraft:levitation"). \
+            KNOCKBACK (hit only: send victim flying). LIFESTEAL (hit only: heal on hit).
+            passive_effects: effects the player gets while holding it ({effect_id, amplifier 0-4}), e.g. speed, strength, \
+            resistance, regeneration, fire_resistance, night_vision, jump_boost, haste, slow_falling, water_breathing, invisibility. \
+            For FOOD, passive_effects are given when eaten and use_abilities trigger when eaten.
 
-    private static final String[] CATEGORIES = {"GUN", "PLANE", "SWORD", "TOOL", "BOMB", "WAND", "FOOD", "EFFECT", "MOB", "VANILLA_ITEM", "OTHER"};
+            Other fields: attack_damage = melee damage (swords 8-30 depending on how epic; 0 = default). cooldown_seconds between \
+            right-clicks (0.25 for rapid guns, longer for big powers). consumable = true if it should be used up (bombs, grenades, \
+            potions); count = how many you get (1 for unique items, 3-8 grenades, 1-16 vanilla materials). \
+            name: fun short name (max 30 chars). description: one short sentence (max 60 chars). \
+            Strength guide: match the concept's real-world scale first (nuke = 10), then add +1/+2 for detailed, effortful drawings. \
+            Unused string fields = "", unused arrays = []. All ids are lowercase namespaced Minecraft ids.
+
+            Examples: atom bomb -> BOMB, use [NUKE 10], consumable, count 1, cooldown 30. \
+            crazy flaming sword -> SWORD, attack_damage 20, hit [FIRE 7, LIGHTNING 3, KNOCKBACK 5], use [SHOCKWAVE 7, DASH 6], \
+            passive [strength 1, fire_resistance 0]. fighter jet -> PLANE, use [FLY 8, SHOOT_ARROW 6]. \
+            laser gun -> GUN, use [BEAM 7], cooldown 0.5. thor hammer -> SWORD, hit [LIGHTNING 4], use [LIGHTNING 8, LAUNCH_UP 5].""";
+
+    private static final String[] CATEGORIES = {"GUN", "PLANE", "SWORD", "TOOL", "BOMB", "WAND", "FOOD", "CHARM", "MOB", "VANILLA_ITEM"};
 
     public static CompletableFuture<DrawingResult> classify(byte[] pixels, String hint) {
         AiConfig cfg = AiConfig.get();
@@ -87,7 +100,7 @@ public final class ClaudeClient {
     static JsonObject buildBody(AiConfig cfg, String pngBase64, String hint, boolean withFallbacks) {
         JsonObject body = new JsonObject();
         body.addProperty("model", cfg.model);
-        body.addProperty("max_tokens", 8000);
+        body.addProperty("max_tokens", 16000);
         body.addProperty("system", SYSTEM);
         if (withFallbacks) body.addProperty("fallbacks", "default");
 
@@ -126,18 +139,33 @@ public final class ClaudeClient {
 
     private static JsonObject schema() {
         JsonObject props = new JsonObject();
-        JsonObject cat = str();
-        JsonArray en = new JsonArray();
-        for (String c : CATEGORIES) en.add(c);
-        cat.add("enum", en);
-        props.add("category", cat);
+        props.add("category", enumOf(CATEGORIES));
         props.add("name", str());
         props.add("description", str());
-        props.add("power", type("integer"));
         props.add("vanilla_id", str());
-        props.add("count", type("integer"));
-        props.add("effect_id", str());
         props.add("mob_id", str());
+        props.add("count", type("integer"));
+        props.add("attack_damage", type("integer"));
+        props.add("cooldown_seconds", type("number"));
+        props.add("consumable", type("boolean"));
+
+        String[] abilityNames = java.util.Arrays.stream(com.aidraw.ability.AbilityType.values()).map(Enum::name).toArray(String[]::new);
+        JsonObject abilityProps = new JsonObject();
+        abilityProps.add("type", enumOf(abilityNames));
+        abilityProps.add("strength", type("integer"));
+        abilityProps.add("effect_id", str());
+        abilityProps.add("entity_id", str());
+        props.add("use_abilities", arrayOf(object(abilityProps)));
+        props.add("hit_abilities", arrayOf(object(abilityProps)));
+
+        JsonObject passiveProps = new JsonObject();
+        passiveProps.add("effect_id", str());
+        passiveProps.add("amplifier", type("integer"));
+        props.add("passive_effects", arrayOf(object(passiveProps)));
+        return object(props);
+    }
+
+    private static JsonObject object(JsonObject props) {
         JsonArray required = new JsonArray();
         for (String k : props.keySet()) required.add(k);
         JsonObject s = type("object");
@@ -145,6 +173,20 @@ public final class ClaudeClient {
         s.add("required", required);
         s.addProperty("additionalProperties", false);
         return s;
+    }
+
+    private static JsonObject arrayOf(JsonObject items) {
+        JsonObject a = type("array");
+        a.add("items", items);
+        return a;
+    }
+
+    private static JsonObject enumOf(String[] values) {
+        JsonObject o = str();
+        JsonArray en = new JsonArray();
+        for (String v : values) en.add(v);
+        o.add("enum", en);
+        return o;
     }
 
     private static JsonObject str() { return type("string"); }
@@ -175,16 +217,19 @@ public final class ClaudeClient {
             if (!"text".equals(block.get("type").getAsString())) continue; // skip thinking blocks
             JsonObject j = JsonParser.parseString(block.get("text").getAsString()).getAsJsonObject();
             return new DrawingResult(
-                    j.get("category").getAsString(),
-                    j.get("name").getAsString(),
-                    j.get("description").getAsString(),
-                    j.get("power").getAsInt(),
-                    j.get("vanilla_id").getAsString(),
-                    j.get("count").getAsInt(),
-                    j.get("effect_id").getAsString(),
-                    j.get("mob_id").getAsString());
+                    getStr(j, "category"), getStr(j, "name"), getStr(j, "description"),
+                    getStr(j, "vanilla_id"), getStr(j, "mob_id"),
+                    getInt(j, "count", 1), getInt(j, "attack_damage", 0), j);
         }
         throw new RuntimeException("AI gave no answer");
+    }
+
+    private static String getStr(JsonObject j, String k) {
+        return j.has(k) && j.get(k).isJsonPrimitive() ? j.get(k).getAsString() : "";
+    }
+
+    private static int getInt(JsonObject j, String k, int def) {
+        try { return j.has(k) ? j.get(k).getAsInt() : def; } catch (Exception e) { return def; }
     }
 
     /** Renders palette indices to a 256x256 PNG (8x nearest-neighbour upscale) for better vision. */
