@@ -1,0 +1,69 @@
+{
+  "values": [
+    "minecraft:elder_guardian",
+    {
+      "id": "iceandfire:hydra",
+      "required": false
+    },
+    {
+      "id": "iceandfire:cyclops",
+      "required": false
+    },
+    {
+      "id": "iceandfire:gorgon",
+      "required": false
+    },
+    {
+      "id": "iceandfire:sea_serpent",
+      "required": false
+    },
+    {
+      "id": "iceandfire:dread_lich",
+      "required": false
+    },
+    {
+      "id": "mutantmonsters:mutant_zombie",
+      "required": false
+    },
+    {
+      "id": "mutantmonsters:mutant_skeleton",
+      "required": false
+    },
+    {
+      "id": "mutantmonsters:mutant_creeper",
+      "required": false
+    },
+    {
+      "id": "mutantmonsters:mutant_enderman",
+      "required": false
+    },
+    {
+      "id": "graveyard:lich",
+      "required": false
+    },
+    {
+      "id": "alexsmobs:warped_mosco",
+      "required": false
+    },
+    {
+      "id": "friendsandfoes:wildfire",
+      "required": false
+    },
+    {
+      "id": "illagerinvasion:invoker",
+      "required": false
+    },
+    {
+      "id": "born_in_chaos_v1:lord_pumpkinhead",
+      "required": false
+    },
+    {
+      "id": "born_in_chaos_v1:sir_pumpkinhead",
+      "required": false
+    },
+    {
+      "id": "born_in_chaos_v1:supreme_bonescaller",
+      "required": false
+    }
+  ]
+}

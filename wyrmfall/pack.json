@@ -1,0 +1,9 @@
+{
+  "name": "WYRMFALL",
+  "version": "1.0.0",
+  "summary": "The dragons came back. The sky burns, the land hungers, and you were never meant to survive. A brutal RLCraft-inspired survival pack for Forge 1.20.1.",
+  "minecraft": "1.20.1",
+  "loader": "forge",
+  "loader_version": "auto",
+  "loader_fallback": "47.4.0"
+}

@@ -1,0 +1,206 @@
+{
+  "values": [
+    "minecraft:zombie",
+    "minecraft:husk",
+    "minecraft:drowned",
+    "minecraft:zombie_villager",
+    "minecraft:skeleton",
+    "minecraft:stray",
+    "minecraft:wither_skeleton",
+    "minecraft:creeper",
+    "minecraft:spider",
+    "minecraft:cave_spider",
+    "minecraft:enderman",
+    "minecraft:witch",
+    "minecraft:pillager",
+    "minecraft:vindicator",
+    "minecraft:evoker",
+    "minecraft:ravager",
+    "minecraft:blaze",
+    "minecraft:ghast",
+    "minecraft:magma_cube",
+    "minecraft:slime",
+    "minecraft:phantom",
+    "minecraft:piglin_brute",
+    "minecraft:hoglin",
+    "minecraft:zoglin",
+    "minecraft:guardian",
+    "minecraft:shulker",
+    "minecraft:vex",
+    "minecraft:illusioner",
+    "minecraft:silverfish",
+    "minecraft:endermite",
+    {
+      "id": "mowziesmobs:foliaath",
+      "required": false
+    },
+    {
+      "id": "mowziesmobs:naga",
+      "required": false
+    },
+    {
+      "id": "mowziesmobs:lantern",
+      "required": false
+    },
+    {
+      "id": "mowziesmobs:umvuthana",
+      "required": false
+    },
+    {
+      "id": "mowziesmobs:grottol",
+      "required": false
+    },
+    {
+      "id": "iceandfire:dread_thrall",
+      "required": false
+    },
+    {
+      "id": "iceandfire:dread_ghoul",
+      "required": false
+    },
+    {
+      "id": "iceandfire:dread_knight",
+      "required": false
+    },
+    {
+      "id": "iceandfire:troll",
+      "required": false
+    },
+    {
+      "id": "iceandfire:pixie",
+      "required": false
+    },
+    {
+      "id": "iceandfire:siren",
+      "required": false
+    },
+    {
+      "id": "iceandfire:cockatrice",
+      "required": false
+    },
+    {
+      "id": "iceandfire:myrmex_soldier",
+      "required": false
+    },
+    {
+      "id": "iceandfire:amphithere",
+      "required": false
+    },
+    {
+      "id": "iceandfire:stymphalian_bird",
+      "required": false
+    },
+    {
+      "id": "alexsmobs:soul_vulture",
+      "required": false
+    },
+    {
+      "id": "alexsmobs:warped_toad",
+      "required": false
+    },
+    {
+      "id": "alexsmobs:crimson_mosquito",
+      "required": false
+    },
+    {
+      "id": "alexsmobs:guster",
+      "required": false
+    },
+    {
+      "id": "alexsmobs:murmur",
+      "required": false
+    },
+    {
+      "id": "cataclysm:ender_golem",
+      "required": false
+    },
+    {
+      "id": "cataclysm:ignited_revenant",
+      "required": false
+    },
+    {
+      "id": "cataclysm:deepling",
+      "required": false
+    },
+    {
+      "id": "cataclysm:koboleton",
+      "required": false
+    },
+    {
+      "id": "cataclysm:watcher",
+      "required": false
+    },
+    {
+      "id": "graveyard:ghoul",
+      "required": false
+    },
+    {
+      "id": "graveyard:revenant",
+      "required": false
+    },
+    {
+      "id": "graveyard:reaper",
+      "required": false
+    },
+    {
+      "id": "graveyard:wraith",
+      "required": false
+    },
+    {
+      "id": "graveyard:nightmare",
+      "required": false
+    },
+    {
+      "id": "graveyard:skeleton_creeper",
+      "required": false
+    },
+    {
+      "id": "illagerinvasion:provoker",
+      "required": false
+    },
+    {
+      "id": "illagerinvasion:marauder",
+      "required": false
+    },
+    {
+      "id": "illagerinvasion:necromancer",
+      "required": false
+    },
+    {
+      "id": "illagerinvasion:basher",
+      "required": false
+    },
+    {
+      "id": "illagerinvasion:inquisitor",
+      "required": false
+    },
+    {
+      "id": "born_in_chaos_v1:dread_hound",
+      "required": false
+    },
+    {
+      "id": "born_in_chaos_v1:bone_imp",
+      "required": false
+    },
+    {
+      "id": "born_in_chaos_v1:zombie_clown",
+      "required": false
+    },
+    {
+      "id": "born_in_chaos_v1:barrel_zombie",
+      "required": false
+    },
+    {
+      "id": "irons_spellbooks:necromancer",
+      "required": false
+    },
+    {
+      "id": "irons_spellbooks:cryomancer",
+      "required": false
+    },
+    {
+      "id": "irons_spellbooks:pyromancer",
+      "required": false
+    }
+  ]
+}
