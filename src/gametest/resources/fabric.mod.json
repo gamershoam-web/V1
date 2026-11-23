@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "lumen-gametest",
+  "version": "1.0.0",
+  "name": "Lumen Game Tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-client-gametest": ["dev.lumen.gametest.LumenClientGameTest"]
+  },
+  "depends": { "lumen": "*" }
+}

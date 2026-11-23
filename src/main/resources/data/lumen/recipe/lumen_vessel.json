@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "AGA",
+    "GEG",
+    "AGA"
+  ],
+  "key": {
+    "A": "minecraft:amethyst_shard",
+    "G": "minecraft:glass",
+    "E": "minecraft:ender_eye"
+  },
+  "result": { "id": "lumen:lumen_vessel", "count": 1 }
+}

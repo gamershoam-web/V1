@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "awakening=false": { "model": "lumen:block/lumen_vessel" },
+    "awakening=true": { "model": "lumen:block/lumen_vessel_awake" }
+  }
+}

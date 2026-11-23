@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "lumen",
+  "version": "${version}",
+  "name": "Lumen",
+  "description": "A watching light. An AI companion orb that follows you, talks back, and remembers how you treat it.",
+  "authors": [
+    "V1"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "dev.lumen.Lumen"
+    ],
+    "client": [
+      "dev.lumen.client.LumenClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.17.0",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "icon": "assets/lumen/icon.png"
+}
