@@ -6,6 +6,8 @@ import dev.lumen.ai.LumenBrain;
 import dev.lumen.ai.LumenConfig;
 import dev.lumen.bond.Bond;
 import dev.lumen.bond.BondManager;
+import dev.lumen.voice.VoicePackets;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.MovementType;
 import net.minecraft.entity.SpawnReason;
@@ -378,10 +380,26 @@ public class LumenEntity extends PathAwareEntity {
 
 	public void say(ServerPlayerEntity owner, String line) {
 		if (line == null || line.isBlank()) return;
+		// Make sure the colour/voice match the current trust even if the mood changed this tick.
+		this.dataTracker.set(MOOD, Bond.of(owner).mood(LumenConfig.get().hostilityThreshold).ordinal());
 		owner.sendMessage(speechText(Bond.of(owner).name, getMood(), line), false);
+		speakAloud(owner, line);
 		SoundEvent sound = getMood() == Bond.Mood.HOSTILE ? SoundEvents.BLOCK_SCULK_SHRIEKER_SHRIEK : SoundEvents.BLOCK_AMETHYST_BLOCK_CHIME;
 		float volume = getMood() == Bond.Mood.HOSTILE ? 0.35f : 1.0f;
 		getEntityWorld().playSound(null, getX(), getY(), getZ(), sound, SoundCategory.NEUTRAL, volume, 0.9f + random.nextFloat() * 0.5f);
+	}
+
+	/** Lets clients voice the line (synthesised locally, so it works offline). */
+	private void speakAloud(ServerPlayerEntity owner, String line) {
+		VoicePackets.LumenSpeechS2C packet = new VoicePackets.LumenSpeechS2C(getId(), getMood().ordinal(), line);
+		if (ServerPlayNetworking.canSend(owner, VoicePackets.LumenSpeechS2C.ID)) ServerPlayNetworking.send(owner, packet);
+		if (LumenConfig.get().lumenVoiceHeardByOthers && getEntityWorld() instanceof ServerWorld world) {
+			for (ServerPlayerEntity other : world.getPlayers()) {
+				if (other != owner && other.squaredDistanceTo(this) < 24 * 24 && ServerPlayNetworking.canSend(other, VoicePackets.LumenSpeechS2C.ID)) {
+					ServerPlayNetworking.send(other, packet);
+				}
+			}
+		}
 	}
 
 	/** Applies a parsed reply: speaks it and carries out any control tags. */

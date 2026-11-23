@@ -9,6 +9,10 @@ import dev.lumen.bond.BondManager;
 import dev.lumen.command.LumenCommand;
 import dev.lumen.entity.HollowEntity;
 import dev.lumen.entity.LumenEntity;
+import dev.lumen.client.voice.LumenVoice;
+import dev.lumen.client.voice.VoiceClient;
+import dev.lumen.client.voice.VoiceClientConfig;
+import dev.lumen.voice.Adpcm;
 import net.fabricmc.fabric.api.client.gametest.v1.FabricClientGameTest;
 import net.fabricmc.fabric.api.client.gametest.v1.context.ClientGameTestContext;
 import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContext;
@@ -37,6 +41,17 @@ import java.util.concurrent.atomic.AtomicReference;
 public class LumenClientGameTest implements FabricClientGameTest {
 	private static void check(boolean condition, String message) {
 		if (!condition) throw new AssertionError(message);
+	}
+
+	/** Runs audio code the way the real microphone thread does (not on the gametest thread). */
+	private static void onMicThread(Runnable runnable) {
+		Thread thread = new Thread(runnable, "Fake Microphone");
+		thread.start();
+		try {
+			thread.join();
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private static ServerPlayerEntity player(MinecraftServer server) {
@@ -211,13 +226,79 @@ public class LumenClientGameTest implements FabricClientGameTest {
 			sp.getServer().runCommand("execute as @p run lumen follow");
 			context.waitTicks(10);
 
-			// 7. Online AI path against a local mock OpenAI-compatible endpoint.
+			// 7. Voice: codec quality, server relay (mic test loopback) and Lumen speaking out loud.
+			context.waitFor(c -> VoiceClient.serverVoice(), 100);
+			check(VoiceClient.serverVoice(), "server should announce voice chat support");
+			short[] sine = new short[Adpcm.FRAME_SAMPLES];
+			for (int i = 0; i < sine.length; i++) sine[i] = (short) (12000 * Math.sin(2 * Math.PI * 440 * i / Adpcm.SAMPLE_RATE));
+			short[] decoded = Adpcm.decode(Adpcm.encode(sine, 0, sine.length), sine.length);
+			double signal = 0, noise = 0;
+			for (int i = 0; i < sine.length; i++) {
+				signal += sine[i] * (double) sine[i];
+				noise += (sine[i] - decoded[i]) * (double) (sine[i] - decoded[i]);
+			}
+			double snr = 10 * Math.log10(signal / Math.max(noise, 1));
+			check(snr > 20, "ADPCM round trip should keep the voice clear, SNR=" + snr);
+
+			VoiceClientConfig voiceConfig = VoiceClientConfig.get();
+			voiceConfig.mode = VoiceClientConfig.Mode.PUSH_TO_TALK;
+			voiceConfig.micMuted = false;
+			voiceConfig.hearMyself = true;
+			long receivedBefore = VoiceClient.mixer().framesReceived();
+			VoiceClient.setHeldForTest(true, false);
+			onMicThread(() -> { for (int i = 0; i < 25; i++) VoiceClient.onCapturedFrame(sine.clone()); });
+			context.waitTicks(20);
+			VoiceClient.setHeldForTest(false, false);
+			voiceConfig.hearMyself = false;
+			long relayed = VoiceClient.mixer().framesReceived() - receivedBefore;
+			check(relayed >= 25, "push-to-talk frames should travel to the server and back (mic test), got " + relayed);
+			onMicThread(() -> VoiceClient.onCapturedFrame(sine.clone()));
+			context.waitTicks(5);
+			check(VoiceClient.mixer().framesReceived() - receivedBefore == relayed, "nothing is sent when the talk key is released");
+
+			for (Bond.Mood mood : Bond.Mood.values()) {
+				short[] babble = LumenVoice.shape(LumenVoice.babble("Hello there, are you listening?", mood), mood);
+				check(babble.length > Adpcm.SAMPLE_RATE / 2, "built-in babble voice should produce audio for " + mood);
+			}
+			sp.getServer().runCommand("effect clear @a");
+			sp.getServer().runOnServer(s -> {
+				ServerPlayerEntity p = player(s);
+				LumenEntity lumen = BondManager.find(p.getUuid());
+				Bond.of(p).staying = true;
+				lumen.setStaying(true);
+				Vec3d l = lumen.getEntityPos();
+				p.networkHandler.requestTeleport(l.x + 1.6, l.y - 1.4, l.z + 1.6, 135f, 15f);
+			});
+			context.waitTicks(40);
+			int lumenId = sp.getServer().computeOnServer(s -> {
+				ServerPlayerEntity p = player(s);
+				LumenEntity lumen = BondManager.find(p.getUuid());
+				lumen.say(p, "Hello. Can you hear me now?");
+				return lumen.getId();
+			});
+			boolean spoke = false;
+			for (int i = 0; i < 150 && !spoke; i++) {
+				context.waitTick();
+				spoke = VoiceClient.mixer().isSpeaking("lumen:" + lumenId);
+			}
+			check(spoke, "Lumen should speak its line out loud");
+			context.takeScreenshot("lumen_05_speaking");
+			sp.getServer().runOnServer(s -> {
+				ServerPlayerEntity p = player(s);
+				Bond.of(p).staying = false;
+				BondManager.find(p.getUuid()).setStaying(false);
+			});
+			System.out.println("[lumen-test] Lumen voice engine: " + LumenVoice.lastEngine());
+
+			// 8. Online AI path (chat + speech recognition) against a local mock OpenAI-compatible endpoint.
 			AtomicReference<String> lastRequest = new AtomicReference<>();
-			HttpServer mock = startMock(lastRequest);
+			AtomicReference<String> lastAudioRequest = new AtomicReference<>();
+			HttpServer mock = startMock(lastRequest, lastAudioRequest);
 			try {
 				LumenConfig config = LumenConfig.get();
 				config.apiKey = "test-key";
 				config.apiUrl = "http://127.0.0.1:" + mock.getAddress().getPort() + "/v1/chat/completions";
+				config.speechToTextUrl = "http://127.0.0.1:" + mock.getAddress().getPort() + "/v1/audio/transcriptions";
 				config.enableAi = true;
 				sp.getServer().runOnServer(s -> {
 					ServerPlayerEntity p = player(s);
@@ -232,12 +313,31 @@ public class LumenClientGameTest implements FabricClientGameTest {
 				check(applied, "AI reply ([TRUST+5]) should be applied");
 				String body = lastRequest.get();
 				check(body != null && body.contains("Where should I look for diamonds?") && body.contains("\"role\":\"system\""), "request should carry the system prompt and message");
+
+				// Hold "Talk to Lumen", speak, release: audio -> server -> speech-to-text -> Lumen.
+				sp.getServer().runOnServer(s -> check(!Bond.of(player(s)).staying, "precondition: following"));
+				VoiceClient.setHeldForTest(false, true);
+				onMicThread(() -> {
+					for (int i = 0; i < 60; i++) VoiceClient.onCapturedFrame(sine.clone());
+					VoiceClient.setHeldForTest(false, false);
+					VoiceClient.finishUtterance();
+				});
+				boolean voiceStayed = false;
+				for (int i = 0; i < 100 && !voiceStayed; i++) {
+					context.waitTicks(2);
+					voiceStayed = sp.getServer().computeOnServer(s -> Bond.of(player(s)).staying);
+				}
+				String audioRequest = lastAudioRequest.get();
+				check(audioRequest != null && audioRequest.contains("whisper-large-v3-turbo") && audioRequest.contains("RIFF"),
+					"speech should be uploaded as WAV to the transcription endpoint");
+				check(voiceStayed, "spoken 'please stay here' should make Lumen stay");
+				sp.getServer().runCommand("execute as @p run lumen follow");
 			} finally {
 				mock.stop(0);
 				LumenConfig.get().apiKey = "";
 			}
 
-			// 8. /lumen release unbinds and removes it.
+			// 9. /lumen release unbinds and removes it.
 			sp.getServer().runCommand("execute as @p run lumen release");
 			context.waitTicks(5);
 			sp.getServer().runOnServer(s -> {
@@ -248,26 +348,39 @@ public class LumenClientGameTest implements FabricClientGameTest {
 		}
 	}
 
-	private static HttpServer startMock(AtomicReference<String> lastRequest) {
+	private static HttpServer startMock(AtomicReference<String> lastRequest, AtomicReference<String> lastAudioRequest) {
 		try {
 			HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
 			server.createContext("/v1/chat/completions", exchange -> {
 				String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
 				String auth = exchange.getRequestHeaders().getFirst("Authorization");
 				lastRequest.set("Bearer test-key".equals(auth) ? body : null);
-				byte[] response = """
-					{"id":"x","object":"chat.completion","choices":[{"index":0,"message":{"role":"assistant","content":"Deep, below y=0, near the lava. Bring torches. [TRUST+5]"},"finish_reason":"stop"}]}
-					""".getBytes(StandardCharsets.UTF_8);
-				exchange.getResponseHeaders().add("Content-Type", "application/json");
-				exchange.sendResponseHeaders(200, response.length);
-				try (OutputStream out = exchange.getResponseBody()) {
-					out.write(response);
-				}
+				var messages = com.google.gson.JsonParser.parseString(body).getAsJsonObject().getAsJsonArray("messages");
+				String lastUser = messages.get(messages.size() - 1).getAsJsonObject().get("content").getAsString();
+				String reply = lastUser.contains("please stay here")
+					? "Fine, I will wait right here. [STAY]"
+					: "Deep, below y=0, near the lava. Bring torches. [TRUST+5]";
+				respond(exchange, "{\"id\":\"x\",\"object\":\"chat.completion\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"" + reply + "\"},\"finish_reason\":\"stop\"}]}");
+			});
+			server.createContext("/v1/audio/transcriptions", exchange -> {
+				byte[] raw = exchange.getRequestBody().readAllBytes();
+				String auth = exchange.getRequestHeaders().getFirst("Authorization");
+				lastAudioRequest.set("Bearer test-key".equals(auth) ? new String(raw, StandardCharsets.ISO_8859_1) : null);
+				respond(exchange, "{\"text\":\" please stay here\"}");
 			});
 			server.start();
 			return server;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	private static void respond(com.sun.net.httpserver.HttpExchange exchange, String json) throws java.io.IOException {
+		byte[] response = json.getBytes(StandardCharsets.UTF_8);
+		exchange.getResponseHeaders().add("Content-Type", "application/json");
+		exchange.sendResponseHeaders(200, response.length);
+		try (OutputStream out = exchange.getResponseBody()) {
+			out.write(response);
 		}
 	}
 }

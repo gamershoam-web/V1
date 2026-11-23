@@ -8,4 +8,5 @@ public class LumenRenderState extends EntityRenderState {
 	public boolean thinking;
 	public boolean blinking;
 	public float hurtFlash;
+	public float voiceLevel;
 }

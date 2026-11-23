@@ -55,6 +55,19 @@ public final class LumenConfig {
 	/** Give every player a Lumen Vessel the first time they join. */
 	public boolean giveVesselOnFirstJoin = true;
 
+	/** Built-in proximity voice chat (runs over the game connection; works offline / LAN). */
+	public boolean voiceChatEnabled = true;
+	/** Blocks within which players hear each other. */
+	public float voiceRange = 48.0f;
+	/** If true, other nearby players also hear your Lumen speak out loud (they see no text). */
+	public boolean lumenVoiceHeardByOthers = false;
+	/**
+	 * OpenAI-compatible speech-to-text endpoint used when you talk to Lumen with your voice.
+	 * Uses the same API key. Groq and OpenAI both provide Whisper here.
+	 */
+	public String speechToTextUrl = "https://api.groq.com/openai/v1/audio/transcriptions";
+	public String speechToTextModel = "whisper-large-v3-turbo";
+
 	public static LumenConfig get() {
 		return instance;
 	}
@@ -67,6 +80,10 @@ public final class LumenConfig {
 
 	public boolean aiAvailable() {
 		return enableAi && !effectiveApiKey().isEmpty() && apiUrl != null && !apiUrl.isBlank();
+	}
+
+	public boolean speechRecognitionAvailable() {
+		return aiAvailable() && speechToTextUrl != null && !speechToTextUrl.isBlank();
 	}
 
 	public static Path path() {

@@ -4,6 +4,8 @@ import dev.lumen.ai.LumenConfig;
 import dev.lumen.bond.Bond;
 import dev.lumen.bond.BondManager;
 import dev.lumen.command.LumenCommand;
+import dev.lumen.voice.VoicePackets;
+import dev.lumen.voice.VoiceServer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -31,11 +33,19 @@ public class Lumen implements ModInitializer {
 		LumenConfig.load();
 		Bond.init();
 		LumenRegistry.init();
+		VoicePackets.register();
+		VoiceServer.init();
 
 		CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> LumenCommand.register(dispatcher));
 		ServerTickEvents.END_SERVER_TICK.register(BondManager::tick);
-		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> BondManager.onJoin(handler.getPlayer()));
-		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> BondManager.onLeave(handler.getPlayer()));
+		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+			BondManager.onJoin(handler.getPlayer());
+			VoiceServer.sendState(handler.getPlayer());
+		});
+		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+			BondManager.onLeave(handler.getPlayer());
+			VoiceServer.onLeave(handler.getPlayer());
+		});
 		ServerLifecycleEvents.SERVER_STOPPED.register(server -> BondManager.onServerStopped());
 
 		// Chat messages starting with the trigger word (or your Lumen's name) are spoken to Lumen.

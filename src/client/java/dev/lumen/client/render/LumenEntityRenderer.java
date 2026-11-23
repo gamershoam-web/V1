@@ -2,6 +2,7 @@ package dev.lumen.client.render;
 
 import dev.lumen.Lumen;
 import dev.lumen.bond.Bond;
+import dev.lumen.client.voice.VoiceClient;
 import dev.lumen.entity.LumenEntity;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.RenderLayer;
@@ -54,10 +55,12 @@ public class LumenEntityRenderer extends EntityRenderer<LumenEntity, LumenRender
 		int cycle = (int) ((entity.age + (entity.getId() * 37L)) % 90);
 		state.blinking = cycle < 3;
 		state.hurtFlash = entity.hurtTime > 0 ? (entity.hurtTime - tickProgress) / 10.0f : 0.0f;
+		state.voiceLevel = VoiceClient.mixer().level("lumen:" + entity.getId());
 	}
 
 	@Override
 	public void render(LumenRenderState state, MatrixStack matrices, OrderedRenderCommandQueue queue, CameraRenderState cameraState) {
+		float speak = 1.0f + Math.min(0.5f, state.voiceLevel * 1.5f);
 		float pulse = state.thinking
 			? 1.0f + 0.12f * MathHelper.sin(state.age * 0.6f)
 			: 1.0f + 0.04f * MathHelper.sin(state.age * 0.12f);
@@ -74,7 +77,7 @@ public class LumenEntityRenderer extends EntityRenderer<LumenEntity, LumenRender
 
 		// Halo (additive glow).
 		matrices.push();
-		float haloScale = 1.25f * pulse;
+		float haloScale = 1.25f * pulse * speak;
 		matrices.scale(haloScale, haloScale, haloScale);
 		final int halo = haloColor;
 		queue.submitCustom(matrices, HALO, (entry, consumer) -> quad(consumer, entry, state.light, halo));

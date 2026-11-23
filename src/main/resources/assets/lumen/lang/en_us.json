@@ -24,5 +24,21 @@
   "command.lumen.trust_set": "Lumen trust set to %s.",
   "command.lumen.status": "%s — trust %s/100, %s, %s, %s.",
   "command.lumen.mode_stay": "waiting in place",
-  "command.lumen.mode_follow": "following you"
+  "command.lumen.mode_follow": "following you",
+  "message.lumen.voice_needs_ai": "Talking to Lumen with your voice needs speech recognition, which uses the AI key in config/lumen.json. You can still type: \"lumen, ...\"",
+  "message.lumen.voice_busy": "Lumen is still listening to your last sentence...",
+  "message.lumen.voice_listening": "Lumen is listening...",
+  "message.lumen.voice_unheard": "Lumen couldn't make out what you said.",
+  "key.category.lumen.voice": "Lumen Voice Chat",
+  "key.lumen.push_to_talk": "Push to Talk",
+  "key.lumen.talk_to_lumen": "Talk to Lumen (hold)",
+  "key.lumen.toggle_mute": "Mute / Unmute Microphone",
+  "message.lumen.mic_muted": "Microphone muted",
+  "message.lumen.mic_unmuted": "Microphone unmuted",
+  "message.lumen.no_microphone": "No microphone available (%s). Check /voicechat mics.",
+  "hud.lumen.voice_off": "○ Voice off",
+  "hud.lumen.speaking_to_lumen": "◉ Speaking to Lumen...",
+  "hud.lumen.muted": "○ Muted",
+  "hud.lumen.no_mic": "○ No microphone",
+  "hud.lumen.talking": "◉ Talking"
 }
