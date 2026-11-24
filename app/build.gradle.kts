@@ -12,8 +12,8 @@ android {
         applicationId = "com.v1.player"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "2.0"
     }
 
     buildTypes {
@@ -40,6 +40,15 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+        // Lets screenshot tests run offline: -Drobolectric.offline=true -Drobolectric.dependency.dir=<dir with android-all jars>
+        unitTests.all { test ->
+            listOf("robolectric.offline", "robolectric.dependency.dir").forEach { key ->
+                System.getProperty(key)?.let { test.systemProperty(key, it) }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -62,4 +71,12 @@ dependencies {
 
     implementation(libs.coil.compose)
     implementation(libs.androidx.work.runtime)
+    implementation(libs.haze)
+
+    // Screenshot tests: render screens to PNG on the JVM (./gradlew testDebugUnitTest).
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

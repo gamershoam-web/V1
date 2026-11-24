@@ -1,23 +1,44 @@
 package com.v1.player.ui.library
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -26,6 +47,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -35,6 +57,7 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Dns
@@ -44,35 +67,31 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.VideoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -85,13 +104,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -99,15 +120,23 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.work.WorkInfo
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.v1.player.data.ServerVideo
 import com.v1.player.data.VideoItem
+import com.v1.player.ui.theme.GlassBackdrop
+import com.v1.player.ui.theme.LocalGlass
+import com.v1.player.ui.theme.glass
+import com.v1.player.ui.theme.pressScale
 import com.v1.player.util.formatDuration
 import com.v1.player.util.formatSize
 import com.v1.player.util.resolutionLabel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.haze
 
 /** Thumbnail on the server; needs the sign-in header. */
 data class ServerThumb(val url: String, val auth: String?)
@@ -149,7 +178,10 @@ interface LibraryActions {
     fun serverThumb(video: ServerVideo): ServerThumb?
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+private val CardShape = RoundedCornerShape(22.dp)
+private val ThumbShape = RoundedCornerShape(16.dp)
+private const val TAB_BAR_HEIGHT = 60
+
 @Composable
 fun LibraryScreen(
     state: LibraryState,
@@ -161,55 +193,72 @@ fun LibraryScreen(
     var showStreamDialog by rememberSaveable { mutableStateOf(false) }
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf<ServerVideo?>(null) }
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val hazeState = remember { HazeState() }
+    val density = LocalDensity.current
+    var topBarHeight by remember { mutableStateOf(0.dp) }
+    val navBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    val contentPadding = PaddingValues(
+        top = topBarHeight + 8.dp,
+        bottom = navBottom + TAB_BAR_HEIGHT.dp + 32.dp,
+    )
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            Column {
-                LibraryTopBar(
-                    state = state,
-                    searching = searching,
-                    hasPermission = hasPermission,
-                    onSearchingChange = {
-                        searching = it
-                        if (!it) actions.setQuery("")
-                    },
-                    actions = actions,
-                    onOpenStream = { showStreamDialog = true },
-                    onOpenServer = { showServerDialog = true },
-                    scrollBehavior = scrollBehavior,
-                )
-                PrimaryTabRow(selectedTabIndex = state.tab.ordinal) {
-                    Tab(
-                        selected = state.tab == LibraryTab.PHONE,
-                        onClick = { actions.setTab(LibraryTab.PHONE) },
-                        text = { Text("This phone") },
-                    )
-                    Tab(
-                        selected = state.tab == LibraryTab.SERVER,
-                        onClick = { actions.setTab(LibraryTab.SERVER) },
-                        text = { Text("Server") },
-                    )
-                }
-            }
-        },
-    ) { padding ->
+    Box(Modifier.fillMaxSize()) {
+        // Everything in here can be seen, blurred, through the glass bars on top.
         Box(
             Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .haze(hazeState)
         ) {
-            when (state.tab) {
-                LibraryTab.PHONE -> PhoneContent(state, hasPermission, actions)
-                LibraryTab.SERVER -> ServerContent(
-                    state = state,
-                    actions = actions,
-                    onOpenServerDialog = { showServerDialog = true },
-                    onDelete = { confirmDelete = it },
-                )
+            GlassBackdrop()
+            AnimatedContent(
+                targetState = state.tab,
+                transitionSpec = {
+                    val dir = if (targetState.ordinal > initialState.ordinal) 1 else -1
+                    (fadeIn(tween(260)) + slideInHorizontally(tween(320)) { it * dir / 10 }) togetherWith
+                        (fadeOut(tween(180)) + slideOutHorizontally(tween(320)) { -it * dir / 10 })
+                },
+                label = "tab",
+            ) { tab ->
+                when (tab) {
+                    LibraryTab.PHONE -> PhoneContent(state, hasPermission, actions, contentPadding)
+                    LibraryTab.SERVER -> ServerContent(
+                        state = state,
+                        actions = actions,
+                        contentPadding = contentPadding,
+                        onOpenServerDialog = { showServerDialog = true },
+                        onDelete = { confirmDelete = it },
+                    )
+                }
             }
         }
+
+        LibraryTopBar(
+            state = state,
+            searching = searching,
+            hasPermission = hasPermission,
+            onSearchingChange = {
+                searching = it
+                if (!it) actions.setQuery("")
+            },
+            actions = actions,
+            onOpenStream = { showStreamDialog = true },
+            onOpenServer = { showServerDialog = true },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .glass(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp), haze = hazeState)
+                .onSizeChanged { topBarHeight = with(density) { it.height.toDp() } },
+        )
+
+        GlassTabBar(
+            selected = state.tab.ordinal,
+            tabs = listOf("This phone" to Icons.Filled.Smartphone, "Server" to Icons.Filled.Cloud),
+            onSelect = { actions.setTab(LibraryTab.entries[it]) },
+            hazeState = hazeState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+                .padding(bottom = 16.dp),
+        )
     }
 
     if (showStreamDialog) {
@@ -252,19 +301,75 @@ fun LibraryScreen(
     }
 }
 
+/** Floating glass capsule with a lit pill that slides to the selected tab. */
+@Composable
+private fun GlassTabBar(
+    selected: Int,
+    tabs: List<Pair<String, ImageVector>>,
+    onSelect: (Int) -> Unit,
+    hazeState: HazeState,
+    modifier: Modifier = Modifier,
+) {
+    val glass = LocalGlass.current
+    val pill = CircleShape
+    BoxWithConstraints(
+        modifier
+            .widthIn(max = 300.dp)
+            .fillMaxWidth(0.78f)
+            .height(TAB_BAR_HEIGHT.dp)
+            .glass(pill, haze = hazeState)
+            .padding(5.dp)
+    ) {
+        val tabWidth = maxWidth / tabs.size
+        val offset by animateDpAsState(
+            targetValue = tabWidth * selected,
+            animationSpec = spring(dampingRatio = 0.72f, stiffness = Spring.StiffnessMediumLow),
+            label = "tabPill",
+        )
+        Box(
+            Modifier
+                .offset { IntOffset(offset.roundToPx(), 0) }
+                .width(tabWidth)
+                .fillMaxHeight()
+                .glass(pill, tint = MaterialTheme.colorScheme.primary.copy(alpha = if (glass.dark) 0.32f else 0.18f))
+        )
+        Row(Modifier.fillMaxSize()) {
+            tabs.forEachIndexed { index, (label, icon) ->
+                val color by animateColorAsState(
+                    if (index == selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    label = "tabColor",
+                )
+                Row(
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(pill)
+                        .clickable { onSelect(index) },
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(label, color = color, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+}
+
 // region Phone tab
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun PhoneContent(state: LibraryState, hasPermission: Boolean, actions: LibraryActions) {
+private fun PhoneContent(
+    state: LibraryState,
+    hasPermission: Boolean,
+    actions: LibraryActions,
+    contentPadding: PaddingValues,
+) {
     when {
-        !hasPermission -> PermissionPrompt(actions::requestPermission, actions::openFile)
+        !hasPermission -> PermissionPrompt(actions::requestPermission, actions::openFile, contentPadding)
         state.loading -> Box(Modifier.fillMaxSize()) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
-        else -> PullToRefreshBox(
-            isRefreshing = state.refreshing,
-            onRefresh = actions::refresh,
-            modifier = Modifier.fillMaxSize(),
-        ) {
+        else -> RefreshBox(state.refreshing, actions::refresh, contentPadding) {
             val visible = state.visible
             val continueList = if (state.query.isBlank()) state.continueLocal else emptyList()
             val cards = remember(visible, state.positions) { visible.map { it.toCard(state) } }
@@ -273,6 +378,7 @@ private fun PhoneContent(state: LibraryState, hasPermission: Boolean, actions: L
             VideoCollection(
                 cards = cards,
                 grid = state.grid,
+                contentPadding = contentPadding,
                 onClick = { actions.openLocal(visible, it) },
                 actionsFor = { index -> localActions(visible[index], state, actions) },
                 header = {
@@ -321,17 +427,17 @@ private fun localActions(video: VideoItem, state: LibraryState, actions: Library
 
 // region Server tab
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ServerContent(
     state: LibraryState,
     actions: LibraryActions,
+    contentPadding: PaddingValues,
     onOpenServerDialog: () -> Unit,
     onDelete: (ServerVideo) -> Unit,
 ) {
     val server = state.server
     when {
-        !server.connected -> ConnectPrompt(server.error, onOpenServerDialog)
+        !server.connected -> ConnectPrompt(server.error, onOpenServerDialog, contentPadding)
         !server.loaded && server.error == null ->
             Box(Modifier.fillMaxSize()) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
         !server.loaded && server.error != null -> MessageState(
@@ -340,12 +446,9 @@ private fun ServerContent(
             message = server.error,
             primary = "Try again" to { actions.refresh() },
             secondary = "Server settings" to onOpenServerDialog,
+            contentPadding = contentPadding,
         )
-        else -> PullToRefreshBox(
-            isRefreshing = server.refreshing,
-            onRefresh = actions::refresh,
-            modifier = Modifier.fillMaxSize(),
-        ) {
+        else -> RefreshBox(server.refreshing, actions::refresh, contentPadding) {
             val visible = state.visibleServer
             val continueList = if (state.query.isBlank()) state.continueServer else emptyList()
             val cards = remember(visible) { visible.map { it.toCard(actions) } }
@@ -354,6 +457,7 @@ private fun ServerContent(
             VideoCollection(
                 cards = cards,
                 grid = state.grid,
+                contentPadding = contentPadding,
                 onClick = { actions.openServer(visible, it) },
                 actionsFor = { index ->
                     val video = visible[index]
@@ -399,57 +503,58 @@ private fun ServerVideo.toCard(actions: LibraryActions) = CardModel(
 )
 
 @Composable
-private fun ConnectPrompt(error: String?, onConnect: () -> Unit) {
+private fun ConnectPrompt(error: String?, onConnect: () -> Unit, contentPadding: PaddingValues) {
     MessageState(
         icon = Icons.Outlined.Cloud,
         title = "Watch from your own server",
-        message = error ?: "Connect your V1 server to stream your videos anywhere, pick up where you left off on any device, and upload from this phone.",
+        message = error ?: "Connect your Lumen server to stream your videos anywhere, pick up where you left off on any device, and upload from this phone.",
         primary = "Connect server" to onConnect,
+        contentPadding = contentPadding,
     )
 }
 
 @Composable
 private fun UploadsCard(uploads: List<UploadStatus>, onClearFailed: () -> Unit) {
-    Card(
-        modifier = Modifier
+    Column(
+        Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .glass(RoundedCornerShape(24.dp))
+            .padding(16.dp)
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.CloudUpload, contentDescription = null)
-                Spacer(Modifier.width(10.dp))
-                Text("Uploading from this phone", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                if (uploads.any { it.state == WorkInfo.State.FAILED }) {
-                    TextButton(onClick = onClearFailed) { Text("Clear") }
-                }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.CloudUpload, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.width(10.dp))
+            Text("Uploading from this phone", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+            if (uploads.any { it.state == WorkInfo.State.FAILED }) {
+                TextButton(onClick = onClearFailed) { Text("Clear") }
             }
-            uploads.forEach { upload ->
-                Spacer(Modifier.height(10.dp))
-                Text(upload.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
-                val label = when (upload.state) {
-                    WorkInfo.State.RUNNING -> "${(upload.progress * 100).toInt()}%"
-                    WorkInfo.State.FAILED -> "Failed"
-                    else -> "Waiting for connection…"
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (upload.state == WorkInfo.State.RUNNING) {
-                        LinearProgressIndicator(
-                            progress = { upload.progress },
-                            modifier = Modifier.weight(1f),
-                        )
-                    } else {
-                        Spacer(Modifier.weight(1f))
-                    }
-                    Spacer(Modifier.width(10.dp))
-                    Text(
-                        label,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = if (upload.state == WorkInfo.State.FAILED) MaterialTheme.colorScheme.error
-                        else MaterialTheme.colorScheme.onSecondaryContainer,
+        }
+        uploads.forEach { upload ->
+            Spacer(Modifier.height(10.dp))
+            Text(upload.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
+            val label = when (upload.state) {
+                WorkInfo.State.RUNNING -> "${(upload.progress * 100).toInt()}%"
+                WorkInfo.State.FAILED -> "Failed"
+                else -> "Waiting for connection…"
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (upload.state == WorkInfo.State.RUNNING) {
+                    LinearProgressIndicator(
+                        progress = { upload.progress },
+                        strokeCap = StrokeCap.Round,
+                        modifier = Modifier.weight(1f),
                     )
+                } else {
+                    Spacer(Modifier.weight(1f))
                 }
+                Spacer(Modifier.width(10.dp))
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (upload.state == WorkInfo.State.FAILED) MaterialTheme.colorScheme.error
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
@@ -459,14 +564,13 @@ private fun UploadsCard(uploads: List<UploadStatus>, onClearFailed: () -> Unit) 
 private fun ErrorBanner(message: String) {
     Text(
         message,
-        color = MaterialTheme.colorScheme.onErrorContainer,
+        color = MaterialTheme.colorScheme.error,
         style = MaterialTheme.typography.bodyMedium,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.errorContainer)
-            .padding(12.dp),
+            .glass(RoundedCornerShape(18.dp), tint = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f))
+            .padding(14.dp),
     )
 }
 
@@ -568,6 +672,35 @@ private fun ServerDialog(
 
 // region Shared building blocks
 
+/** Pull to refresh, with the spinner placed below the floating top bar. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RefreshBox(
+    refreshing: Boolean,
+    onRefresh: () -> Unit,
+    contentPadding: PaddingValues,
+    content: @Composable () -> Unit,
+) {
+    val pullState = rememberPullToRefreshState()
+    PullToRefreshBox(
+        isRefreshing = refreshing,
+        onRefresh = onRefresh,
+        state = pullState,
+        modifier = Modifier.fillMaxSize(),
+        indicator = {
+            PullToRefreshDefaults.Indicator(
+                state = pullState,
+                isRefreshing = refreshing,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = contentPadding.calculateTopPadding()),
+            )
+        },
+    ) {
+        content()
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LibraryTopBar(
@@ -578,7 +711,7 @@ private fun LibraryTopBar(
     actions: LibraryActions,
     onOpenStream: () -> Unit,
     onOpenServer: () -> Unit,
-    scrollBehavior: TopAppBarScrollBehavior,
+    modifier: Modifier = Modifier,
 ) {
     var sortMenu by remember { mutableStateOf(false) }
     var moreMenu by remember { mutableStateOf(false) }
@@ -587,7 +720,11 @@ private fun LibraryTopBar(
     val showCount = if (state.tab == LibraryTab.PHONE) hasPermission && !state.loading else state.server.loaded
 
     TopAppBar(
-        scrollBehavior = scrollBehavior,
+        modifier = modifier,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = Color.Transparent,
+            scrolledContainerColor = Color.Transparent,
+        ),
         navigationIcon = {
             if (searching) {
                 IconButton(onClick = { onSearchingChange(false) }) {
@@ -600,10 +737,10 @@ private fun LibraryTopBar(
                 SearchField(state.query, actions::setQuery)
             } else {
                 Column {
-                    Text("Videos", fontWeight = FontWeight.SemiBold)
-                    if (showCount) {
+                    Text("Lumen", fontWeight = FontWeight.Bold)
+                    AnimatedVisibility(showCount) {
                         Text(
-                            "$count videos",
+                            "$count videos" + if (state.tab == LibraryTab.SERVER) " on your server" else "",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -713,24 +850,41 @@ private fun SearchField(query: String, onQueryChange: (String) -> Unit) {
 @Composable
 private fun FolderChips(state: LibraryState, onFolderSelect: (String?) -> Unit) {
     LazyRow(
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item {
-            FilterChip(
-                selected = state.folder == null,
-                onClick = { onFolderSelect(null) },
-                label = { Text("All") },
-            )
+            GlassChip("All", selected = state.folder == null) { onFolderSelect(null) }
         }
         items(state.folders, key = { it.name }) { folder ->
-            FilterChip(
-                selected = state.folder == folder.name,
-                onClick = { onFolderSelect(if (state.folder == folder.name) null else folder.name) },
-                label = { Text("${folder.name}  ${folder.count}") },
-            )
+            GlassChip("${folder.name}  ${folder.count}", selected = state.folder == folder.name) {
+                onFolderSelect(if (state.folder == folder.name) null else folder.name)
+            }
         }
     }
+}
+
+@Composable
+private fun GlassChip(text: String, selected: Boolean, onClick: () -> Unit) {
+    val glass = LocalGlass.current
+    val tint by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = if (glass.dark) 0.45f else 0.22f) else glass.fillTop,
+        label = "chip",
+    )
+    val textColor by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+        label = "chipText",
+    )
+    Text(
+        text,
+        color = textColor,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+        modifier = Modifier
+            .glass(CircleShape, tint = tint)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 9.dp),
+    )
 }
 
 @Composable
@@ -739,7 +893,7 @@ private fun SectionTitle(text: String) {
         text,
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+        modifier = Modifier.padding(start = 20.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
     )
 }
 
@@ -752,28 +906,31 @@ private fun ContinueRow(cards: List<CardModel>, onClick: (Int) -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             itemsIndexed(cards, key = { _, c -> c.key }) { index, card ->
+                val interaction = remember { MutableInteractionSource() }
                 Column(
                     Modifier
-                        .width(220.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .clickable { onClick(index) }
+                        .animateItem()
+                        .width(236.dp)
+                        .pressScale(interaction)
+                        .glass(CardShape)
+                        .clickable(interactionSource = interaction, indication = LocalIndication.current) { onClick(index) }
+                        .padding(6.dp)
                 ) {
                     Thumbnail(card, Modifier.fillMaxWidth())
-                    Spacer(Modifier.height(8.dp))
                     Text(
                         card.title,
                         style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
+                        fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(horizontal = 2.dp),
+                        modifier = Modifier.padding(start = 6.dp, end = 6.dp, top = 8.dp),
                     )
                     val left = (card.durationMs * (1f - card.progress)).toLong()
                     Text(
                         if (card.durationMs > 0) "${formatDuration(left)} left" else "In progress",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 2.dp, vertical = 2.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(start = 6.dp, end = 6.dp, top = 2.dp, bottom = 6.dp),
                     )
                 }
             }
@@ -786,43 +943,56 @@ private fun ContinueRow(cards: List<CardModel>, onClick: (Int) -> Unit) {
 private fun VideoCollection(
     cards: List<CardModel>,
     grid: Boolean,
+    contentPadding: PaddingValues,
     onClick: (Int) -> Unit,
     actionsFor: (Int) -> List<CardAction>,
     header: @Composable () -> Unit,
 ) {
+    val top = contentPadding.calculateTopPadding()
+    val bottom = contentPadding.calculateBottomPadding()
     if (grid) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 168.dp),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = top, bottom = bottom),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize(),
         ) {
             item(key = "header", span = { GridItemSpan(maxLineSpan) }) {
                 // The header is full width; undo the grid's side padding for edge-to-edge rows.
-                Box(Modifier.padding(top = 4.dp)) { Box(Modifier.layoutEdgeToEdge()) { header() } }
+                Box(Modifier.layoutEdgeToEdge(32.dp)) { header() }
             }
             itemsIndexed(cards, key = { _, c -> c.key }) { index, card ->
-                GridCard(card, onClick = { onClick(index) }, actions = { actionsFor(index) })
+                GridCard(
+                    card,
+                    onClick = { onClick(index) },
+                    actions = { actionsFor(index) },
+                    modifier = Modifier.animateItem(),
+                )
             }
         }
     } else {
         LazyColumn(
-            contentPadding = PaddingValues(bottom = 24.dp),
+            contentPadding = PaddingValues(top = top, bottom = bottom),
             modifier = Modifier.fillMaxSize(),
         ) {
             item(key = "header") { header() }
             itemsIndexed(cards, key = { _, c -> c.key }) { index, card ->
-                ListCard(card, onClick = { onClick(index) }, actions = { actionsFor(index) })
+                ListCard(
+                    card,
+                    onClick = { onClick(index) },
+                    actions = { actionsFor(index) },
+                    modifier = Modifier.animateItem(),
+                )
             }
         }
     }
 }
 
-/** Lets a full-span grid header reach the screen edges despite the grid's 16dp content padding. */
-private fun Modifier.layoutEdgeToEdge(): Modifier = this.then(
+/** Lets a full-span grid header reach the screen edges despite the grid's side content padding. */
+private fun Modifier.layoutEdgeToEdge(extraWidth: Dp): Modifier = this.then(
     Modifier.layout { measurable, constraints ->
-        val extra = 32.dp.roundToPx()
+        val extra = extraWidth.roundToPx()
         val placeable = measurable.measure(
             constraints.copy(
                 minWidth = constraints.minWidth + extra,
@@ -837,24 +1007,37 @@ private fun Modifier.layoutEdgeToEdge(): Modifier = this.then(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun GridCard(card: CardModel, onClick: () -> Unit, actions: () -> List<CardAction>) {
+private fun GridCard(
+    card: CardModel,
+    onClick: () -> Unit,
+    actions: () -> List<CardAction>,
+    modifier: Modifier = Modifier,
+) {
     var menu by remember { mutableStateOf(false) }
+    val interaction = remember { MutableInteractionSource() }
     Column(
-        Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .combinedClickable(onClick = onClick, onLongClick = { menu = true })
+        modifier
+            .pressScale(interaction)
+            .glass(CardShape)
+            .combinedClickable(
+                interactionSource = interaction,
+                indication = LocalIndication.current,
+                onClick = onClick,
+                onLongClick = { menu = true },
+            )
+            .padding(6.dp)
     ) {
         Thumbnail(card, Modifier.fillMaxWidth())
         Row(verticalAlignment = Alignment.Top) {
             Column(
                 Modifier
                     .weight(1f)
-                    .padding(start = 2.dp, top = 8.dp)
+                    .padding(start = 6.dp, top = 8.dp, bottom = 6.dp)
             ) {
                 Text(
                     card.title,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -864,7 +1047,7 @@ private fun GridCard(card: CardModel, onClick: () -> Unit, actions: () -> List<C
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(vertical = 2.dp),
+                    modifier = Modifier.padding(top = 2.dp),
                 )
             }
             CardMenu(menu, onOpen = { menu = true }, onClose = { menu = false }, actions = actions)
@@ -874,19 +1057,39 @@ private fun GridCard(card: CardModel, onClick: () -> Unit, actions: () -> List<C
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun ListCard(card: CardModel, onClick: () -> Unit, actions: () -> List<CardAction>) {
+private fun ListCard(
+    card: CardModel,
+    onClick: () -> Unit,
+    actions: () -> List<CardAction>,
+    modifier: Modifier = Modifier,
+) {
     var menu by remember { mutableStateOf(false) }
+    val interaction = remember { MutableInteractionSource() }
     Row(
-        Modifier
+        modifier
             .fillMaxWidth()
-            .combinedClickable(onClick = onClick, onLongClick = { menu = true })
-            .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
+            .padding(horizontal = 16.dp, vertical = 5.dp)
+            .pressScale(interaction, pressedScale = 0.98f)
+            .glass(CardShape)
+            .combinedClickable(
+                interactionSource = interaction,
+                indication = LocalIndication.current,
+                onClick = onClick,
+                onLongClick = { menu = true },
+            )
+            .padding(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Thumbnail(card, Modifier.width(136.dp))
-        Spacer(Modifier.width(14.dp))
+        Thumbnail(card, Modifier.width(132.dp))
+        Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(card.title, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(
+                card.title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
             Spacer(Modifier.height(4.dp))
             Text(
                 card.subtitle,
@@ -943,6 +1146,7 @@ private fun Thumbnail(card: CardModel, modifier: Modifier = Modifier) {
                 .apply { t.auth?.let { addHeader("Authorization", it) } }
                 .memoryCacheKey(t.url)
                 .diskCacheKey(t.url)
+                .crossfade(true)
                 .build()
             else -> t
         }
@@ -950,8 +1154,8 @@ private fun Thumbnail(card: CardModel, modifier: Modifier = Modifier) {
     Box(
         modifier
             .aspectRatio(16f / 9f)
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clip(ThumbShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f))
     ) {
         Icon(
             Icons.Outlined.VideoLibrary,
@@ -987,31 +1191,35 @@ private fun Thumbnail(card: CardModel, modifier: Modifier = Modifier) {
     }
 }
 
+/** Small frosted label on a thumbnail (duration, "Processing"). */
 @Composable
 private fun Badge(text: String, modifier: Modifier) {
     Text(
         text,
         color = Color.White,
         style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
         modifier = modifier
             .padding(6.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(Color.Black.copy(alpha = 0.65f))
-            .padding(horizontal = 5.dp, vertical = 1.dp),
+            .clip(RoundedCornerShape(8.dp))
+            .background(Brush.verticalGradient(listOf(Color(0x8C000000), Color(0xA6000000))))
+            .padding(horizontal = 6.dp, vertical = 2.dp),
     )
 }
 
 @Composable
-private fun PermissionPrompt(onRequestPermission: () -> Unit, onOpenFile: () -> Unit) {
+private fun PermissionPrompt(onRequestPermission: () -> Unit, onOpenFile: () -> Unit, contentPadding: PaddingValues) {
     MessageState(
         icon = Icons.Outlined.VideoLibrary,
         title = "See all your videos",
         message = "Allow access to videos on this device to browse and play them.",
         primary = "Allow access" to onRequestPermission,
         secondary = "Open a single file instead" to onOpenFile,
+        contentPadding = contentPadding,
     )
 }
 
+/** A centred glass card with an icon, a message and one or two buttons. */
 @Composable
 private fun MessageState(
     icon: ImageVector,
@@ -1019,29 +1227,45 @@ private fun MessageState(
     message: String,
     primary: Pair<String, () -> Unit>,
     secondary: Pair<String, () -> Unit>? = null,
+    contentPadding: PaddingValues,
 ) {
-    Column(
+    Box(
         Modifier
             .fillMaxSize()
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+            .padding(contentPadding)
+            .padding(24.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(72.dp))
-        Spacer(Modifier.height(24.dp))
-        Text(title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(24.dp))
-        Button(onClick = primary.second) { Text(primary.first) }
-        secondary?.let { (label, action) ->
-            Spacer(Modifier.height(4.dp))
-            OutlinedButton(onClick = action) { Text(label) }
+        Column(
+            Modifier
+                .widthIn(max = 420.dp)
+                .glass(RoundedCornerShape(32.dp))
+                .padding(horizontal = 24.dp, vertical = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Box(
+                Modifier
+                    .size(88.dp)
+                    .glass(CircleShape, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
+            }
+            Spacer(Modifier.height(20.dp))
+            Text(title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(8.dp))
+            Text(
+                message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.height(24.dp))
+            Button(onClick = primary.second) { Text(primary.first) }
+            secondary?.let { (label, action) ->
+                Spacer(Modifier.height(6.dp))
+                OutlinedButton(onClick = action) { Text(label) }
+            }
         }
     }
 }

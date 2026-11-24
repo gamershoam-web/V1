@@ -1,9 +1,19 @@
-# V1 Player
+# Lumen
 
 A clean, simple video player for Android, built with Kotlin, Jetpack Compose and
 [Media3 ExoPlayer](https://developer.android.com/media/media3/exoplayer), plus an optional
 self-hosted server and website (in [`server/`](server/README.md)) so you can upload your videos
 to your own VPS and watch them anywhere.
+
+## Look and feel
+
+A "liquid glass" design: frosted panels with light-catching edges float over slowly drifting colour
+glows. The top bar and the floating tab switcher blur whatever scrolls beneath them (Android 12+;
+older versions get a tinted glass). Motion is kept subtle: cards press in when tapped, the tab pill
+slides, tabs cross-fade, and player controls glide in. The website uses the same style.
+
+Screens can be rendered to PNG without a device: `./gradlew testDebugUnitTest --tests '*ScreenshotTest*'`
+(output in `app/build/screenshots`).
 
 ## Pick up where you left off
 
@@ -16,7 +26,13 @@ Every video remembers where you stopped, on the phone and on your server:
 
 ## Your own server
 
-Run the server on a VPS (`cd server && sudo ./install.sh`, full guide in [server/README.md](server/README.md)), then:
+Run the server on a VPS with one line in a root shell (full guide in [server/README.md](server/README.md)):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gamershoam-web/V1/ccr-bf2e92af-l5c6am/server/get.sh | bash
+```
+
+Then:
 
 - **Website**: sign in, drag videos in to upload, watch them in the browser
 - **App**: **Server** tab → **Connect server** → stream your server's videos

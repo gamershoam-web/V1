@@ -27,7 +27,7 @@ import java.io.InputStream
 import java.util.concurrent.TimeUnit
 
 /**
- * Uploads one video from the phone to your V1 server in 8 MB chunks.
+ * Uploads one video from the phone to your Lumen server in 8 MB chunks.
  * If the connection drops (or the phone restarts) it picks up from the last chunk the server received.
  */
 class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
@@ -141,7 +141,7 @@ class UploadWorker(context: Context, params: WorkerParameters) : CoroutineWorker
         val notification = NotificationCompat.Builder(applicationContext, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_upload)
             .setContentTitle("Uploading $title")
-            .setContentText("${(fraction * 100).toInt()}% · to your V1 server")
+            .setContentText("${(fraction * 100).toInt()}% · to your Lumen server")
             .setProgress(1000, (fraction * 1000).toInt(), false)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

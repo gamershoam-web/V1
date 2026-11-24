@@ -13,7 +13,7 @@ import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
-/** A video stored on your V1 server. */
+/** A video stored on your Lumen server. */
 data class ServerVideo(
     val id: String,
     val title: String,
@@ -47,7 +47,7 @@ class ServerSettings(context: Context) {
     fun api(): ServerApi = ServerApi(url ?: throw ServerAuthException(), token)
 }
 
-/** Minimal client for the V1 server API (plain HttpURLConnection + org.json, no extra libraries). */
+/** Minimal client for the Lumen server API (plain HttpURLConnection + org.json, no extra libraries). */
 class ServerApi(val baseUrl: String, private val token: String?) {
 
     fun streamUri(id: String): Uri = Uri.parse("$baseUrl/api/videos/$id/stream")
@@ -205,9 +205,9 @@ class ServerApi(val baseUrl: String, private val token: String?) {
             val api = ServerApi(baseUrl, null)
             try {
                 val health = api.request("GET", "/api/health")
-                if (!health.optBoolean("ok")) throw IOException("That address isn't a V1 Player server")
+                if (!health.optBoolean("ok")) throw IOException("That address isn't a Lumen server")
             } catch (e: ServerException) {
-                throw IOException("That address isn't a V1 Player server")
+                throw IOException("That address isn't a Lumen server")
             }
             try {
                 api.request("POST", "/api/login", JSONObject().put("password", password)).getString("token")

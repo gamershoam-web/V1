@@ -191,7 +191,7 @@ function thumbEl(v, { showProgress = true } = {}) {
   return box;
 }
 
-function card(v, { continueRow = false } = {}) {
+function card(v, { continueRow = false, index = 0 } = {}) {
   const meta = continueRow && v.progress
     ? `${formatTime(v.duration - v.progress.position)} left`
     : [resolution(v), formatSize(v.size), formatAgo(v.created)].filter(Boolean).join(' · ');
@@ -204,13 +204,15 @@ function card(v, { continueRow = false } = {}) {
       openMenu(e.currentTarget, v);
     },
   }, icon(ICONS.more));
-  return h('a', { class: 'card', href: `#/watch/${v.id}` },
+  const el = h('a', { class: 'card', href: `#/watch/${v.id}` },
     thumbEl(v),
     h('div', { class: 'card-body' },
       h('div', { class: 'card-text' },
         h('div', { class: 'card-title', text: v.title, title: v.title }),
         h('div', { class: 'card-meta', text: meta })),
       more));
+  el.style.setProperty('--i', String(Math.min(index, 16)));
+  return el;
 }
 
 function render() {
@@ -218,8 +220,8 @@ function render() {
   const resume = state.query ? [] : inProgress();
 
   $('#continue').hidden = resume.length === 0;
-  $('#continue-row').replaceChildren(...resume.map((v) => card(v, { continueRow: true })));
-  $('#grid').replaceChildren(...list.map((v) => card(v)));
+  $('#continue-row').replaceChildren(...resume.map((v, index) => card(v, { continueRow: true, index })));
+  $('#grid').replaceChildren(...list.map((v, index) => card(v, { index })));
   $('#count').textContent = state.videos.length ? `· ${state.videos.length}` : '';
   $('#empty').hidden = list.length > 0;
   if (state.videos.length && !list.length) {
@@ -685,6 +687,9 @@ async function start() {
     return;
   }
   $('#app').hidden = false;
+  // Cards fade up once when the app opens, not on every refresh.
+  document.body.classList.add('intro');
+  setTimeout(() => document.body.classList.remove('intro'), 1800);
   route();
   clearInterval(refreshTimer);
   // Keep the list fresh (thumbnails finishing, uploads from the phone, progress from other devices).

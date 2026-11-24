@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "V1Player"
+rootProject.name = "Lumen"
 include(":app")

@@ -20,7 +20,7 @@ data class VideoItem(
 
 /**
  * Lightweight description of something the player should play.
- * [serverId] is set for videos streamed from your V1 server; [resumeMs] overrides the locally saved position.
+ * [serverId] is set for videos streamed from your Lumen server; [resumeMs] overrides the locally saved position.
  */
 data class PlayItem(
     val uri: Uri,

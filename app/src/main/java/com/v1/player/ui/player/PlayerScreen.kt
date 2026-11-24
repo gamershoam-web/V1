@@ -3,7 +3,17 @@ package com.v1.player.ui.player
 import android.graphics.Color as AndroidColor
 import androidx.activity.compose.BackHandler
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -107,7 +117,10 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.v1.player.ui.theme.pressScale
+import com.v1.player.ui.theme.videoGlass
 import com.v1.player.util.formatDuration
+import androidx.compose.ui.graphics.Shadow
 import kotlinx.coroutines.delay
 import java.util.Locale
 import kotlin.math.abs
@@ -384,14 +397,13 @@ fun PlayerScreen(player: ExoPlayer, actions: PlayerActions, inPip: Boolean, resu
                     enter = fadeIn(),
                     exit = fadeOut(),
                     modifier = Modifier
-                        .align(Alignment.BottomCenter)
+                        .align(Alignment.TopCenter)
                         .windowInsetsPadding(WindowInsets.safeDrawing)
-                        .padding(bottom = 132.dp),
+                        .padding(top = 76.dp),
                 ) {
                     Row(
                         Modifier
-                            .clip(RoundedCornerShape(50))
-                            .background(Color(0xE6141319))
+                            .videoGlass(CircleShape)
                             .padding(start = 18.dp, end = 6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -417,9 +429,8 @@ fun PlayerScreen(player: ExoPlayer, actions: PlayerActions, inPip: Boolean, resu
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .windowInsetsPadding(WindowInsets.safeDrawing)
-                            .padding(top = 72.dp)
-                            .clip(RoundedCornerShape(50))
-                            .background(Color.Black.copy(alpha = 0.6f))
+                            .padding(top = 80.dp)
+                            .videoGlass(CircleShape)
                             .padding(horizontal = 18.dp, vertical = 8.dp),
                     )
                 }
@@ -449,7 +460,7 @@ fun PlayerScreen(player: ExoPlayer, actions: PlayerActions, inPip: Boolean, resu
 
 @OptIn(UnstableApi::class)
 @Composable
-private fun Controls(
+private fun AnimatedVisibilityScope.Controls(
     ui: PlayerUiState,
     player: ExoPlayer,
     actions: PlayerActions,
@@ -467,36 +478,49 @@ private fun Controls(
             Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.75f), Color.Transparent)))
+                .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent)))
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
-                .padding(horizontal = 4.dp, vertical = 8.dp),
+                .animateEnterExit(
+                    enter = slideInVertically(tween(280)) { -it / 3 },
+                    exit = slideOutVertically(tween(220)) { -it / 3 },
+                )
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = actions::close) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
-            }
+            RoundIconButton(Icons.AutoMirrored.Filled.ArrowBack, "Back", size = 44.dp, onClick = actions::close)
             Text(
                 ui.title,
                 color = Color.White,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.copy(shadow = TextShadow),
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 4.dp),
+                    .padding(horizontal = 12.dp),
             )
-            SpeedButton(ui.speed) {
-                player.setPlaybackSpeed(it)
-                onInteract()
-            }
-            IconButton(onClick = onTracks) {
-                Icon(Icons.Filled.Subtitles, contentDescription = "Audio and subtitles", tint = Color.White)
+            Row(
+                Modifier
+                    .height(44.dp)
+                    .videoGlass(CircleShape)
+                    .padding(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                SpeedButton(ui.speed) {
+                    player.setPlaybackSpeed(it)
+                    onInteract()
+                }
+                IconButton(onClick = onTracks) {
+                    Icon(Icons.Filled.Subtitles, contentDescription = "Audio and subtitles", tint = Color.White)
+                }
             }
         }
 
         // Center transport
         Row(
-            Modifier.align(Alignment.Center),
+            Modifier
+                .align(Alignment.Center)
+                .animateEnterExit(enter = scaleIn(tween(260), initialScale = 0.92f), exit = scaleOut(tween(200), targetScale = 0.92f)),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -537,9 +561,15 @@ private fun Controls(
             Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))))
+                .background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.55f))))
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
-                .padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 8.dp),
+                .animateEnterExit(
+                    enter = slideInVertically(tween(280)) { it / 3 },
+                    exit = slideOutVertically(tween(220)) { it / 3 },
+                )
+                .padding(start = 12.dp, end = 12.dp, top = 24.dp, bottom = 12.dp)
+                .videoGlass(RoundedCornerShape(28.dp))
+                .padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 2.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val shown = scrubPosition ?: ui.position
@@ -668,21 +698,31 @@ private fun RoundIconButton(
     enabled: Boolean = true,
     onClick: () -> Unit,
 ) {
-    val bg = if (filled) Color.White.copy(alpha = 0.18f) else Color.Black.copy(alpha = 0.25f)
+    val interaction = remember { MutableInteractionSource() }
     Box(
         Modifier
             .size(size)
-            .clip(CircleShape)
-            .background(bg)
-            .clickable(enabled = enabled, onClick = onClick),
+            .pressScale(interaction, pressedScale = 0.9f)
+            .videoGlass(CircleShape)
+            .then(if (filled) Modifier.background(Color.White.copy(alpha = 0.12f), CircleShape) else Modifier)
+            .clickable(interactionSource = interaction, indication = LocalIndication.current, enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(
-            icon,
-            contentDescription = description,
-            tint = Color.White.copy(alpha = if (enabled) 1f else 0.35f),
-            modifier = Modifier.size(size * 0.55f),
-        )
+        AnimatedContent(
+            targetState = icon,
+            transitionSpec = {
+                (fadeIn(tween(180)) + scaleIn(tween(180), initialScale = 0.7f)) togetherWith
+                    (fadeOut(tween(120)) + scaleOut(tween(120), targetScale = 0.7f))
+            },
+            label = "icon",
+        ) { current ->
+            Icon(
+                current,
+                contentDescription = description,
+                tint = Color.White.copy(alpha = if (enabled) 1f else 0.35f),
+                modifier = Modifier.size(size * 0.52f),
+            )
+        }
     }
 }
 
@@ -733,8 +773,7 @@ private fun BoxScope.DragIndicator(feedback: DragFeedback?) {
     Column(
         Modifier
             .align(Alignment.Center)
-            .clip(RoundedCornerShape(16.dp))
-            .background(Color.Black.copy(alpha = 0.65f))
+            .videoGlass(RoundedCornerShape(24.dp))
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -840,8 +879,9 @@ private fun TracksPanel(
             .fillMaxHeight()
             .widthIn(max = 340.dp)
             .fillMaxWidth(0.85f)
-            .clip(RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp))
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))
+            .clip(RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp))
+            .background(Color(0xE6151320))
+            .videoGlass(RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp))
             .pointerInput(Unit) { detectTapGestures { } } // don't let taps fall through to the video
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical + WindowInsetsSides.End))
             .verticalScroll(rememberScrollState())
@@ -971,4 +1011,5 @@ private fun trackLabel(format: Format, number: Int, type: Int): String {
 }
 
 private const val SWIPE_SEEK_RANGE_MS = 120_000f
+private val TextShadow = Shadow(color = Color(0x99000000), blurRadius = 8f)
 private val SPEEDS = listOf(0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)

@@ -33,7 +33,7 @@ import com.v1.player.ui.library.LibraryViewModel
 import com.v1.player.ui.library.ServerThumb
 import com.v1.player.ui.library.SortOrder
 import com.v1.player.ui.player.PlayerActivity
-import com.v1.player.ui.theme.V1Theme
+import com.v1.player.ui.theme.LumenTheme
 
 class MainActivity : ComponentActivity() {
     private val viewModel: LibraryViewModel by viewModels()
@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            V1Theme {
+            LumenTheme {
                 val state by viewModel.state.collectAsStateWithLifecycle()
                 val connectState by viewModel.connectState.collectAsStateWithLifecycle()
                 var hasPermission by remember { mutableStateOf(hasVideoPermission(this)) }

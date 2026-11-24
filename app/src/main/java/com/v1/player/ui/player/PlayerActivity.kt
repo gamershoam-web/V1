@@ -165,7 +165,7 @@ class PlayerActivity : ComponentActivity(), PlayerActions {
         val auth = if (settings.connected) settings.api().authHeader else null
         val http = DefaultHttpDataSource.Factory()
             .setAllowCrossProtocolRedirects(true)
-            .setUserAgent("V1Player")
+            .setUserAgent("Lumen")
         val withAuth = ResolvingDataSource.Factory(http) { spec ->
             val u = spec.uri
             if (auth != null && server != null && u.scheme == server.scheme && u.host == server.host && u.port == server.port) {

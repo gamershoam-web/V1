@@ -11,7 +11,19 @@ watch them anywhere, and pick up where you left off on any device.
 - **Password protected**; automatic HTTPS when you have a domain
 - No database to manage: videos are plain files in `data/videos`, everything else is in `data/db.json`
 
-## Install on your VPS
+## Quick install
+
+On a fresh Ubuntu/Debian VPS, open a root shell (e.g. your provider's web console) and paste:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/gamershoam-web/V1/ccr-bf2e92af-l5c6am/server/get.sh | bash
+```
+
+It downloads Lumen to `/opt/lumen`, installs Docker if needed, asks for a domain (Enter for none) and a
+password (Enter to generate one), starts everything and prints the address. Run the same line again
+later to update; your videos and settings are kept.
+
+## Install on your VPS (step by step)
 
 You need a Linux VPS (Ubuntu or Debian is easiest) and, ideally, a domain name.
 
