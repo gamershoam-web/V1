@@ -14,6 +14,8 @@ android {
         targetSdk = 35
         versionCode = 3
         versionName = "2.0"
+        // Server the app connects to out of the box (your VPS). Change here to point elsewhere.
+        buildConfigField("String", "DEFAULT_SERVER_URL", "\"http://189.72.147.80:8080\"")
     }
 
     buildTypes {
@@ -39,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     testOptions {
         unitTests.isIncludeAndroidResources = true

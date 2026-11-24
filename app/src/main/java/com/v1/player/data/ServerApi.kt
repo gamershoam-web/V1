@@ -2,6 +2,7 @@ package com.v1.player.data
 
 import android.content.Context
 import android.net.Uri
+import com.v1.player.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -65,12 +66,19 @@ class ServerAuthException : ServerException(401, "Signed out of the server. Conn
 class ServerSettings(context: Context) {
     private val prefs = context.applicationContext.getSharedPreferences("server", Context.MODE_PRIVATE)
 
-    val url: String? get() = prefs.getString("url", null)
-    val token: String? get() = prefs.getString("token", null)
+    /** Until the user connects elsewhere or disconnects, the app uses the built-in server. */
+    private val usingDefault: Boolean
+        get() = prefs.getString("url", null) == null && !prefs.getBoolean("disconnected", false)
+
+    val url: String? get() = prefs.getString("url", null) ?: BuildConfig.DEFAULT_SERVER_URL.takeIf { it.isNotBlank() }
+    val token: String?
+        // The built-in server has no password, so it needs no sign-in token.
+        get() = prefs.getString("token", null) ?: if (usingDefault) "open" else null
     val connected: Boolean get() = !url.isNullOrBlank() && !token.isNullOrBlank()
 
-    fun save(url: String, token: String) = prefs.edit().putString("url", url).putString("token", token).apply()
-    fun clear() = prefs.edit().remove("token").apply()
+    fun save(url: String, token: String) =
+        prefs.edit().putString("url", url).putString("token", token).putBoolean("disconnected", false).apply()
+    fun clear() = prefs.edit().remove("token").putBoolean("disconnected", true).apply()
 
     fun api(): ServerApi = ServerApi(url ?: throw ServerAuthException(), token)
 }
