@@ -64,6 +64,17 @@
           </div>
         </div>
       </section>
+      <section id="series-section">
+        <div class="section-head">
+          <h2>Series</h2>
+          <button id="new-series-btn" class="btn small">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>
+            New series
+          </button>
+        </div>
+        <div id="series-row" class="row"></div>
+        <p id="series-empty" class="series-empty muted" hidden>Group episodes into a series with seasons. Lumen remembers where you are and plays the next episode for you.</p>
+      </section>
       <section id="continue" hidden>
         <h2>Continue watching</h2>
         <div id="continue-row" class="row"></div>
@@ -87,6 +98,56 @@
       </section>
     </main>
 
+    <!-- Series -->
+    <main id="series-page" class="page" hidden>
+      <a href="#/" class="back-link">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20z"/></svg>
+        Library
+      </a>
+      <header class="series-head">
+        <div class="series-poster"><img id="sp-poster" alt=""></div>
+        <div class="series-info">
+          <p class="eyebrow muted">Series</p>
+          <h1 id="sp-title"></h1>
+          <p id="sp-meta" class="muted"></p>
+          <div class="series-actions">
+            <a id="sp-play" class="btn primary" href="#/">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
+              <span id="sp-play-label">Play</span>
+            </a>
+            <button id="sp-more" class="icon-btn" aria-label="Series options">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4m0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4m0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/></svg>
+            </button>
+          </div>
+        </div>
+      </header>
+      <div class="season-bar">
+        <div id="sp-seasons" class="season-tabs" role="tablist"></div>
+        <button id="sp-add-season" class="btn small ghost">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>
+          Season
+        </button>
+      </div>
+      <div class="season-head">
+        <h2 id="sp-season-title"></h2>
+        <div class="season-actions">
+          <button id="sp-add-episodes" class="btn small">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z"/></svg>
+            Add episodes
+          </button>
+          <button id="sp-season-more" class="icon-btn small" aria-label="Season options">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4m0 2a2 2 0 1 0 0 4 2 2 0 0 0 0-4m0 6a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/></svg>
+          </button>
+        </div>
+      </div>
+      <ol id="sp-episodes" class="episodes"></ol>
+      <div id="sp-empty" class="empty compact" hidden>
+        <h3>No episodes in this season yet</h3>
+        <p class="muted">Pick videos from your library to add them in order.</p>
+        <button id="sp-empty-add" class="btn primary">Add episodes</button>
+      </div>
+    </main>
+
     <!-- Watch -->
     <main id="watch" class="page watch" hidden>
       <div class="watch-main">
@@ -97,7 +158,7 @@
             <button id="start-over" class="link-btn">Start over</button>
           </div>
           <div id="next-overlay" class="next-overlay" hidden>
-            <p class="muted">Up next</p>
+            <p id="next-label" class="muted">Up next</p>
             <h3 id="next-title"></h3>
             <div class="next-actions">
               <button id="next-cancel" class="btn">Cancel</button>
@@ -125,7 +186,7 @@
         </div>
       </div>
       <aside class="up-next">
-        <h2>Up next</h2>
+        <h2 id="up-next-title">Up next</h2>
         <div id="up-next"></div>
       </aside>
     </main>
@@ -144,6 +205,8 @@
     <div id="drop" class="drop" hidden><div>Drop videos to upload</div></div>
     <input id="file-input" type="file" accept="video/*,.mkv,.avi,.mov,.m4v,.ts,.webm" multiple hidden>
     <div id="menu" class="menu" hidden role="menu"></div>
+    <div id="modal" class="modal" hidden><div id="modal-card" class="modal-card" role="dialog" aria-modal="true"></div></div>
+    <div id="snack" class="snack" role="status" hidden></div>
   </div>
 
   <script src="/app.js"></script>

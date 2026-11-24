@@ -331,6 +331,127 @@ body.intro .grid .card, body.intro .row .card { animation: fade 0.5s ease both; 
   font-size: 20px; font-weight: 650;
 }
 
+/* ---------- Small button variants ---------- */
+.btn.small { height: 34px; padding: 0 14px; font-size: 14px; gap: 6px; }
+.btn.small svg { width: 16px; height: 16px; }
+.btn.ghost { background: transparent; border: 1px dashed var(--line-strong); color: var(--muted); }
+.btn.ghost:hover { color: var(--text); background: var(--surface-2); }
+.btn.danger-solid { background: var(--danger); color: #fff; }
+.btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+.icon-btn:disabled { opacity: 0.3; cursor: default; background: none; }
+
+/* ---------- Series cards (library) ---------- */
+.series-card .stack { position: relative; padding-top: 10px; }
+.series-card .stack::before,
+.series-card .stack::after {
+  content: ""; position: absolute; left: 50%; height: 12px; border-radius: 10px 10px 0 0;
+  transform: translateX(-50%); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line);
+}
+.series-card .stack::before { top: 0; width: 82%; opacity: 0.55; }
+.series-card .stack::after { top: 5px; width: 91%; }
+.series-card .thumb { z-index: 1; }
+.series-empty { margin: 0; max-width: 520px; }
+
+/* ---------- Series page ---------- */
+.back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 600; margin-bottom: 18px; }
+.back-link:hover { color: var(--text); }
+.back-link svg { width: 18px; height: 18px; }
+.series-head { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 28px; align-items: end; }
+.series-poster { aspect-ratio: 16 / 9; border-radius: 16px; overflow: hidden; background: var(--surface-2); box-shadow: var(--shadow); }
+.series-poster img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.series-info .eyebrow { color: var(--muted); }
+.series-info h1 { font-size: clamp(26px, 3.4vw, 40px); font-weight: 750; line-height: 1.1; word-break: break-word; }
+.series-info > p { margin: 8px 0 0; }
+.series-actions { display: flex; align-items: center; gap: 8px; margin-top: 20px; }
+
+.season-bar { display: flex; align-items: center; gap: 10px; margin: 36px 0 18px; flex-wrap: wrap; }
+.season-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.season-tab {
+  display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border-radius: 999px;
+  border: 0; background: var(--surface-2); color: var(--text); font: inherit; font-weight: 600; cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.season-tab .count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.season-tab.active { background: var(--btn-bg); color: var(--btn-fg); }
+.season-tab.active .count { color: inherit; opacity: 0.6; }
+.season-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.season-actions { display: flex; align-items: center; gap: 6px; }
+
+.episodes { list-style: none; margin: 0; padding: 0; }
+.episode {
+  display: flex; align-items: center; gap: 8px; border-radius: 14px; padding: 8px 6px 8px 0;
+  border-bottom: 1px solid var(--line); transition: background 0.2s;
+}
+.episode:last-child { border-bottom: 0; }
+.episode:hover { background: rgb(var(--surface-rgb) / 0.6); }
+.ep-link { flex: 1; min-width: 0; display: grid; grid-template-columns: 36px 176px minmax(0, 1fr); gap: 14px; align-items: center; }
+.ep-num { text-align: center; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
+.ep-text .card-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.episode.watched .card-title { color: var(--muted); }
+.next-pill {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 999px; background: var(--accent); color: #1a1200;
+}
+.ep-controls { display: flex; gap: 2px; opacity: 0; transition: opacity 0.2s; }
+.episode:hover .ep-controls, .ep-controls:focus-within { opacity: 1; }
+@media (hover: none) { .ep-controls { opacity: 1; } }
+.empty.compact { padding: 40px 18px; }
+.empty.compact h3 { font-size: 17px; }
+.empty.compact .btn { margin-top: 16px; }
+.ep-label { font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 0.02em; margin-bottom: 1px; }
+
+/* ---------- Dialogs ---------- */
+.modal {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px;
+  background: rgb(0 0 0 / 0.45);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+.modal:not([hidden]) { animation: fade 0.18s ease both; }
+.modal-card {
+  width: min(460px, 100%); max-height: min(720px, calc(100vh - 32px)); overflow: auto;
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: 20px; box-shadow: var(--shadow);
+  animation: menu-in 0.2s var(--ease) both;
+}
+.modal-form { display: grid; gap: 14px; padding: 22px; }
+.modal-form h2 { font-size: 19px; }
+.modal-form > p { margin: -6px 0 0; }
+.modal-form input[type="text"], .modal-form input[type="search"] { width: 100%; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.picker { max-height: inherit; grid-template-rows: auto auto auto minmax(0, 1fr) auto; }
+.pick-list { overflow: auto; max-height: 46vh; margin: 0 -8px; }
+.pick-item {
+  display: grid; grid-template-columns: 22px 96px minmax(0, 1fr); gap: 12px; align-items: center;
+  padding: 8px; border-radius: 12px; cursor: pointer;
+}
+.pick-item:hover { background: var(--surface-2); }
+.pick-item.added { cursor: default; opacity: 0.6; }
+.pick-item input { width: 18px; height: 18px; accent-color: var(--accent); }
+.pick-item .thumb { border-radius: 8px; }
+.pick-item .badge { font-size: 10px; right: 4px; bottom: 4px; padding: 1px 4px; }
+.pick-none { padding: 16px 8px; margin: 0; }
+.series-pick { display: grid; gap: 12px; }
+.series-pick-title { font-weight: 650; margin-bottom: 6px; }
+.series-pick-seasons { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border-radius: 999px;
+  border: 1px solid var(--line-strong); background: transparent; color: var(--text); font: inherit; font-size: 14px; cursor: pointer;
+}
+.chip:hover { background: var(--surface-2); }
+.chip.on { background: var(--surface-2); color: var(--muted); cursor: default; }
+.chip svg { width: 16px; height: 16px; }
+.divider-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-top: 4px; }
+.new-series-row { display: flex; gap: 8px; }
+.new-series-row input { flex: 1; min-width: 0; }
+
+/* ---------- Snackbar ---------- */
+.snack {
+  position: fixed; left: 50%; bottom: 24px; z-index: 60; transform: translateX(-50%);
+  max-width: calc(100vw - 32px); padding: 11px 18px; border-radius: 12px;
+  background: var(--btn-bg); color: var(--btn-fg); font-weight: 600; font-size: 14px; box-shadow: var(--shadow);
+}
+.snack.show { animation: snack-in 0.3s var(--ease) both; }
+@keyframes snack-in { from { opacity: 0; transform: translate(-50%, 10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
 /* ---------- Motion ---------- */
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -365,4 +486,9 @@ body.intro .grid .card, body.intro .row .card { animation: fade 0.5s ease both; 
   .watch-info, .warning, .up-next { margin-left: 14px; margin-right: 14px; }
   .watch-info { padding-left: 0; padding-right: 0; }
   .up-next .item { grid-template-columns: 136px minmax(0, 1fr); }
+  .series-head { grid-template-columns: 1fr; gap: 18px; }
+  .ep-link { grid-template-columns: 24px 112px minmax(0, 1fr); gap: 10px; }
+  .ep-controls { flex-direction: column; gap: 0; }
+  .ep-controls .icon-btn.small { width: 30px; height: 28px; }
+  .season-head { flex-wrap: wrap; }
 }

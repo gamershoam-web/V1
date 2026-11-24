@@ -65,7 +65,7 @@ for (const dir of [DATA_DIR, VIDEO_DIR, THUMB_DIR, UPLOAD_DIR]) fs.mkdirSync(dir
 // Tiny JSON database (atomic writes)
 // ---------------------------------------------------------------------------
 
-let db = { videos: {}, sessions: {}, uploads: {} };
+let db = { videos: {}, sessions: {}, uploads: {}, series: {} };
 try {
   db = { ...db, ...JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) };
 } catch (err) {
@@ -384,7 +384,7 @@ async function scanLibrary() {
   }
   for (const video of known.values()) {
     if (!present.has(video.file)) {
-      delete db.videos[video.id];
+      forgetVideo(video.id);
       fsp.rm(path.join(THUMB_DIR, `${video.id}.jpg`), { force: true }).catch(() => {});
       save();
     }
@@ -407,6 +407,189 @@ function publicVideo(v) {
     webPlayable: v.webPlayable !== false,
     progress: v.progress || null,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Series: a named list of seasons, each an ordered list of video ids
+// ---------------------------------------------------------------------------
+
+/** Removes a video from the library and from every season it was in. */
+function forgetVideo(id) {
+  delete db.videos[id];
+  for (const series of Object.values(db.series)) {
+    for (const season of series.seasons) season.episodes = season.episodes.filter((v) => v !== id);
+  }
+}
+
+function cleanTitle(value, fallback) {
+  const title = String(value ?? '').trim().slice(0, 200);
+  return title || fallback;
+}
+
+function newSeason() {
+  return { id: newId(6), title: null, episodes: [] };
+}
+
+/**
+ * Next episode to watch: one you're partway through; otherwise the first unwatched episode after
+ * the last one you finished; otherwise the first unwatched one anywhere (episodes watched out of
+ * order); and once everything is watched, the first episode again.
+ */
+function nextUp(episodes) {
+  const progressOf = (e) => db.videos[e.videoId]?.progress;
+  const inProgress = episodes.find((e) => progressOf(e)?.position > 0);
+  if (inProgress) return inProgress;
+  const unwatched = (e) => !progressOf(e)?.finished;
+  let lastDone = -1;
+  episodes.forEach((e, i) => { if (progressOf(e)?.finished) lastDone = i; });
+  return episodes.slice(lastDone + 1).find(unwatched) || episodes.find(unwatched) || episodes[0] || null;
+}
+
+function publicSeries(series) {
+  const seasons = series.seasons.map((season, i) => ({
+    id: season.id,
+    title: season.title || `Season ${i + 1}`,
+    episodes: season.episodes.filter((id) => db.videos[id]),
+  }));
+  const flat = seasons.flatMap((season, si) =>
+    season.episodes.map((videoId, ei) => ({ videoId, season: si + 1, episode: ei + 1 })));
+  const next = nextUp(flat);
+  const poster = flat.find((e) => db.videos[e.videoId]?.thumb);
+  return {
+    id: series.id,
+    title: series.title,
+    created: series.created,
+    updated: series.updated,
+    seasons,
+    episodeCount: flat.length,
+    watchedCount: flat.filter((e) => db.videos[e.videoId]?.progress?.finished).length,
+    nextUp: next,
+    posterVideoId: (next && db.videos[next.videoId]?.thumb ? next.videoId : poster?.videoId) || null,
+  };
+}
+
+function seriesOr404(id) {
+  const series = db.series[id];
+  if (!series) throw new HttpError(404, 'Series not found');
+  return series;
+}
+
+function seasonOr404(series, id) {
+  const season = series.seasons.find((s) => s.id === id);
+  if (!season) throw new HttpError(404, 'Season not found');
+  return season;
+}
+
+function touch(series) {
+  series.updated = Date.now();
+  save();
+}
+
+/** All series routes. Returns true when the request was handled. */
+async function handleSeries(req, res, pathname, method) {
+  if (pathname === '/api/series') {
+    if (method === 'GET') {
+      const list = Object.values(db.series).sort((a, b) => b.updated - a.updated).map(publicSeries);
+      sendJson(res, 200, { series: list });
+      return true;
+    }
+    if (method === 'POST') {
+      const body = await readJson(req);
+      const series = {
+        id: newId(),
+        title: cleanTitle(body.title, 'New series'),
+        created: Date.now(),
+        updated: Date.now(),
+        seasons: [newSeason()],
+      };
+      db.series[series.id] = series;
+      save();
+      sendJson(res, 201, publicSeries(series));
+      return true;
+    }
+  }
+
+  let m = /^\/api\/series\/([\w-]+)$/.exec(pathname);
+  if (m) {
+    const series = seriesOr404(m[1]);
+    if (method === 'GET') {
+      sendJson(res, 200, publicSeries(series));
+      return true;
+    }
+    if (method === 'PATCH') {
+      const body = await readJson(req);
+      series.title = cleanTitle(body.title, series.title);
+      touch(series);
+      sendJson(res, 200, publicSeries(series));
+      return true;
+    }
+    if (method === 'DELETE') {
+      delete db.series[series.id]; // the videos themselves stay in the library
+      save();
+      sendJson(res, 200, { ok: true });
+      return true;
+    }
+  }
+
+  m = /^\/api\/series\/([\w-]+)\/seasons$/.exec(pathname);
+  if (m && method === 'POST') {
+    const series = seriesOr404(m[1]);
+    const body = await readJson(req);
+    const season = newSeason();
+    if (body.title) season.title = cleanTitle(body.title, null);
+    series.seasons.push(season);
+    touch(series);
+    sendJson(res, 201, publicSeries(series));
+    return true;
+  }
+
+  m = /^\/api\/series\/([\w-]+)\/seasons\/([\w-]+)$/.exec(pathname);
+  if (m) {
+    const series = seriesOr404(m[1]);
+    const season = seasonOr404(series, m[2]);
+    if (method === 'PATCH') {
+      const body = await readJson(req);
+      if ('title' in body) season.title = cleanTitle(body.title, null);
+      if (Array.isArray(body.episodes)) {
+        // Full new order (used for reordering). Unknown ids and repeats are dropped.
+        season.episodes = [...new Set(body.episodes.map(String))].filter((id) => db.videos[id]);
+      }
+      touch(series);
+      sendJson(res, 200, publicSeries(series));
+      return true;
+    }
+    if (method === 'DELETE') {
+      series.seasons = series.seasons.filter((s) => s.id !== season.id);
+      if (!series.seasons.length) series.seasons.push(newSeason());
+      touch(series);
+      sendJson(res, 200, publicSeries(series));
+      return true;
+    }
+  }
+
+  m = /^\/api\/series\/([\w-]+)\/seasons\/([\w-]+)\/episodes$/.exec(pathname);
+  if (m && method === 'POST') {
+    const series = seriesOr404(m[1]);
+    const season = seasonOr404(series, m[2]);
+    const body = await readJson(req);
+    const ids = (Array.isArray(body.videoIds) ? body.videoIds : [body.videoId]).map(String).filter((id) => db.videos[id]);
+    for (const id of ids) if (!season.episodes.includes(id)) season.episodes.push(id);
+    touch(series);
+    sendJson(res, 200, publicSeries(series));
+    return true;
+  }
+
+  m = /^\/api\/series\/([\w-]+)\/seasons\/([\w-]+)\/episodes\/([\w-]+)$/.exec(pathname);
+  if (m && method === 'DELETE') {
+    const series = seriesOr404(m[1]);
+    const season = seasonOr404(series, m[2]);
+    season.episodes = season.episodes.filter((id) => id !== m[3]);
+    touch(series);
+    sendJson(res, 200, publicSeries(series));
+    return true;
+  }
+
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -613,6 +796,8 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, { videos });
   }
 
+  if (pathname.startsWith('/api/series') && await handleSeries(req, res, pathname, method)) return;
+
   if (pathname === '/api/rescan' && method === 'POST') {
     await scanLibrary();
     return sendJson(res, 200, { ok: true });
@@ -655,7 +840,7 @@ async function handleApi(req, res, url) {
       if (method === 'DELETE') {
         await fsp.rm(path.join(VIDEO_DIR, video.file), { force: true });
         await fsp.rm(path.join(THUMB_DIR, `${video.id}.jpg`), { force: true });
-        delete db.videos[video.id];
+        forgetVideo(video.id);
         save();
         return sendJson(res, 200, { ok: true });
       }

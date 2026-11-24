@@ -39,6 +39,11 @@ const ICONS = {
   delete: 'M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14z',
   restart: 'M12 5V1L7 6l5 5V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8',
   close: 'M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z',
+  plus: 'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6z',
+  up: 'M7.41 15.41 12 10.83l4.59 4.58L18 14l-6-6-6 6z',
+  down: 'M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z',
+  series: 'M4 6H2v14a2 2 0 0 0 2 2h14v-2H4zm16-4H8a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2m-8 12.5v-9l6 4.5z',
+  check: 'M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z',
   retry: 'M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.75 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z',
 };
 
@@ -108,7 +113,27 @@ const state = {
   query: '',
   sort: localStorage.getItem('v1.sort') || 'date',
   current: null, // video being watched
+  series: [],
+  seriesContext: null, // series id when a video was opened from a series
+  openSeries: null, // series shown on the series page
+  seasonId: null, // selected season on the series page
 };
+
+const videoById = (id) => state.videos.find((v) => v.id === id);
+const epLabel = (e) => `S${e.season} E${e.episode}`;
+const watchHref = (id, seriesId) => `#/watch/${id}${seriesId ? `?s=${seriesId}` : ''}`;
+
+/** Every episode of a series in viewing order, with its season/episode numbers. */
+function episodesOf(sr) {
+  return sr.seasons
+    .flatMap((season, si) => season.episodes.map((id, ei) => ({ id, season: si + 1, episode: ei + 1, seasonId: season.id })))
+    .filter((e) => videoById(e.id));
+}
+
+/** The first series a video belongs to (for labels on the hero). */
+function seriesFor(videoId) {
+  return state.series.find((sr) => sr.seasons.some((se) => se.episodes.includes(videoId))) || null;
+}
 
 function sortedVideos() {
   const q = state.query.trim().toLowerCase();
@@ -129,8 +154,13 @@ function inProgress() {
 }
 
 async function loadVideos() {
-  const { videos } = await api('/api/videos');
+  const [{ videos }, { series }] = await Promise.all([api('/api/videos'), api('/api/series')]);
   state.videos = videos;
+  state.series = series;
+  if (state.openSeries) {
+    state.openSeries = series.find((sr) => sr.id === state.openSeries.id) || state.openSeries;
+    renderSeries();
+  }
   render();
 }
 
@@ -251,7 +281,9 @@ function renderHero(hero) {
   $('#hero').hidden = !hero;
   if (!hero) return;
   const resuming = hero.progress && hero.progress.position > 0 && hero.duration;
-  $('#hero-eyebrow').textContent = resuming ? 'Continue watching' : 'Latest';
+  const sr = seriesFor(hero.id);
+  const ep = sr && episodesOf(sr).find((e) => e.id === hero.id);
+  $('#hero-eyebrow').textContent = ep ? `${sr.title} · ${epLabel(ep)}` : resuming ? 'Continue watching' : 'Latest';
   $('#hero-title').textContent = hero.title;
   $('#hero-meta').textContent = resuming
     ? `${formatTime(hero.duration - hero.progress.position)} left · ${formatTime(hero.duration)}`
@@ -259,7 +291,7 @@ function renderHero(hero) {
   $('#hero-play-label').textContent = resuming ? 'Resume' : 'Play';
   $('#hero-restart').hidden = !resuming;
   $('#hero-restart').dataset.id = hero.id;
-  $('#hero-media').href = $('#hero-play').href = `#/watch/${hero.id}`;
+  $('#hero-media').href = $('#hero-play').href = watchHref(hero.id, sr?.id);
   $('#hero-bar').hidden = !resuming;
   $('#hero-progress').style.width = resuming ? `${Math.min(100, (hero.progress.position / hero.duration) * 100)}%` : '0';
   const img = $('#hero-img');
@@ -273,7 +305,7 @@ $('#hero-restart').addEventListener('click', async () => {
   await api(`/api/videos/${id}/progress`, { method: 'DELETE' }).catch(() => {});
   const v = state.videos.find((x) => x.id === id);
   if (v) v.progress = null;
-  location.hash = `#/watch/${id}`;
+  location.hash = watchHref(id, seriesFor(id)?.id);
 });
 
 function render() {
@@ -283,7 +315,10 @@ function render() {
   const resume = state.query ? [] : inProgress().filter((v) => v.id !== hero?.id);
 
   renderHero(hero);
-  if (!state.current) setAmbient(thumbUrl(hero));
+  if (!state.current && !state.openSeries) setAmbient(thumbUrl(hero));
+  $('#series-section').hidden = Boolean(state.query) || !state.videos.length;
+  $('#series-row').replaceChildren(...state.series.map((sr, index) => seriesCard(sr, index)));
+  $('#series-empty').hidden = state.series.length > 0;
   $('#continue').hidden = resume.length === 0;
   $('#continue-row').replaceChildren(...resume.map((v, index) => card(v, { continueRow: true, index })));
   $('#grid').replaceChildren(...list.map((v, index) => card(v, { index })));
@@ -317,22 +352,10 @@ $('#sort').addEventListener('change', (e) => {
 
 const menu = $('#menu');
 
-function openMenu(anchor, v) {
-  const item = (label, ic, onclick, cls) => h('button', { role: 'menuitem', class: cls, onclick: () => { closeMenu(); onclick(); } }, icon(ic), label);
-  const items = [];
-  if (v.progress && v.progress.position > 0) {
-    items.push(item('Start from beginning', ICONS.restart, async () => {
-      await api(`/api/videos/${v.id}/progress`, { method: 'DELETE' });
-      v.progress = null;
-      render();
-    }));
-  }
-  items.push(
-    item('Rename', ICONS.edit, () => renameVideo(v)),
-    item('Download', ICONS.download, () => { location.href = `/api/videos/${v.id}/download`; }),
-    item('Delete', ICONS.delete, () => deleteVideo(v), 'danger'),
-  );
-  menu.replaceChildren(...items);
+/** Shows a small menu under [anchor]. items: [{ label, icon, onClick, danger }] */
+function showMenu(anchor, items) {
+  menu.replaceChildren(...items.map(({ label, icon: ic, onClick, danger }) =>
+    h('button', { role: 'menuitem', class: danger ? 'danger' : null, onclick: () => { closeMenu(); onClick(); } }, icon(ic), label)));
   menu.hidden = false;
   const r = anchor.getBoundingClientRect();
   const w = menu.offsetWidth;
@@ -341,13 +364,44 @@ function openMenu(anchor, v) {
   menu.style.top = `${r.bottom + hgt + 8 > innerHeight ? r.top - hgt - 4 : r.bottom + 4}px`;
   menu.querySelector('button').focus();
 }
+
+function openMenu(anchor, v) {
+  const items = [];
+  if (v.progress && v.progress.position > 0) {
+    items.push({
+      label: 'Start from beginning',
+      icon: ICONS.restart,
+      onClick: async () => {
+        await api(`/api/videos/${v.id}/progress`, { method: 'DELETE' });
+        v.progress = null;
+        render();
+      },
+    });
+  }
+  items.push(
+    { label: 'Add to series…', icon: ICONS.series, onClick: () => addToSeriesDialog(v) },
+    { label: 'Rename', icon: ICONS.edit, onClick: () => renameVideo(v) },
+    { label: 'Download', icon: ICONS.download, onClick: () => { location.href = `/api/videos/${v.id}/download`; } },
+    { label: 'Delete', icon: ICONS.delete, onClick: () => deleteVideo(v), danger: true },
+  );
+  showMenu(anchor, items);
+}
+
+/** Wires a ⋮ button to a menu built when it's clicked. */
+function menuButton(button, buildItems) {
+  button.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showMenu(button, buildItems());
+  });
+}
 function closeMenu() { menu.hidden = true; }
 document.addEventListener('click', (e) => { if (!menu.contains(e.target)) closeMenu(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
 addEventListener('scroll', closeMenu, { passive: true });
 
 async function renameVideo(v) {
-  const title = prompt('Rename video', v.title);
+  const title = await askText('Rename video', v.title, 'Save');
   if (!title || title.trim() === v.title) return;
   const updated = await api(`/api/videos/${v.id}`, { method: 'PATCH', body: { title: title.trim() } });
   Object.assign(v, updated);
@@ -356,9 +410,11 @@ async function renameVideo(v) {
 }
 
 async function deleteVideo(v) {
-  if (!confirm(`Delete "${v.title}" from the server? This can't be undone.`)) return;
+  const ok = await confirmBox('Delete video?', `"${v.title}" will be deleted from your server, and removed from any series. This can't be undone.`, 'Delete', true);
+  if (!ok) return;
   await api(`/api/videos/${v.id}`, { method: 'DELETE' });
   state.videos = state.videos.filter((x) => x.id !== v.id);
+  loadVideos().catch(() => {}); // series lists changed too
   if (state.current?.id === v.id) location.hash = '#/';
   render();
 }
@@ -373,8 +429,11 @@ let resumeTimer = null;
 let nextTimer = null;
 
 function showWatchInfo(v) {
+  const sr = state.series.find((x) => x.id === state.seriesContext);
+  const ep = sr && episodesOf(sr).find((e) => e.id === v.id);
   $('#watch-title').textContent = v.title;
   $('#watch-meta').textContent = [
+    ep ? `${sr.title} · ${epLabel(ep)}` : null,
     v.duration ? formatTime(v.duration) : null, resolution(v), formatSize(v.size), `Added ${formatAgo(v.created)}`,
   ].filter(Boolean).join(' · ');
   $('#download-link').href = `/api/videos/${v.id}/download`;
@@ -382,22 +441,40 @@ function showWatchInfo(v) {
   document.title = `${v.title} · Lumen`;
 }
 
-function renderUpNext() {
+/** What plays after the current video: the rest of its series, or the rest of the library. */
+function upNext() {
+  const sr = state.series.find((x) => x.id === state.seriesContext);
+  if (sr && state.current) {
+    const eps = episodesOf(sr);
+    const i = eps.findIndex((e) => e.id === state.current.id);
+    if (i >= 0) return { series: sr, items: eps.slice(i + 1).map((e) => ({ v: videoById(e.id), label: epLabel(e) })) };
+  }
   const list = sortedVideos();
-  const idx = list.findIndex((x) => x.id === state.current.id);
+  const idx = list.findIndex((x) => x.id === state.current?.id);
   const after = idx >= 0 ? [...list.slice(idx + 1), ...list.slice(0, idx)] : list;
-  $('#up-next').replaceChildren(...after.slice(0, 12).map((v) =>
-    h('a', { class: 'item', href: `#/watch/${v.id}` },
+  return { series: null, items: after.map((v) => ({ v })) };
+}
+
+function renderUpNext() {
+  const { series, items } = upNext();
+  $('#up-next-title').textContent = series ? `Up next in ${series.title}` : 'Up next';
+  const rows = items.slice(0, 12).map(({ v, label }) =>
+    h('a', { class: 'item', href: watchHref(v.id, series?.id) },
       thumbEl(v),
       h('div', {},
+        label ? h('div', { class: 'ep-label', text: label }) : null,
         h('div', { class: 'card-title', text: v.title }),
-        h('div', { class: 'card-meta', text: [formatSize(v.size), formatAgo(v.created)].filter(Boolean).join(' · ') })))));
+        h('div', { class: 'card-meta', text: [v.duration ? formatTime(v.duration) : null, formatAgo(v.created)].filter(Boolean).join(' · ') }))));
+  if (series && !items.length) rows.push(h('p', { class: 'muted', text: 'This is the last episode.' }));
+  $('#up-next').replaceChildren(...rows);
 }
 
 function nextVideo() {
+  const { series, items } = upNext();
+  if (series) return items[0] ? { ...items[0], series } : null;
   const list = sortedVideos();
   const idx = list.findIndex((x) => x.id === state.current?.id);
-  return idx >= 0 ? list[idx + 1] : null;
+  return idx >= 0 && list[idx + 1] ? { v: list[idx + 1] } : null;
 }
 
 async function openWatch(id) {
@@ -412,8 +489,7 @@ async function openWatch(id) {
   }
   if (state.current?.id !== v.id) saveProgress(true);
   state.current = v;
-  $('#library').hidden = true;
-  $('#watch').hidden = false;
+  showView('watch');
   hideNextOverlay();
   $('#resume-toast').hidden = true;
   showWatchInfo(v);
@@ -443,17 +519,14 @@ async function openWatch(id) {
   });
 }
 
-function closeWatch() {
+function stopWatching() {
   saveProgress(true);
   video.pause();
   video.removeAttribute('src');
   video.load();
   state.current = null;
   hideNextOverlay();
-  $('#watch').hidden = true;
-  $('#library').hidden = false;
   document.title = 'Lumen';
-  render();
 }
 
 function saveProgress(force = false) {
@@ -487,7 +560,8 @@ video.addEventListener('ended', () => {
   saveProgress(true);
   const next = nextVideo();
   if (!next) return;
-  $('#next-title').textContent = next.title;
+  $('#next-label').textContent = next.label ? `Next episode · ${next.label}` : 'Up next';
+  $('#next-title').textContent = next.v.title;
   $('#next-overlay').hidden = false;
   let n = 8;
   $('#next-count').textContent = `(${n})`;
@@ -497,7 +571,7 @@ video.addEventListener('ended', () => {
     $('#next-count').textContent = `(${n})`;
     if (n <= 0) {
       hideNextOverlay();
-      location.hash = `#/watch/${next.id}`;
+      location.hash = watchHref(next.v.id, next.series?.id);
     }
   }, 1000);
 });
@@ -509,7 +583,7 @@ $('#next-cancel').addEventListener('click', hideNextOverlay);
 $('#next-play').addEventListener('click', () => {
   const next = nextVideo();
   hideNextOverlay();
-  if (next) location.hash = `#/watch/${next.id}`;
+  if (next) location.hash = watchHref(next.v.id, next.series?.id);
 });
 
 $('#rename-btn').addEventListener('click', () => state.current && renameVideo(state.current));
@@ -735,13 +809,419 @@ addEventListener('drop', (e) => {
 });
 
 // ---------------------------------------------------------------------------
+// Dialogs and messages
+// ---------------------------------------------------------------------------
+
+const modal = $('#modal');
+const modalCard = $('#modal-card');
+let modalDone = null;
+
+function openModal(content, onDone) {
+  modalCard.replaceChildren(content);
+  modal.hidden = false;
+  modalDone = onDone || null;
+  setTimeout(() => modalCard.querySelector('input:not([type=checkbox]), .btn.primary')?.focus(), 30);
+}
+function closeModal(result) {
+  if (modal.hidden) return;
+  modal.hidden = true;
+  modalCard.replaceChildren();
+  const done = modalDone;
+  modalDone = null;
+  done?.(result);
+}
+modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(null); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(null); });
+
+/** Asks for a short piece of text (names). Resolves to the text, or null if cancelled. */
+function askText(title, value = '', confirmLabel = 'Save', placeholder = '') {
+  return new Promise((resolve) => {
+    const input = h('input', { type: 'text', placeholder, maxlength: '200' });
+    input.value = value;
+    const form = h('form', {
+      class: 'modal-form',
+      onsubmit: (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (text) closeModal(text);
+      },
+    },
+    h('h2', { text: title }),
+    input,
+    h('div', { class: 'modal-actions' },
+      h('button', { type: 'button', class: 'btn', text: 'Cancel', onclick: () => closeModal(null) }),
+      h('button', { type: 'submit', class: 'btn primary', text: confirmLabel })));
+    openModal(form, resolve);
+    setTimeout(() => input.select(), 40);
+  });
+}
+
+function confirmBox(title, message, confirmLabel, danger = false) {
+  return new Promise((resolve) => {
+    openModal(h('div', { class: 'modal-form' },
+      h('h2', { text: title }),
+      h('p', { class: 'muted', text: message }),
+      h('div', { class: 'modal-actions' },
+        h('button', { class: 'btn', text: 'Cancel', onclick: () => closeModal(false) }),
+        h('button', { class: danger ? 'btn danger-solid' : 'btn primary', text: confirmLabel, onclick: () => closeModal(true) }))),
+    (result) => resolve(Boolean(result)));
+  });
+}
+
+let snackTimer = null;
+function snack(text) {
+  const el = $('#snack');
+  el.textContent = text;
+  el.hidden = false;
+  el.classList.remove('show');
+  void el.offsetWidth; // restart the animation
+  el.classList.add('show');
+  clearTimeout(snackTimer);
+  snackTimer = setTimeout(() => { el.hidden = true; }, 2800);
+}
+addEventListener('unhandledrejection', (e) => {
+  if (e.reason?.message && e.reason.message !== 'Not signed in') snack(e.reason.message);
+});
+
+// ---------------------------------------------------------------------------
+// Series
+// ---------------------------------------------------------------------------
+
+/** Stores an updated series from the server and refreshes whatever shows it. */
+function upsertSeries(sr) {
+  const i = state.series.findIndex((x) => x.id === sr.id);
+  if (i >= 0) state.series[i] = sr; else state.series.unshift(sr);
+  if (state.openSeries?.id === sr.id) {
+    state.openSeries = sr;
+    renderSeries();
+  }
+  if (!$('#library').hidden) render();
+}
+
+async function seriesCall(path, options) {
+  const sr = await api(path, options);
+  upsertSeries(sr);
+  return sr;
+}
+
+function seriesCard(sr, index) {
+  const poster = sr.posterVideoId ? `/api/videos/${sr.posterVideoId}/thumb` : null;
+  const box = h('div', { class: 'thumb' }, icon(ICONS.series, 'placeholder'));
+  if (poster) {
+    const img = h('img', { src: poster, alt: '', loading: 'lazy', decoding: 'async' });
+    img.addEventListener('error', () => img.remove());
+    box.append(img);
+  }
+  box.append(h('span', { class: 'badge', text: `${sr.episodeCount} ep` }));
+  const seasons = sr.seasons.length;
+  const status = !sr.episodeCount ? 'No episodes yet'
+    : sr.watchedCount >= sr.episodeCount ? 'All watched'
+      : sr.nextUp ? `Next: ${epLabel(sr.nextUp)}` : '';
+  const el = h('a', { class: 'card series-card', href: `#/series/${sr.id}` },
+    h('div', { class: 'stack' }, box),
+    h('div', { class: 'card-body' },
+      h('div', { class: 'card-text' },
+        h('div', { class: 'card-title', text: sr.title }),
+        h('div', { class: 'card-meta', text: `${seasons} season${seasons === 1 ? '' : 's'} · ${status}` }))));
+  el.style.setProperty('--i', String(Math.min(index, 16)));
+  return el;
+}
+
+$('#new-series-btn').addEventListener('click', async () => {
+  const title = await askText('New series', '', 'Create', 'e.g. Holiday 2026');
+  if (!title) return;
+  const sr = await seriesCall('/api/series', { method: 'POST', body: { title } });
+  location.hash = `#/series/${sr.id}`;
+});
+
+async function openSeries(id) {
+  showView('series-page');
+  scrollTo(0, 0);
+  if (state.openSeries?.id !== id) state.seasonId = null;
+  state.openSeries = state.series.find((x) => x.id === id) || state.openSeries;
+  if (state.openSeries?.id === id) renderSeries();
+  try {
+    upsertSeries(await api(`/api/series/${id}`));
+    state.openSeries = state.series.find((x) => x.id === id);
+    renderSeries();
+  } catch {
+    location.hash = '#/';
+  }
+}
+
+function currentSeason() {
+  const sr = state.openSeries;
+  return sr.seasons.find((se) => se.id === state.seasonId) || sr.seasons[0];
+}
+
+function renderSeries() {
+  const sr = state.openSeries;
+  if (!sr || $('#series-page').hidden) return;
+  const season = currentSeason();
+  state.seasonId = season.id;
+  document.title = `${sr.title} · Lumen`;
+
+  $('#sp-title').textContent = sr.title;
+  const n = sr.seasons.length;
+  $('#sp-meta').textContent = [
+    `${n} season${n === 1 ? '' : 's'}`,
+    `${sr.episodeCount} episode${sr.episodeCount === 1 ? '' : 's'}`,
+    sr.watchedCount ? `${sr.watchedCount} watched` : null,
+  ].filter(Boolean).join(' · ');
+
+  const poster = sr.posterVideoId ? `/api/videos/${sr.posterVideoId}/thumb` : null;
+  const img = $('#sp-poster');
+  img.hidden = !poster;
+  if (poster && img.getAttribute('src') !== poster) img.src = poster;
+  setAmbient(poster);
+
+  const next = sr.nextUp && videoById(sr.nextUp.videoId);
+  $('#sp-play').hidden = !next;
+  if (next) {
+    const verb = next.progress?.position > 0 ? 'Resume' : sr.watchedCount ? 'Play' : 'Start';
+    $('#sp-play-label').textContent = `${verb} ${epLabel(sr.nextUp)}`;
+    $('#sp-play').href = watchHref(next.id, sr.id);
+  }
+
+  $('#sp-seasons').replaceChildren(...sr.seasons.map((se) => h('button', {
+    class: `season-tab${se.id === season.id ? ' active' : ''}`,
+    role: 'tab',
+    'aria-selected': String(se.id === season.id),
+    onclick: () => {
+      state.seasonId = se.id;
+      renderSeries();
+    },
+  }, se.title, h('span', { class: 'count', text: String(se.episodes.length) }))));
+
+  $('#sp-season-title').textContent = season.title;
+  const episodes = season.episodes.map((id, i) => ({ v: videoById(id), n: i + 1 })).filter((e) => e.v);
+  $('#sp-episodes').replaceChildren(...episodes.map((e, i) => episodeRow(sr, season, e, i, episodes.length)));
+  $('#sp-empty').hidden = episodes.length > 0;
+}
+
+function episodeRow(sr, season, { v, n }, index, total) {
+  const p = v.progress;
+  const status = p?.finished ? 'Watched'
+    : p?.position > 0 && v.duration ? `${formatTime(v.duration - p.position)} left`
+      : v.duration ? formatTime(v.duration) : '';
+  const isNext = sr.nextUp?.videoId === v.id && sr.seasons[sr.nextUp.season - 1]?.id === season.id;
+
+  const move = async (delta) => {
+    const ids = [...season.episodes];
+    const j = index + delta;
+    [ids[index], ids[j]] = [ids[j], ids[index]];
+    await seriesCall(`/api/series/${sr.id}/seasons/${season.id}`, { method: 'PATCH', body: { episodes: ids } });
+  };
+  const control = (label, ic, onClick, disabled = false) => h('button', {
+    class: 'icon-btn small',
+    'aria-label': label,
+    title: label,
+    disabled,
+    onclick: (e) => {
+      e.preventDefault();
+      onClick();
+    },
+  }, icon(ic));
+
+  return h('li', { class: `episode${p?.finished ? ' watched' : ''}${isNext ? ' next' : ''}` },
+    h('a', { class: 'ep-link', href: watchHref(v.id, sr.id) },
+      h('span', { class: 'ep-num', text: String(n) }),
+      thumbEl(v),
+      h('div', { class: 'ep-text' },
+        h('div', { class: 'card-title', text: v.title }),
+        h('div', { class: 'card-meta' },
+          isNext ? h('span', { class: 'next-pill', text: 'Up next' }) : null,
+          status))),
+    h('div', { class: 'ep-controls' },
+      control('Move up', ICONS.up, () => move(-1), index === 0),
+      control('Move down', ICONS.down, () => move(1), index === total - 1),
+      control('Remove from season', ICONS.close, async () => {
+        await seriesCall(`/api/series/${sr.id}/seasons/${season.id}/episodes/${v.id}`, { method: 'DELETE' });
+        snack(`Removed "${v.title}" from ${season.title}`);
+      })));
+}
+
+/** Picker for adding library videos to a season. */
+function pickEpisodes(sr, season) {
+  const inSeason = new Set(season.episodes);
+  const chosen = new Set();
+  const videos = [...state.videos].sort((a, b) => a.title.localeCompare(b.title, undefined, { numeric: true }));
+  const search = h('input', { type: 'search', placeholder: 'Search your videos' });
+  const list = h('div', { class: 'pick-list' });
+  const addBtn = h('button', { class: 'btn primary', disabled: true, text: 'Add' });
+
+  const update = () => {
+    addBtn.disabled = chosen.size === 0;
+    addBtn.textContent = chosen.size ? `Add ${chosen.size} episode${chosen.size === 1 ? '' : 's'}` : 'Add';
+  };
+  const draw = () => {
+    const q = search.value.trim().toLowerCase();
+    const rows = videos.filter((v) => !q || v.title.toLowerCase().includes(q)).map((v) => {
+      const already = inSeason.has(v.id);
+      const box = h('input', { type: 'checkbox', checked: already || chosen.has(v.id), disabled: already });
+      box.addEventListener('change', () => {
+        if (box.checked) chosen.add(v.id); else chosen.delete(v.id);
+        update();
+      });
+      return h('label', { class: `pick-item${already ? ' added' : ''}` },
+        box,
+        thumbEl(v, { showProgress: false }),
+        h('div', { class: 'pick-text' },
+          h('div', { class: 'card-title', text: v.title }),
+          h('div', { class: 'card-meta', text: already ? 'Already in this season' : [v.duration ? formatTime(v.duration) : null, formatAgo(v.created)].filter(Boolean).join(' · ') })));
+    });
+    list.replaceChildren(...rows);
+    if (!rows.length) list.append(h('p', { class: 'muted pick-none', text: q ? 'No videos match.' : 'Your library is empty. Upload some videos first.' }));
+  };
+  search.addEventListener('input', draw);
+  addBtn.addEventListener('click', async () => {
+    const ids = videos.filter((v) => chosen.has(v.id)).map((v) => v.id);
+    closeModal();
+    await seriesCall(`/api/series/${sr.id}/seasons/${season.id}/episodes`, { method: 'POST', body: { videoIds: ids } });
+    snack(`Added ${ids.length} episode${ids.length === 1 ? '' : 's'} to ${season.title}`);
+  });
+  draw();
+  openModal(h('div', { class: 'modal-form picker' },
+    h('h2', { text: `Add episodes to ${season.title}` }),
+    h('p', { class: 'muted', text: 'They are added in name order; you can reorder them afterwards.' }),
+    search,
+    list,
+    h('div', { class: 'modal-actions' },
+      h('button', { class: 'btn', text: 'Cancel', onclick: () => closeModal() }),
+      addBtn)));
+}
+
+/** "Add to series…" from a video's menu: pick a season, or start a new series with it. */
+function addToSeriesDialog(v) {
+  const body = h('div', { class: 'modal-form' },
+    h('h2', { text: 'Add to series' }),
+    h('p', { class: 'muted', text: v.title }));
+  if (state.series.length) {
+    body.append(h('div', { class: 'series-pick' }, ...state.series.map((sr) =>
+      h('div', { class: 'series-pick-row' },
+        h('div', { class: 'series-pick-title', text: sr.title }),
+        h('div', { class: 'series-pick-seasons' }, ...sr.seasons.map((se) => {
+          const has = se.episodes.includes(v.id);
+          return h('button', {
+            class: `chip${has ? ' on' : ''}`,
+            disabled: has,
+            onclick: async () => {
+              closeModal();
+              await seriesCall(`/api/series/${sr.id}/seasons/${se.id}/episodes`, { method: 'POST', body: { videoId: v.id } });
+              snack(`Added to ${sr.title} · ${se.title}`);
+            },
+          }, has ? icon(ICONS.check) : null, se.title);
+        }))))));
+  }
+  const name = h('input', { type: 'text', placeholder: 'New series name', maxlength: '200' });
+  body.append(
+    h('div', { class: 'divider-label', text: state.series.length ? 'Or start a new series' : 'Start a new series' }),
+    h('form', {
+      class: 'new-series-row',
+      onsubmit: async (e) => {
+        e.preventDefault();
+        const title = name.value.trim();
+        if (!title) return;
+        closeModal();
+        const sr = await api('/api/series', { method: 'POST', body: { title } });
+        await seriesCall(`/api/series/${sr.id}/seasons/${sr.seasons[0].id}/episodes`, { method: 'POST', body: { videoId: v.id } });
+        snack(`Created "${title}"`);
+      },
+    }, name, h('button', { type: 'submit', class: 'btn primary', text: 'Create' })),
+    h('div', { class: 'modal-actions' }, h('button', { class: 'btn', text: 'Close', onclick: () => closeModal() })));
+  openModal(body);
+}
+
+$('#sp-add-season').addEventListener('click', async () => {
+  const sr = await seriesCall(`/api/series/${state.openSeries.id}/seasons`, { method: 'POST', body: {} });
+  state.seasonId = sr.seasons[sr.seasons.length - 1].id;
+  renderSeries();
+});
+$('#sp-add-episodes').addEventListener('click', () => pickEpisodes(state.openSeries, currentSeason()));
+$('#sp-empty-add').addEventListener('click', () => pickEpisodes(state.openSeries, currentSeason()));
+
+menuButton($('#sp-more'), () => [
+  {
+    label: 'Rename series',
+    icon: ICONS.edit,
+    onClick: async () => {
+      const sr = state.openSeries;
+      const title = await askText('Rename series', sr.title, 'Save');
+      if (title && title !== sr.title) await seriesCall(`/api/series/${sr.id}`, { method: 'PATCH', body: { title } });
+    },
+  },
+  {
+    label: 'Delete series',
+    icon: ICONS.delete,
+    danger: true,
+    onClick: async () => {
+      const sr = state.openSeries;
+      const ok = await confirmBox('Delete series?', `"${sr.title}" and its seasons will be removed. The videos stay in your library.`, 'Delete series', true);
+      if (!ok) return;
+      await api(`/api/series/${sr.id}`, { method: 'DELETE' });
+      state.series = state.series.filter((x) => x.id !== sr.id);
+      location.hash = '#/';
+    },
+  },
+]);
+
+menuButton($('#sp-season-more'), () => [
+  {
+    label: 'Rename season',
+    icon: ICONS.edit,
+    onClick: async () => {
+      const sr = state.openSeries;
+      const season = currentSeason();
+      const title = await askText('Rename season', season.title, 'Save');
+      if (title && title !== season.title) await seriesCall(`/api/series/${sr.id}/seasons/${season.id}`, { method: 'PATCH', body: { title } });
+    },
+  },
+  {
+    label: 'Delete season',
+    icon: ICONS.delete,
+    danger: true,
+    onClick: async () => {
+      const sr = state.openSeries;
+      const season = currentSeason();
+      const count = season.episodes.length;
+      const ok = await confirmBox(
+        `Delete ${season.title}?`,
+        count ? `Its ${count} episode${count === 1 ? '' : 's'} will be removed from this series. The videos stay in your library.` : 'This season is empty.',
+        'Delete season',
+        true,
+      );
+      if (!ok) return;
+      state.seasonId = null;
+      await seriesCall(`/api/series/${sr.id}/seasons/${season.id}`, { method: 'DELETE' });
+    },
+  },
+]);
+
+// ---------------------------------------------------------------------------
 // Routing and startup
 // ---------------------------------------------------------------------------
 
+const VIEWS = ['library', 'watch', 'series-page'];
+function showView(name) {
+  for (const id of VIEWS) $(`#${id}`).hidden = id !== name;
+}
+
 function route() {
-  const m = /^#\/watch\/([\w-]+)/.exec(location.hash);
-  if (m) openWatch(m[1]);
-  else if (state.current || !$('#watch').hidden) closeWatch();
+  const watch = /^#\/watch\/([\w-]+)(?:\?s=([\w-]+))?/.exec(location.hash);
+  if (watch) {
+    state.seriesContext = watch[2] || null;
+    openWatch(watch[1]);
+    return;
+  }
+  if (state.current) stopWatching();
+  const series = /^#\/series\/([\w-]+)/.exec(location.hash);
+  if (series) {
+    openSeries(series[1]);
+  } else {
+    state.openSeries = null;
+    showView('library');
+    render();
+  }
 }
 addEventListener('hashchange', route);
 
