@@ -24,6 +24,16 @@ Every video remembers where you stopped, on the phone and on your server:
 - Progress for server videos is shared: stop on the phone, continue in the browser, or the other way round
 - Finished videos drop out of Continue watching automatically; ⋮ → **Start from beginning** resets one
 
+## Series
+
+Group server videos into a **series** with **seasons**:
+
+- Create a series from the Server tab (app) or the library (website), or from any video's ⋮ → **Add to series…**
+- Add, rename and delete seasons; add episodes from your library, reorder them, or remove them
+  (removing never deletes the video)
+- **Next up** is worked out from what you've watched, on any device: press **Resume S1 E3** and
+  the following episodes play on their own, across seasons
+
 ## Your own server
 
 Run the server on a VPS with one line in a root shell (full guide in [server/README.md](server/README.md)):

@@ -1,5 +1,6 @@
 package com.v1.player.ui.library
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -69,6 +70,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Smartphone
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.outlined.Cloud
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.VideoLibrary
@@ -130,6 +132,7 @@ import androidx.compose.ui.unit.sp
 import androidx.work.WorkInfo
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.v1.player.data.SeriesInfo
 import com.v1.player.data.ServerVideo
 import com.v1.player.data.VideoItem
 import com.v1.player.ui.theme.LocalGlass
@@ -179,6 +182,21 @@ interface LibraryActions {
     fun disconnect()
     fun clearFailedUploads()
     fun serverThumb(video: ServerVideo): ServerThumb?
+
+    // Series (server only)
+    fun openSeries(id: String?) {}
+    fun selectSeason(id: String) {}
+    fun createSeries(title: String, firstVideo: ServerVideo? = null) {}
+    fun renameSeries(id: String, title: String) {}
+    fun deleteSeries(id: String) {}
+    fun addSeason(seriesId: String) {}
+    fun renameSeason(seriesId: String, seasonId: String, title: String) {}
+    fun deleteSeason(seriesId: String, seasonId: String) {}
+    fun addEpisodes(seriesId: String, seasonId: String, videoIds: List<String>, seasonTitle: String) {}
+    fun removeEpisode(seriesId: String, seasonId: String, videoId: String) {}
+    fun moveEpisode(series: SeriesInfo, seasonId: String, from: Int, to: Int) {}
+    fun addToSeries(video: ServerVideo, series: SeriesInfo, seasonId: String) {}
+    fun playSeries(series: SeriesInfo, videoId: String) {}
 }
 
 private val CardShape = RoundedCornerShape(16.dp)
@@ -196,6 +214,9 @@ fun LibraryScreen(
     var showStreamDialog by rememberSaveable { mutableStateOf(false) }
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf<ServerVideo?>(null) }
+    var addToSeriesFor by remember { mutableStateOf<ServerVideo?>(null) }
+    var newSeries by rememberSaveable { mutableStateOf(false) }
+    val serverVideos = remember(state.server.videos) { state.server.videos.associateBy { it.id } }
     val hazeState = remember { HazeState() }
     val density = LocalDensity.current
     var topBarHeight by remember { mutableStateOf(0.dp) }
@@ -235,6 +256,8 @@ fun LibraryScreen(
                         contentPadding = contentPadding,
                         onOpenServerDialog = { showServerDialog = true },
                         onDelete = { confirmDelete = it },
+                        onAddToSeries = { addToSeriesFor = it },
+                        onNewSeries = { newSeries = true },
                     )
                 }
             }
@@ -267,6 +290,43 @@ fun LibraryScreen(
                 .navigationBarsPadding()
                 .padding(bottom = 16.dp),
         )
+
+        // A series slides in over the library; Back returns to it.
+        val openSeries = state.openSeries.takeIf { state.tab == LibraryTab.SERVER }
+        var lastSeries by remember { mutableStateOf(openSeries) }
+        if (openSeries != null) lastSeries = openSeries
+        BackHandler(enabled = openSeries != null) { actions.openSeries(null) }
+        AnimatedVisibility(
+            visible = openSeries != null,
+            enter = slideInHorizontally(tween(320)) { it / 3 } + fadeIn(tween(240)),
+            exit = slideOutHorizontally(tween(260)) { it / 3 } + fadeOut(tween(200)),
+        ) {
+            lastSeries?.let { sr ->
+                SeriesScreen(series = sr, seasonId = state.seasonId, videos = serverVideos, actions = actions)
+            }
+        }
+    }
+
+    addToSeriesFor?.let { video ->
+        AddToSeriesDialog(
+            video = video,
+            series = state.server.series,
+            onDismiss = { addToSeriesFor = null },
+            onPick = { sr, seasonId ->
+                addToSeriesFor = null
+                actions.addToSeries(video, sr, seasonId)
+            },
+            onCreate = { title ->
+                addToSeriesFor = null
+                actions.createSeries(title, video)
+            },
+        )
+    }
+    if (newSeries) {
+        TextPromptDialog("New series", "", "Create", placeholder = "e.g. Holiday 2026", onDismiss = { newSeries = false }) {
+            newSeries = false
+            actions.createSeries(it)
+        }
     }
 
     if (showStreamDialog) {
@@ -456,8 +516,11 @@ private fun ServerContent(
     contentPadding: PaddingValues,
     onOpenServerDialog: () -> Unit,
     onDelete: (ServerVideo) -> Unit,
+    onAddToSeries: (ServerVideo) -> Unit,
+    onNewSeries: () -> Unit,
 ) {
     val server = state.server
+    val videosById = remember(server.videos) { server.videos.associateBy { it.id } }
     when {
         !server.connected -> ConnectPrompt(server.error, onOpenServerDialog, contentPadding)
         !server.loaded && server.error == null ->
@@ -493,6 +556,7 @@ private fun ServerContent(
                         if (video.progressMs > 0) {
                             add(CardAction("Start from beginning", Icons.Filled.Replay) { actions.clearServerProgress(video) })
                         }
+                        add(CardAction("Add to series…", Icons.Filled.VideoLibrary) { onAddToSeries(video) })
                         add(CardAction("Delete from server", Icons.Filled.Delete, danger = true) { onDelete(video) })
                     }
                 },
@@ -510,6 +574,9 @@ private fun ServerContent(
                         }
                         if (continueCards.isNotEmpty()) {
                             ContinueRow(continueCards) { i -> actions.openServer(continueList, i) }
+                        }
+                        if (state.query.isBlank() && server.videos.isNotEmpty()) {
+                            SeriesSection(server.series, videosById, actions, onNewSeries)
                         }
                         if (hero != null) SectionTitle("All videos")
                         if (visible.isEmpty()) {
@@ -1170,7 +1237,7 @@ private fun CardMenu(open: Boolean, onOpen: () -> Unit, onClose: () -> Unit, act
 
 /** Loads a thumbnail model (local MediaStore frame or server image with its sign-in header). */
 @Composable
-private fun ThumbImage(thumb: Any?, modifier: Modifier = Modifier) {
+internal fun ThumbImage(thumb: Any?, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val model = remember(thumb) {
         when (thumb) {
@@ -1195,7 +1262,7 @@ private fun ThumbImage(thumb: Any?, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun Thumbnail(card: CardModel, modifier: Modifier = Modifier) {
+internal fun Thumbnail(card: CardModel, modifier: Modifier = Modifier) {
     Box(
         modifier
             .aspectRatio(16f / 9f)

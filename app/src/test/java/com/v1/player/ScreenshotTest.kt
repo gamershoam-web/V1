@@ -6,6 +6,9 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.test.core.app.ApplicationProvider
+import com.v1.player.data.NextUp
+import com.v1.player.data.SeriesInfo
+import com.v1.player.data.SeriesSeason
 import com.v1.player.data.ServerVideo
 import com.v1.player.data.VideoItem
 import com.v1.player.ui.library.ConnectState
@@ -20,9 +23,6 @@ import com.v1.player.ui.player.PlayerActions
 import com.v1.player.ui.player.PlayerScreen
 import com.v1.player.ui.player.ResumeNotice
 import com.v1.player.ui.theme.LumenTheme
-import coil.imageLoader
-import kotlinx.coroutines.runBlocking
-import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -88,22 +88,52 @@ class ScreenshotTest {
         override fun serverThumb(video: ServerVideo) = ServerThumb(thumb(video.id.drop(1).toInt() + 1), null)
     }
 
+    private val testSeries = listOf(
+        SeriesInfo(
+            id = "s1",
+            title = "The Long Way Round",
+            seasons = listOf(
+                SeriesSeason("a", "Season 1", listOf("v5", "v1", "v4")),
+                SeriesSeason("b", "Extras", listOf("v2")),
+            ),
+            episodeCount = 4,
+            watchedCount = 1,
+            nextUp = NextUp("v1", 1, 2),
+            posterVideoId = "v1",
+            updated = now,
+        ),
+        SeriesInfo(
+            id = "s2",
+            title = "Night walks",
+            seasons = listOf(SeriesSeason("c", "Season 1", listOf("v3"))),
+            episodeCount = 1,
+            watchedCount = 0,
+            nextUp = NextUp("v3", 1, 1),
+            posterVideoId = "v3",
+            updated = now,
+        ),
+    )
+
+    @Test
+    fun seriesScreenDark() {
+        rule.setContent {
+            LumenTheme(darkTheme = true) {
+                LibraryScreen(
+                    state = serverState().copy(openSeriesId = "s1"),
+                    connectState = ConnectState.Idle,
+                    hasPermission = true,
+                    actions = actions,
+                )
+            }
+        }
+        capture("series-dark")
+    }
+
     private fun serverState() = LibraryState(
         loading = false,
         tab = LibraryTab.SERVER,
-        server = ServerState(connected = true, url = "https://videos.example.com", loaded = true, videos = serverVideos),
+        server = ServerState(connected = true, url = "https://videos.example.com", loaded = true, videos = serverVideos, series = testSeries),
     )
-
-    /** Load every thumbnail once up front so the first screenshot isn't missing images. */
-    @Before
-    fun warmUpImages() {
-        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        runBlocking {
-            (1..6).forEach { n ->
-                context.imageLoader.execute(coil.request.ImageRequest.Builder(context).data(thumb(n)).build())
-            }
-        }
-    }
 
     private fun capture(name: String) {
         // Compose tests pause endless animations (the drifting backdrop); just let images load.

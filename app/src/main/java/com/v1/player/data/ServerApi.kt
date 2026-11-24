@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
@@ -28,7 +29,34 @@ data class ServerVideo(
     /** Where you left off, or 0. */
     val progressMs: Long,
     val progressUpdated: Long,
+    /** Watched to the end. */
+    val watched: Boolean = false,
 )
+
+/** A season: an ordered list of server video ids. */
+data class SeriesSeason(val id: String, val title: String, val episodes: List<String>)
+
+/** Which episode to watch next (1-based season and episode numbers). */
+data class NextUp(val videoId: String, val season: Int, val episode: Int) {
+    val label: String get() = "S$season E$episode"
+}
+
+/** A series of seasons and episodes, stored on the server. */
+data class SeriesInfo(
+    val id: String,
+    val title: String,
+    val seasons: List<SeriesSeason>,
+    val episodeCount: Int,
+    val watchedCount: Int,
+    val nextUp: NextUp?,
+    val posterVideoId: String?,
+    val updated: Long,
+) {
+    /** Every episode in viewing order with its label, e.g. ("abc", "S1 E2"). */
+    fun episodesInOrder(): List<Pair<String, String>> = seasons.flatMapIndexed { si, season ->
+        season.episodes.mapIndexed { ei, id -> id to "S${si + 1} E${ei + 1}" }
+    }
+}
 
 open class ServerException(val code: Int, message: String) : IOException(message)
 class ServerAuthException : ServerException(401, "Signed out of the server. Connect again.")
@@ -76,6 +104,66 @@ class ServerApi(val baseUrl: String, private val token: String?) {
         request("DELETE", "/api/videos/$id")
         Unit
     }
+
+    // region Series
+
+    suspend fun series(): List<SeriesInfo> = withContext(Dispatchers.IO) {
+        val arr = request("GET", "/api/series").getJSONArray("series")
+        (0 until arr.length()).map { parseSeries(arr.getJSONObject(it)) }
+    }
+
+    suspend fun createSeries(title: String): SeriesInfo =
+        seriesCall("POST", "/api/series", JSONObject().put("title", title))
+
+    suspend fun renameSeries(id: String, title: String): SeriesInfo =
+        seriesCall("PUT", "/api/series/$id", JSONObject().put("title", title))
+
+    suspend fun deleteSeries(id: String) = withContext(Dispatchers.IO) {
+        request("DELETE", "/api/series/$id")
+        Unit
+    }
+
+    suspend fun addSeason(seriesId: String): SeriesInfo =
+        seriesCall("POST", "/api/series/$seriesId/seasons", JSONObject())
+
+    suspend fun renameSeason(seriesId: String, seasonId: String, title: String): SeriesInfo =
+        seriesCall("PUT", "/api/series/$seriesId/seasons/$seasonId", JSONObject().put("title", title))
+
+    suspend fun reorderSeason(seriesId: String, seasonId: String, episodes: List<String>): SeriesInfo =
+        seriesCall("PUT", "/api/series/$seriesId/seasons/$seasonId", JSONObject().put("episodes", JSONArray(episodes)))
+
+    suspend fun deleteSeason(seriesId: String, seasonId: String): SeriesInfo =
+        seriesCall("DELETE", "/api/series/$seriesId/seasons/$seasonId", null)
+
+    suspend fun addEpisodes(seriesId: String, seasonId: String, videoIds: List<String>): SeriesInfo =
+        seriesCall("POST", "/api/series/$seriesId/seasons/$seasonId/episodes", JSONObject().put("videoIds", JSONArray(videoIds)))
+
+    suspend fun removeEpisode(seriesId: String, seasonId: String, videoId: String): SeriesInfo =
+        seriesCall("DELETE", "/api/series/$seriesId/seasons/$seasonId/episodes/$videoId", null)
+
+    private suspend fun seriesCall(method: String, path: String, body: JSONObject?): SeriesInfo =
+        withContext(Dispatchers.IO) { parseSeries(request(method, path, body)) }
+
+    private fun parseSeries(o: JSONObject): SeriesInfo {
+        val seasons = o.getJSONArray("seasons")
+        val next = o.optJSONObject("nextUp")
+        return SeriesInfo(
+            id = o.getString("id"),
+            title = o.optString("title"),
+            seasons = (0 until seasons.length()).map { i ->
+                val se = seasons.getJSONObject(i)
+                val eps = se.getJSONArray("episodes")
+                SeriesSeason(se.getString("id"), se.optString("title"), (0 until eps.length()).map { eps.getString(it) })
+            },
+            episodeCount = o.optInt("episodeCount"),
+            watchedCount = o.optInt("watchedCount"),
+            nextUp = next?.let { NextUp(it.getString("videoId"), it.optInt("season"), it.optInt("episode")) },
+            posterVideoId = o.optString("posterVideoId").takeIf { it.isNotBlank() && it != "null" },
+            updated = o.optLong("updated"),
+        )
+    }
+
+    // endregion
 
     // region Resumable uploads (blocking; call from a background thread)
 
@@ -184,6 +272,7 @@ class ServerApi(val baseUrl: String, private val token: String?) {
             ready = o.optBoolean("ready", true),
             progressMs = progress?.optLong("position") ?: 0L,
             progressUpdated = progress?.optLong("updated") ?: 0L,
+            watched = progress?.optBoolean("finished") ?: false,
         )
     }
 

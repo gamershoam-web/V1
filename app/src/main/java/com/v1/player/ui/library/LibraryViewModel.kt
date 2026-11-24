@@ -10,11 +10,15 @@ import com.v1.player.data.PlaybackStore
 import com.v1.player.data.ServerApi
 import com.v1.player.data.ServerAuthException
 import com.v1.player.data.ServerSettings
+import com.v1.player.data.SeriesInfo
 import com.v1.player.data.ServerVideo
 import com.v1.player.data.UploadWorker
 import com.v1.player.data.VideoItem
 import com.v1.player.data.VideoRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -43,6 +47,7 @@ data class ServerState(
     val refreshing: Boolean = false,
     val error: String? = null,
     val videos: List<ServerVideo> = emptyList(),
+    val series: List<SeriesInfo> = emptyList(),
 )
 
 sealed interface ConnectState {
@@ -66,7 +71,13 @@ data class LibraryState(
     val positionTimes: Map<String, Long> = emptyMap(),
     val server: ServerState = ServerState(),
     val uploads: List<UploadStatus> = emptyList(),
+    /** Series shown full-screen on the server tab, if any. */
+    val openSeriesId: String? = null,
+    /** Selected season on the series screen. */
+    val seasonId: String? = null,
 ) {
+    val openSeries: SeriesInfo? get() = server.series.firstOrNull { it.id == openSeriesId }
+
     val folders: List<FolderInfo> by lazy {
         videos.groupingBy { it.folder }.eachCount()
             .map { (name, count) -> FolderInfo(name, count) }
@@ -213,9 +224,11 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
         }
         viewModelScope.launch {
             try {
-                val videos = settings.api().videos()
+                val api = settings.api()
+                val videos = api.videos()
+                val series = runCatching { api.series() }.getOrDefault(_state.value.server.series)
                 _state.update {
-                    it.copy(server = it.server.copy(loaded = true, loading = false, refreshing = false, error = null, videos = videos))
+                    it.copy(server = it.server.copy(loaded = true, loading = false, refreshing = false, error = null, videos = videos, series = series))
                 }
             } catch (e: ServerAuthException) {
                 settings.clear()
@@ -254,7 +267,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     fun disconnect() {
         settings.clear()
         WorkManager.getInstance(getApplication()).cancelAllWorkByTag(UploadWorker.TAG)
-        _state.update { it.copy(server = ServerState(connected = false, url = settings.url)) }
+        _state.update { it.copy(openSeriesId = null, server = ServerState(connected = false, url = settings.url)) }
     }
 
     fun clearServerProgress(video: ServerVideo) = serverAction { api ->
@@ -276,6 +289,109 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun serverApi(): ServerApi? = if (settings.connected) settings.api() else null
+
+    // region Series
+
+    private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 4)
+    /** Short confirmations ("Added to …") for the UI to show. */
+    val messages: SharedFlow<String> = _messages.asSharedFlow()
+
+    fun openSeries(id: String?) = _state.update { it.copy(openSeriesId = id, seasonId = if (id != it.openSeriesId) null else it.seasonId) }
+
+    fun selectSeason(id: String) = _state.update { it.copy(seasonId = id) }
+
+    private fun upsertSeries(series: SeriesInfo) = _state.update { st ->
+        val list = st.server.series
+        val updated = if (list.any { it.id == series.id }) list.map { if (it.id == series.id) series else it } else listOf(series) + list
+        st.copy(server = st.server.copy(series = updated))
+    }
+
+    /** Runs a series change on the server and stores the series it sends back. */
+    private fun seriesChange(message: String? = null, block: suspend (ServerApi) -> SeriesInfo) {
+        viewModelScope.launch {
+            try {
+                upsertSeries(block(settings.api()))
+                message?.let { _messages.tryEmit(it) }
+            } catch (e: IOException) {
+                _messages.tryEmit(friendly(e))
+            }
+        }
+    }
+
+    fun createSeries(title: String, firstVideo: ServerVideo? = null) {
+        viewModelScope.launch {
+            try {
+                val api = settings.api()
+                var series = api.createSeries(title)
+                if (firstVideo != null) {
+                    series = api.addEpisodes(series.id, series.seasons.first().id, listOf(firstVideo.id))
+                    _messages.tryEmit("Created \"$title\"")
+                }
+                upsertSeries(series)
+                if (firstVideo == null) openSeries(series.id)
+            } catch (e: IOException) {
+                _messages.tryEmit(friendly(e))
+            }
+        }
+    }
+
+    fun renameSeries(id: String, title: String) = seriesChange { it.renameSeries(id, title) }
+
+    fun deleteSeries(id: String) {
+        viewModelScope.launch {
+            try {
+                settings.api().deleteSeries(id)
+                _state.update { st ->
+                    st.copy(
+                        openSeriesId = if (st.openSeriesId == id) null else st.openSeriesId,
+                        server = st.server.copy(series = st.server.series.filterNot { it.id == id }),
+                    )
+                }
+            } catch (e: IOException) {
+                _messages.tryEmit(friendly(e))
+            }
+        }
+    }
+
+    fun addSeason(seriesId: String) {
+        viewModelScope.launch {
+            try {
+                val series = settings.api().addSeason(seriesId)
+                upsertSeries(series)
+                selectSeason(series.seasons.last().id)
+            } catch (e: IOException) {
+                _messages.tryEmit(friendly(e))
+            }
+        }
+    }
+
+    fun renameSeason(seriesId: String, seasonId: String, title: String) =
+        seriesChange { it.renameSeason(seriesId, seasonId, title) }
+
+    fun deleteSeason(seriesId: String, seasonId: String) {
+        _state.update { it.copy(seasonId = null) }
+        seriesChange { it.deleteSeason(seriesId, seasonId) }
+    }
+
+    fun addEpisodes(seriesId: String, seasonId: String, videoIds: List<String>, seasonTitle: String) =
+        seriesChange("Added ${videoIds.size} to $seasonTitle") { it.addEpisodes(seriesId, seasonId, videoIds) }
+
+    fun removeEpisode(seriesId: String, seasonId: String, videoId: String) =
+        seriesChange("Removed from season") { it.removeEpisode(seriesId, seasonId, videoId) }
+
+    fun moveEpisode(series: SeriesInfo, seasonId: String, from: Int, to: Int) {
+        val season = series.seasons.firstOrNull { it.id == seasonId } ?: return
+        if (to !in season.episodes.indices) return
+        val ids = season.episodes.toMutableList().apply { add(to, removeAt(from)) }
+        // Show the new order straight away; the server confirms it.
+        upsertSeries(series.copy(seasons = series.seasons.map { if (it.id == seasonId) it.copy(episodes = ids) else it }))
+        seriesChange { it.reorderSeason(series.id, seasonId, ids) }
+    }
+
+    fun addToSeries(video: ServerVideo, seriesId: String, seasonId: String, label: String) =
+        seriesChange("Added to $label") { it.addEpisodes(seriesId, seasonId, listOf(video.id)) }
+
+    // endregion
 
     // endregion
 

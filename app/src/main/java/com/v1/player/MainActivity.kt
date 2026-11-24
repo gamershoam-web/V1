@@ -15,6 +15,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +25,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v1.player.data.PlayItem
 import com.v1.player.data.Playlist
+import com.v1.player.data.SeriesInfo
 import com.v1.player.data.ServerVideo
 import com.v1.player.data.VideoItem
 import com.v1.player.ui.library.LibraryActions
@@ -131,7 +133,47 @@ class MainActivity : ComponentActivity() {
                             val api = viewModel.serverApi() ?: return null
                             return ServerThumb(api.thumbUrl(video.id), api.authHeader)
                         }
+
+                        override fun openSeries(id: String?) = viewModel.openSeries(id)
+                        override fun selectSeason(id: String) = viewModel.selectSeason(id)
+                        override fun createSeries(title: String, firstVideo: ServerVideo?) = viewModel.createSeries(title, firstVideo)
+                        override fun renameSeries(id: String, title: String) = viewModel.renameSeries(id, title)
+                        override fun deleteSeries(id: String) = viewModel.deleteSeries(id)
+                        override fun addSeason(seriesId: String) = viewModel.addSeason(seriesId)
+                        override fun renameSeason(seriesId: String, seasonId: String, title: String) =
+                            viewModel.renameSeason(seriesId, seasonId, title)
+                        override fun deleteSeason(seriesId: String, seasonId: String) = viewModel.deleteSeason(seriesId, seasonId)
+                        override fun addEpisodes(seriesId: String, seasonId: String, videoIds: List<String>, seasonTitle: String) =
+                            viewModel.addEpisodes(seriesId, seasonId, videoIds, seasonTitle)
+                        override fun removeEpisode(seriesId: String, seasonId: String, videoId: String) =
+                            viewModel.removeEpisode(seriesId, seasonId, videoId)
+                        override fun moveEpisode(series: SeriesInfo, seasonId: String, from: Int, to: Int) =
+                            viewModel.moveEpisode(series, seasonId, from, to)
+
+                        override fun addToSeries(video: ServerVideo, series: SeriesInfo, seasonId: String) {
+                            val season = series.seasons.firstOrNull { it.id == seasonId } ?: return
+                            viewModel.addToSeries(video, series.id, seasonId, "${series.title} · ${season.title}")
+                        }
+
+                        override fun playSeries(series: SeriesInfo, videoId: String) {
+                            val api = viewModel.serverApi() ?: return
+                            val videos = viewModel.state.value.server.videos.associateBy { it.id }
+                            // The whole series in order, so the next episode plays on its own, across seasons.
+                            val episodes = series.episodesInOrder().mapNotNull { (id, label) -> videos[id]?.let { it to label } }
+                            val index = episodes.indexOfFirst { it.first.id == videoId }.takeIf { it >= 0 } ?: return
+                            Playlist.set(
+                                episodes.map { (v, label) ->
+                                    PlayItem(api.streamUri(v.id), "$label · ${v.title}", serverId = v.id, resumeMs = v.progressMs)
+                                },
+                                index,
+                            )
+                            play(api.streamUri(videoId))
+                        }
                     }
+                }
+
+                LaunchedEffect(Unit) {
+                    viewModel.messages.collect { Toast.makeText(this@MainActivity, it, Toast.LENGTH_SHORT).show() }
                 }
 
                 LibraryScreen(

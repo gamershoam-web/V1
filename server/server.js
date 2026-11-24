@@ -516,7 +516,7 @@ async function handleSeries(req, res, pathname, method) {
       sendJson(res, 200, publicSeries(series));
       return true;
     }
-    if (method === 'PATCH') {
+    if (method === 'PATCH' || method === 'PUT') { // PUT too: Android's HttpURLConnection can't send PATCH
       const body = await readJson(req);
       series.title = cleanTitle(body.title, series.title);
       touch(series);
@@ -547,7 +547,7 @@ async function handleSeries(req, res, pathname, method) {
   if (m) {
     const series = seriesOr404(m[1]);
     const season = seasonOr404(series, m[2]);
-    if (method === 'PATCH') {
+    if (method === 'PATCH' || method === 'PUT') {
       const body = await readJson(req);
       if ('title' in body) season.title = cleanTitle(body.title, null);
       if (Array.isArray(body.episodes)) {

@@ -8,7 +8,8 @@ watch them anywhere, and pick up where you left off on any device.
 - **Uploads resume** after a dropped connection (sent in 8 MB pieces)
 - **Instant seeking** in long videos (HTTP range streaming)
 - **Thumbnails and lengths** are made automatically with ffmpeg
-- **Password protected**; automatic HTTPS when you have a domain
+- **Series** with seasons and episodes, with "next up" shared across devices
+- **Optional password** (off by default); automatic HTTPS when you have a domain
 - No database to manage: videos are plain files in `data/videos`, everything else is in `data/db.json`
 
 ## Quick install
@@ -19,8 +20,8 @@ On a fresh Ubuntu/Debian VPS, open a root shell (e.g. your provider's web consol
 curl -fsSL https://raw.githubusercontent.com/gamershoam-web/V1/ccr-bf2e92af-l5c6am/server/get.sh | bash
 ```
 
-It downloads Lumen to `/opt/lumen`, installs Docker if needed, asks for a domain (Enter for none) and a
-password (Enter to generate one), starts everything and prints the address. Run the same line again
+It downloads Lumen to `/opt/lumen`, installs Docker if needed, asks for a domain (Enter for none) and
+whether to require a password (Enter for no password), starts everything and prints the address. Run the same line again
 later to update; your videos and settings are kept.
 
 ## Install on your VPS (step by step)
@@ -91,7 +92,9 @@ sign in again with the new one. Your videos and watch progress are kept.
   the website says so on the video page, and they still play in the Android app or can be downloaded.
 - Without a domain the connection is plain HTTP, so the password and videos travel unencrypted.
   Use a domain for anything you care about.
-- Login attempts are limited to 10 per 15 minutes per IP address.
+- Without a password, anyone who knows your address can watch, upload and delete videos. To add one later,
+  run the installer again and answer **y** to "Require a password?".
+- With a password, login attempts are limited to 10 per 15 minutes per IP address.
 
 ## Running without Docker
 
@@ -101,12 +104,12 @@ Needs Node.js 20+ (and ffmpeg for thumbnails):
 V1_PASSWORD='choose-a-good-password' PORT=8080 node server.js
 ```
 
-Settings: `V1_PASSWORD` (required, 8+ characters), `PORT` (default 8080), `DATA_DIR` (default `./data`),
+Settings: `V1_PASSWORD` (empty = no sign-in, otherwise 8+ characters), `PORT` (default 8080), `DATA_DIR` (default `./data`),
 `TRUST_PROXY=1` when behind a reverse proxy such as Caddy or nginx.
 
 ## API (used by the website and the app)
 
-All endpoints except `/api/health` and `/api/login` need `Authorization: Bearer <token>` or the session cookie.
+When a password is set, all endpoints except `/api/health` and `/api/login` need `Authorization: Bearer <token>` or the session cookie.
 
 | Method | Path | |
 | --- | --- | --- |
@@ -122,3 +125,9 @@ All endpoints except `/api/health` and `/api/login` need `Authorization: Bearer 
 | GET | `/api/uploads/:id` | `{offset}` — bytes received so far |
 | PUT | `/api/uploads/:id` | chunk body with `Upload-Offset` header |
 | POST | `/api/rescan` | pick up files copied into `data/videos` |
+| GET/POST | `/api/series` | list series / create `{title}` |
+| GET/PATCH/DELETE | `/api/series/:id` | details, rename `{title}`, delete (videos are kept) |
+| POST | `/api/series/:id/seasons` | add a season |
+| PATCH/DELETE | `/api/series/:id/seasons/:sid` | rename `{title}`, reorder `{episodes: [ids]}`, delete |
+| POST | `/api/series/:id/seasons/:sid/episodes` | add `{videoIds: [...]}` |
+| DELETE | `/api/series/:id/seasons/:sid/episodes/:videoId` | remove an episode |
