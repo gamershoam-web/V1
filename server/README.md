@@ -1,6 +1,6 @@
-# V1 Player server
+# Lumen server
 
-Your own video server and website. Upload videos from a browser or the V1 Player Android app,
+Your own video server and website. Upload videos from a browser or the Lumen Android app,
 watch them anywhere, and pick up where you left off on any device.
 
 - **Website**: library, "Continue watching", drag-and-drop uploads, player that resumes where you stopped

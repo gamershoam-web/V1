@@ -1,6 +1,6 @@
 'use strict';
 /*
- * V1 Player server
+ * Lumen server
  *
  * A small, dependency-free video server for your own VPS:
  *  - password login (one owner account), sessions for browsers and the Android app
@@ -575,7 +575,7 @@ async function handleApi(req, res, url) {
   const method = req.method;
 
   if (pathname === '/api/health') {
-    return sendJson(res, 200, { ok: true, name: 'V1 Player', version: 1 });
+    return sendJson(res, 200, { ok: true, name: 'Lumen', version: 1 });
   }
 
   if (pathname === '/api/login' && method === 'POST') {
@@ -720,7 +720,7 @@ server.headersTimeout = 60_000;
 
 scanLibrary().then(() => {
   server.listen(PORT, () => {
-    console.log(`V1 Player server running on http://localhost:${PORT}  (data: ${DATA_DIR})`);
+    console.log(`Lumen server running on http://localhost:${PORT}  (data: ${DATA_DIR})`);
   });
 });
 setInterval(scanLibrary, 60_000).unref();

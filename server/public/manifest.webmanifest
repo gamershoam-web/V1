@@ -1,9 +1,9 @@
 {
-  "name": "V1 Player",
-  "short_name": "V1 Player",
+  "name": "Lumen",
+  "short_name": "Lumen",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#121118",
-  "theme_color": "#121118",
+  "background_color": "#0b0a14",
+  "theme_color": "#0b0a14",
   "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
 }

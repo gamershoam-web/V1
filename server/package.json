@@ -1,8 +1,8 @@
 {
-  "name": "v1-player-server",
+  "name": "lumen-server",
   "version": "1.0.0",
   "private": true,
-  "description": "Self-hosted video server and website for V1 Player",
+  "description": "Self-hosted video server and website for Lumen",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

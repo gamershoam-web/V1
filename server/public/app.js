@@ -312,7 +312,7 @@ function showWatchInfo(v) {
   ].filter(Boolean).join(' · ');
   $('#download-link').href = `/api/videos/${v.id}/download`;
   $('#web-warning').hidden = v.webPlayable;
-  document.title = `${v.title} · V1 Player`;
+  document.title = `${v.title} · Lumen`;
 }
 
 function renderUpNext() {
@@ -384,7 +384,7 @@ function closeWatch() {
   hideNextOverlay();
   $('#watch').hidden = true;
   $('#library').hidden = false;
-  document.title = 'V1 Player';
+  document.title = 'Lumen';
   render();
 }
 
