@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  HTTPS is used whenever your server has a domain. Plain HTTP is still allowed so a server
+  reached by IP address (http://1.2.3.4:8080) and http:// stream links keep working.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

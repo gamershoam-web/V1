@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -23,8 +24,14 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.v1.player.data.PlayItem
 import com.v1.player.data.Playlist
+import com.v1.player.data.ServerVideo
+import com.v1.player.data.VideoItem
+import com.v1.player.ui.library.LibraryActions
 import com.v1.player.ui.library.LibraryScreen
+import com.v1.player.ui.library.LibraryTab
 import com.v1.player.ui.library.LibraryViewModel
+import com.v1.player.ui.library.ServerThumb
+import com.v1.player.ui.library.SortOrder
 import com.v1.player.ui.player.PlayerActivity
 import com.v1.player.ui.theme.V1Theme
 
@@ -37,6 +44,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             V1Theme {
                 val state by viewModel.state.collectAsStateWithLifecycle()
+                val connectState by viewModel.connectState.collectAsStateWithLifecycle()
                 var hasPermission by remember { mutableStateOf(hasVideoPermission(this)) }
 
                 val permissionLauncher = rememberLauncherForActivityResult(
@@ -48,29 +56,84 @@ class MainActivity : ComponentActivity() {
                 val openDocument = rememberLauncherForActivityResult(
                     ActivityResultContracts.OpenDocument()
                 ) { uri -> if (uri != null) play(uri) }
+                // Asked once, the first time something is uploaded, so upload progress can show.
+                val notificationLauncher = rememberLauncherForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) { }
 
                 // Re-check access and refresh when coming back (e.g. from settings or the player).
                 LifecycleResumeEffect(Unit) {
                     hasPermission = hasVideoPermission(this@MainActivity)
                     if (hasPermission) viewModel.load()
+                    if (viewModel.state.value.tab == LibraryTab.SERVER) viewModel.loadServer()
                     onPauseOrDispose { }
+                }
+
+                val actions = remember {
+                    object : LibraryActions {
+                        override fun requestPermission() =
+                            requestPermission { permissionLauncher.launch(videoPermissions()) }
+
+                        override fun refresh() {
+                            if (viewModel.state.value.tab == LibraryTab.SERVER) viewModel.loadServer(userInitiated = true)
+                            else viewModel.load(userInitiated = true)
+                        }
+
+                        override fun setTab(tab: LibraryTab) = viewModel.setTab(tab)
+                        override fun setQuery(query: String) = viewModel.setQuery(query)
+                        override fun selectFolder(folder: String?) = viewModel.selectFolder(folder)
+                        override fun setSort(sort: SortOrder) = viewModel.setSort(sort)
+                        override fun toggleGrid() = viewModel.toggleGrid()
+
+                        override fun openLocal(list: List<VideoItem>, index: Int) {
+                            Playlist.set(list.map { PlayItem(it.uri, it.title) }, index)
+                            play(list[index].uri)
+                        }
+
+                        override fun openServer(list: List<ServerVideo>, index: Int) {
+                            val api = viewModel.serverApi() ?: return
+                            // The server's position wins: it may have been watched on another device.
+                            Playlist.set(
+                                list.map { PlayItem(api.streamUri(it.id), it.title, serverId = it.id, resumeMs = it.progressMs) },
+                                index,
+                            )
+                            play(api.streamUri(list[index].id))
+                        }
+
+                        override fun openFile() = openDocument.launch(arrayOf("video/*"))
+                        override fun openStream(url: String) = play(Uri.parse(url))
+
+                        override fun uploadToServer(video: VideoItem) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS)
+                                != PackageManager.PERMISSION_GRANTED
+                            ) {
+                                notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                            viewModel.uploadToServer(video)
+                            Toast.makeText(this@MainActivity, "Uploading \"${video.title}\" to your server", Toast.LENGTH_SHORT).show()
+                        }
+
+                        override fun clearLocalProgress(video: VideoItem) = viewModel.clearLocalProgress(video)
+                        override fun clearServerProgress(video: ServerVideo) = viewModel.clearServerProgress(video)
+                        override fun deleteServerVideo(video: ServerVideo) = viewModel.deleteServerVideo(video)
+                        override fun connect(address: String, password: String) = viewModel.connect(address, password)
+                        override fun resetConnect() = viewModel.resetConnectState()
+                        override fun disconnect() = viewModel.disconnect()
+                        override fun clearFailedUploads() = viewModel.clearFailedUploads()
+
+                        override fun serverThumb(video: ServerVideo): ServerThumb? {
+                            val api = viewModel.serverApi() ?: return null
+                            return ServerThumb(api.thumbUrl(video.id), api.authHeader)
+                        }
+                    }
                 }
 
                 LibraryScreen(
                     state = state,
+                    connectState = connectState,
                     hasPermission = hasPermission,
-                    onRequestPermission = { requestPermission { permissionLauncher.launch(videoPermissions()) } },
-                    onRefresh = { viewModel.load(userInitiated = true) },
-                    onQueryChange = viewModel::setQuery,
-                    onFolderSelect = viewModel::selectFolder,
-                    onSortChange = viewModel::setSort,
-                    onToggleGrid = viewModel::toggleGrid,
-                    onOpenVideo = { list, index ->
-                        Playlist.set(list.map { PlayItem(it.uri, it.title) }, index)
-                        play(list[index].uri)
-                    },
-                    onOpenFile = { openDocument.launch(arrayOf("video/*")) },
-                    onOpenStream = { play(Uri.parse(it)) },
+                    actions = actions,
                 )
             }
         }

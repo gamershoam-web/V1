@@ -1,11 +1,32 @@
 # V1 Player
 
 A clean, simple video player for Android, built with Kotlin, Jetpack Compose and
-[Media3 ExoPlayer](https://developer.android.com/media/media3/exoplayer).
+[Media3 ExoPlayer](https://developer.android.com/media/media3/exoplayer), plus an optional
+self-hosted server and website (in [`server/`](server/README.md)) so you can upload your videos
+to your own VPS and watch them anywhere.
+
+## Pick up where you left off
+
+Every video remembers where you stopped, on the phone and on your server:
+
+- **Continue watching** rows at the top of the app (phone and server tabs) and the website
+- Opening a half-watched video jumps back to that spot and shows **Resumed from 12:34 · Start over**
+- Progress for server videos is shared: stop on the phone, continue in the browser, or the other way round
+- Finished videos drop out of Continue watching automatically; ⋮ → **Start from beginning** resets one
+
+## Your own server
+
+Run the server on a VPS (`cd server && sudo ./install.sh`, full guide in [server/README.md](server/README.md)), then:
+
+- **Website**: sign in, drag videos in to upload, watch them in the browser
+- **App**: **Server** tab → **Connect server** → stream your server's videos
+- **Upload from the phone**: ⋮ on any video in **This phone** → **Upload to server**
+  (runs in the background with a notification, and resumes if the connection drops)
 
 ## Features
 
 **Library**
+- Two tabs: **This phone** and **Server**
 - Finds every video on the device, with thumbnails, length, resolution and size
 - Grid or list view, sort by date, name, length or size
 - Filter by folder (Camera, Downloads, WhatsApp, …) and search by name
@@ -53,9 +74,16 @@ signing config in `app/build.gradle.kts` before publishing to Google Play.
 app/src/main/java/com/v1/player/
 ├── MainActivity.kt              library screen host + permissions
 ├── V1App.kt                     image loader setup (thumbnails)
-├── data/                        MediaStore queries, thumbnails, resume positions, playlist hand-off
+├── data/                        MediaStore queries, thumbnails, resume positions, playlist hand-off,
+│                                server API client and background upload worker
 ├── ui/library/                  library UI and view model
 ├── ui/player/                   PlayerActivity, Compose controls, gestures, track picker
 ├── ui/theme/                    Material 3 theme (uses dynamic color on Android 12+)
 └── util/                        time and size formatting
+
+server/
+├── server.js                    the whole server: API, uploads, streaming, progress (no npm packages)
+├── public/                      the website (plain HTML, CSS and JavaScript)
+├── Dockerfile, docker-compose.yml, Caddyfile
+└── install.sh                   one-command VPS setup with automatic HTTPS
 ```

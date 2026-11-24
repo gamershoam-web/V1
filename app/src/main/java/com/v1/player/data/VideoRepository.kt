@@ -48,6 +48,7 @@ class VideoRepository(private val context: Context) {
                         id = id,
                         uri = ContentUris.withAppendedId(collection, id),
                         title = name.substringBeforeLast('.', name),
+                        fileName = name,
                         durationMs = c.getLong(durCol),
                         sizeBytes = c.getLong(sizeCol),
                         dateAddedSec = c.getLong(dateCol),

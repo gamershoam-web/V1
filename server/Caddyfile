@@ -1,0 +1,7 @@
+# Caddy gets and renews a free HTTPS certificate for your domain automatically.
+{$DOMAIN} {
+	reverse_proxy v1player:8080 {
+		# Stream video bytes straight through instead of buffering them.
+		flush_interval -1
+	}
+}

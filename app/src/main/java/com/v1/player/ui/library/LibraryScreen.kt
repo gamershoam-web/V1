@@ -1,8 +1,10 @@
 package com.v1.player.ui.library
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,9 +21,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -31,14 +35,22 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Cloud
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.VideoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -48,14 +60,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,58 +87,112 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.work.WorkInfo
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.v1.player.data.ServerVideo
 import com.v1.player.data.VideoItem
 import com.v1.player.util.formatDuration
 import com.v1.player.util.formatSize
 import com.v1.player.util.resolutionLabel
 
+/** Thumbnail on the server; needs the sign-in header. */
+data class ServerThumb(val url: String, val auth: String?)
+
+/** What a video card shows, whether the video is on the phone or on the server. */
+data class CardModel(
+    val key: String,
+    val title: String,
+    val subtitle: String,
+    val durationMs: Long,
+    val progress: Float,
+    val thumb: Any?,
+    val badge: String? = null,
+)
+
+data class CardAction(val label: String, val icon: ImageVector, val danger: Boolean = false, val onClick: () -> Unit)
+
+/** Everything the library screen can ask for. */
+interface LibraryActions {
+    fun requestPermission()
+    fun refresh()
+    fun setTab(tab: LibraryTab)
+    fun setQuery(query: String)
+    fun selectFolder(folder: String?)
+    fun setSort(sort: SortOrder)
+    fun toggleGrid()
+    fun openLocal(list: List<VideoItem>, index: Int)
+    fun openServer(list: List<ServerVideo>, index: Int)
+    fun openFile()
+    fun openStream(url: String)
+    fun uploadToServer(video: VideoItem)
+    fun clearLocalProgress(video: VideoItem)
+    fun clearServerProgress(video: ServerVideo)
+    fun deleteServerVideo(video: ServerVideo)
+    fun connect(address: String, password: String)
+    fun resetConnect()
+    fun disconnect()
+    fun clearFailedUploads()
+    fun serverThumb(video: ServerVideo): ServerThumb?
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LibraryScreen(
     state: LibraryState,
+    connectState: ConnectState,
     hasPermission: Boolean,
-    onRequestPermission: () -> Unit,
-    onRefresh: () -> Unit,
-    onQueryChange: (String) -> Unit,
-    onFolderSelect: (String?) -> Unit,
-    onSortChange: (SortOrder) -> Unit,
-    onToggleGrid: () -> Unit,
-    onOpenVideo: (List<VideoItem>, Int) -> Unit,
-    onOpenFile: () -> Unit,
-    onOpenStream: (String) -> Unit,
+    actions: LibraryActions,
 ) {
     var searching by rememberSaveable { mutableStateOf(false) }
     var showStreamDialog by rememberSaveable { mutableStateOf(false) }
+    var showServerDialog by rememberSaveable { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf<ServerVideo?>(null) }
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LibraryTopBar(
-                state = state,
-                searching = searching,
-                hasPermission = hasPermission,
-                onSearchingChange = {
-                    searching = it
-                    if (!it) onQueryChange("")
-                },
-                onQueryChange = onQueryChange,
-                onSortChange = onSortChange,
-                onToggleGrid = onToggleGrid,
-                onOpenFile = onOpenFile,
-                onOpenStream = { showStreamDialog = true },
-                scrollBehavior = scrollBehavior,
-            )
+            Column {
+                LibraryTopBar(
+                    state = state,
+                    searching = searching,
+                    hasPermission = hasPermission,
+                    onSearchingChange = {
+                        searching = it
+                        if (!it) actions.setQuery("")
+                    },
+                    actions = actions,
+                    onOpenStream = { showStreamDialog = true },
+                    onOpenServer = { showServerDialog = true },
+                    scrollBehavior = scrollBehavior,
+                )
+                PrimaryTabRow(selectedTabIndex = state.tab.ordinal) {
+                    Tab(
+                        selected = state.tab == LibraryTab.PHONE,
+                        onClick = { actions.setTab(LibraryTab.PHONE) },
+                        text = { Text("This phone") },
+                    )
+                    Tab(
+                        selected = state.tab == LibraryTab.SERVER,
+                        onClick = { actions.setTab(LibraryTab.SERVER) },
+                        text = { Text("Server") },
+                    )
+                }
+            }
         },
     ) { padding ->
         Box(
@@ -130,31 +200,14 @@ fun LibraryScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            when {
-                !hasPermission -> PermissionPrompt(onRequestPermission, onOpenFile)
-                state.loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
-                else -> PullToRefreshBox(
-                    isRefreshing = state.refreshing,
-                    onRefresh = onRefresh,
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    Column(Modifier.fillMaxSize()) {
-                        if (state.folders.size > 1) {
-                            FolderChips(state, onFolderSelect)
-                        }
-                        val visible = state.visible
-                        if (visible.isEmpty()) {
-                            EmptyState(
-                                if (state.query.isNotBlank()) "No videos match \"${state.query}\""
-                                else "No videos found on this device"
-                            )
-                        } else if (state.grid) {
-                            VideoGrid(visible, state, onOpenVideo)
-                        } else {
-                            VideoList(visible, state, onOpenVideo)
-                        }
-                    }
-                }
+            when (state.tab) {
+                LibraryTab.PHONE -> PhoneContent(state, hasPermission, actions)
+                LibraryTab.SERVER -> ServerContent(
+                    state = state,
+                    actions = actions,
+                    onOpenServerDialog = { showServerDialog = true },
+                    onDelete = { confirmDelete = it },
+                )
             }
         }
     }
@@ -164,11 +217,356 @@ fun LibraryScreen(
             onDismiss = { showStreamDialog = false },
             onPlay = {
                 showStreamDialog = false
-                onOpenStream(it)
+                actions.openStream(it)
             },
         )
     }
+    if (showServerDialog) {
+        ServerDialog(
+            server = state.server,
+            connectState = connectState,
+            actions = actions,
+            onDismiss = {
+                showServerDialog = false
+                actions.resetConnect()
+            },
+        )
+    }
+    // Close the dialog once a connection succeeds.
+    LaunchedEffect(state.server.connected) {
+        if (state.server.connected && connectState == ConnectState.Idle) showServerDialog = false
+    }
+    confirmDelete?.let { video ->
+        AlertDialog(
+            onDismissRequest = { confirmDelete = null },
+            title = { Text("Delete from server?") },
+            text = { Text("\"${video.title}\" will be removed from your server for every device. This can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDelete = null
+                    actions.deleteServerVideo(video)
+                }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmDelete = null }) { Text("Cancel") } },
+        )
+    }
 }
+
+// region Phone tab
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun PhoneContent(state: LibraryState, hasPermission: Boolean, actions: LibraryActions) {
+    when {
+        !hasPermission -> PermissionPrompt(actions::requestPermission, actions::openFile)
+        state.loading -> Box(Modifier.fillMaxSize()) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
+        else -> PullToRefreshBox(
+            isRefreshing = state.refreshing,
+            onRefresh = actions::refresh,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            val visible = state.visible
+            val continueList = if (state.query.isBlank()) state.continueLocal else emptyList()
+            val cards = remember(visible, state.positions) { visible.map { it.toCard(state) } }
+            val continueCards = remember(continueList, state.positions) { continueList.map { it.toCard(state) } }
+
+            VideoCollection(
+                cards = cards,
+                grid = state.grid,
+                onClick = { actions.openLocal(visible, it) },
+                actionsFor = { index -> localActions(visible[index], state, actions) },
+                header = {
+                    Column {
+                        if (state.folders.size > 1) FolderChips(state, actions::selectFolder)
+                        if (continueCards.isNotEmpty()) {
+                            ContinueRow(continueCards) { i -> actions.openLocal(continueList, i) }
+                            SectionTitle("All videos")
+                        }
+                        if (visible.isEmpty()) {
+                            EmptyState(
+                                if (state.query.isNotBlank()) "No videos match \"${state.query}\""
+                                else "No videos found on this phone"
+                            )
+                        }
+                    }
+                },
+            )
+        }
+    }
+}
+
+private fun VideoItem.toCard(state: LibraryState) = CardModel(
+    key = "l$id",
+    title = title,
+    subtitle = listOfNotNull(
+        resolutionLabel(width, height),
+        formatSize(sizeBytes).ifEmpty { null },
+        folder,
+    ).joinToString(" · "),
+    durationMs = durationMs,
+    progress = state.progressOf(this),
+    thumb = thumbnail,
+)
+
+private fun localActions(video: VideoItem, state: LibraryState, actions: LibraryActions): List<CardAction> = buildList {
+    if (state.progressOf(video) > 0f) {
+        add(CardAction("Start from beginning", Icons.Filled.Replay) { actions.clearLocalProgress(video) })
+    }
+    if (state.server.connected) {
+        add(CardAction("Upload to server", Icons.Filled.CloudUpload) { actions.uploadToServer(video) })
+    }
+}
+
+// endregion
+
+// region Server tab
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ServerContent(
+    state: LibraryState,
+    actions: LibraryActions,
+    onOpenServerDialog: () -> Unit,
+    onDelete: (ServerVideo) -> Unit,
+) {
+    val server = state.server
+    when {
+        !server.connected -> ConnectPrompt(server.error, onOpenServerDialog)
+        !server.loaded && server.error == null ->
+            Box(Modifier.fillMaxSize()) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
+        !server.loaded && server.error != null -> MessageState(
+            icon = Icons.Outlined.CloudOff,
+            title = "Couldn't reach your server",
+            message = server.error,
+            primary = "Try again" to { actions.refresh() },
+            secondary = "Server settings" to onOpenServerDialog,
+        )
+        else -> PullToRefreshBox(
+            isRefreshing = server.refreshing,
+            onRefresh = actions::refresh,
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            val visible = state.visibleServer
+            val continueList = if (state.query.isBlank()) state.continueServer else emptyList()
+            val cards = remember(visible) { visible.map { it.toCard(actions) } }
+            val continueCards = remember(continueList) { continueList.map { it.toCard(actions) } }
+
+            VideoCollection(
+                cards = cards,
+                grid = state.grid,
+                onClick = { actions.openServer(visible, it) },
+                actionsFor = { index ->
+                    val video = visible[index]
+                    buildList {
+                        if (video.progressMs > 0) {
+                            add(CardAction("Start from beginning", Icons.Filled.Replay) { actions.clearServerProgress(video) })
+                        }
+                        add(CardAction("Delete from server", Icons.Filled.Delete, danger = true) { onDelete(video) })
+                    }
+                },
+                header = {
+                    Column {
+                        if (server.error != null) ErrorBanner(server.error)
+                        if (state.uploads.isNotEmpty()) UploadsCard(state.uploads, actions::clearFailedUploads)
+                        if (continueCards.isNotEmpty()) {
+                            ContinueRow(continueCards) { i -> actions.openServer(continueList, i) }
+                            SectionTitle("All videos")
+                        }
+                        if (visible.isEmpty()) {
+                            EmptyState(
+                                if (state.query.isNotBlank()) "No videos match \"${state.query}\""
+                                else "No videos on your server yet.\n\nUpload from the website, or tap ⋮ on a video in \"This phone\" and choose Upload to server."
+                            )
+                        }
+                    }
+                },
+            )
+        }
+    }
+}
+
+private fun ServerVideo.toCard(actions: LibraryActions) = CardModel(
+    key = "s$id",
+    title = title,
+    subtitle = listOfNotNull(
+        resolutionLabel(width, height),
+        formatSize(sizeBytes).ifEmpty { null },
+    ).joinToString(" · ").ifEmpty { "On your server" },
+    durationMs = durationMs,
+    progress = if (durationMs > 0) (progressMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f,
+    thumb = if (hasThumb) actions.serverThumb(this) else null,
+    badge = if (!ready) "Processing" else null,
+)
+
+@Composable
+private fun ConnectPrompt(error: String?, onConnect: () -> Unit) {
+    MessageState(
+        icon = Icons.Outlined.Cloud,
+        title = "Watch from your own server",
+        message = error ?: "Connect your V1 server to stream your videos anywhere, pick up where you left off on any device, and upload from this phone.",
+        primary = "Connect server" to onConnect,
+    )
+}
+
+@Composable
+private fun UploadsCard(uploads: List<UploadStatus>, onClearFailed: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.CloudUpload, contentDescription = null)
+                Spacer(Modifier.width(10.dp))
+                Text("Uploading from this phone", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                if (uploads.any { it.state == WorkInfo.State.FAILED }) {
+                    TextButton(onClick = onClearFailed) { Text("Clear") }
+                }
+            }
+            uploads.forEach { upload ->
+                Spacer(Modifier.height(10.dp))
+                Text(upload.title, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium)
+                val label = when (upload.state) {
+                    WorkInfo.State.RUNNING -> "${(upload.progress * 100).toInt()}%"
+                    WorkInfo.State.FAILED -> "Failed"
+                    else -> "Waiting for connection…"
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (upload.state == WorkInfo.State.RUNNING) {
+                        LinearProgressIndicator(
+                            progress = { upload.progress },
+                            modifier = Modifier.weight(1f),
+                        )
+                    } else {
+                        Spacer(Modifier.weight(1f))
+                    }
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        label,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (upload.state == WorkInfo.State.FAILED) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ErrorBanner(message: String) {
+    Text(
+        message,
+        color = MaterialTheme.colorScheme.onErrorContainer,
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.errorContainer)
+            .padding(12.dp),
+    )
+}
+
+@Composable
+private fun ServerDialog(
+    server: ServerState,
+    connectState: ConnectState,
+    actions: LibraryActions,
+    onDismiss: () -> Unit,
+) {
+    var address by rememberSaveable { mutableStateOf(server.url.orEmpty()) }
+    var password by rememberSaveable { mutableStateOf("") }
+    val working = connectState == ConnectState.Working
+
+    if (server.connected) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            icon = { Icon(Icons.Filled.Dns, contentDescription = null) },
+            title = { Text("Your server") },
+            text = {
+                Column {
+                    Text("Connected to", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(server.url.orEmpty(), style = MaterialTheme.typography.bodyLarge)
+                    if (server.url?.startsWith("http://") == true) {
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            "This connection isn't encrypted. Give your server a domain to switch to HTTPS.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } },
+            dismissButton = {
+                TextButton(onClick = {
+                    actions.disconnect()
+                    onDismiss()
+                }) { Text("Disconnect", color = MaterialTheme.colorScheme.error) }
+            },
+        )
+        return
+    }
+
+    AlertDialog(
+        onDismissRequest = { if (!working) onDismiss() },
+        icon = { Icon(Icons.Filled.Dns, contentDescription = null) },
+        title = { Text("Connect your server") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = address,
+                    onValueChange = { address = it },
+                    label = { Text("Server address") },
+                    placeholder = { Text("videos.example.com") },
+                    supportingText = { Text("Your domain, or http://IP:8080 without one") },
+                    singleLine = true,
+                    enabled = !working,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
+                )
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    singleLine = true,
+                    enabled = !working,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Go),
+                    keyboardActions = KeyboardActions(onGo = {
+                        if (address.isNotBlank() && password.isNotBlank()) actions.connect(address, password)
+                    }),
+                )
+                when (connectState) {
+                    is ConnectState.Failed -> Text(
+                        connectState.message,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    ConnectState.Working -> Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(10.dp))
+                        Text("Connecting…", style = MaterialTheme.typography.bodyMedium)
+                    }
+                    ConnectState.Idle -> Unit
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { actions.connect(address, password) },
+                enabled = !working && address.isNotBlank() && password.isNotBlank(),
+            ) { Text("Connect") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss, enabled = !working) { Text("Cancel") } },
+    )
+}
+
+// endregion
+
+// region Shared building blocks
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -177,15 +575,16 @@ private fun LibraryTopBar(
     searching: Boolean,
     hasPermission: Boolean,
     onSearchingChange: (Boolean) -> Unit,
-    onQueryChange: (String) -> Unit,
-    onSortChange: (SortOrder) -> Unit,
-    onToggleGrid: () -> Unit,
-    onOpenFile: () -> Unit,
+    actions: LibraryActions,
     onOpenStream: () -> Unit,
-    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
+    onOpenServer: () -> Unit,
+    scrollBehavior: TopAppBarScrollBehavior,
 ) {
     var sortMenu by remember { mutableStateOf(false) }
     var moreMenu by remember { mutableStateOf(false) }
+    val showListTools = if (state.tab == LibraryTab.PHONE) hasPermission else state.server.connected
+    val count = if (state.tab == LibraryTab.PHONE) state.videos.size else state.server.videos.size
+    val showCount = if (state.tab == LibraryTab.PHONE) hasPermission && !state.loading else state.server.loaded
 
     TopAppBar(
         scrollBehavior = scrollBehavior,
@@ -198,13 +597,13 @@ private fun LibraryTopBar(
         },
         title = {
             if (searching) {
-                SearchField(state.query, onQueryChange)
+                SearchField(state.query, actions::setQuery)
             } else {
                 Column {
                     Text("Videos", fontWeight = FontWeight.SemiBold)
-                    if (hasPermission && !state.loading) {
+                    if (showCount) {
                         Text(
-                            "${state.videos.size} videos",
+                            "$count videos",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -213,13 +612,13 @@ private fun LibraryTopBar(
             }
         },
         actions = {
-            if (hasPermission && !searching) {
+            if (showListTools && !searching) {
                 IconButton(onClick = { onSearchingChange(true) }) {
                     Icon(Icons.Filled.Search, contentDescription = "Search")
                 }
             }
-            if (hasPermission) {
-                IconButton(onClick = onToggleGrid) {
+            if (showListTools) {
+                IconButton(onClick = actions::toggleGrid) {
                     Icon(
                         if (state.grid) Icons.AutoMirrored.Filled.ViewList else Icons.Filled.GridView,
                         contentDescription = if (state.grid) "List view" else "Grid view",
@@ -238,7 +637,7 @@ private fun LibraryTopBar(
                                 },
                                 onClick = {
                                     sortMenu = false
-                                    onSortChange(order)
+                                    actions.setSort(order)
                                 },
                             )
                         }
@@ -251,11 +650,19 @@ private fun LibraryTopBar(
                 }
                 DropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
                     DropdownMenuItem(
+                        text = { Text(if (state.server.connected) "Your server" else "Connect server…") },
+                        leadingIcon = { Icon(Icons.Filled.Dns, contentDescription = null) },
+                        onClick = {
+                            moreMenu = false
+                            onOpenServer()
+                        },
+                    )
+                    DropdownMenuItem(
                         text = { Text("Open file…") },
                         leadingIcon = { Icon(Icons.Filled.FolderOpen, contentDescription = null) },
                         onClick = {
                             moreMenu = false
-                            onOpenFile()
+                            actions.openFile()
                         },
                     )
                     DropdownMenuItem(
@@ -327,80 +734,46 @@ private fun FolderChips(state: LibraryState, onFolderSelect: (String?) -> Unit) 
 }
 
 @Composable
-private fun VideoGrid(
-    videos: List<VideoItem>,
-    state: LibraryState,
-    onOpenVideo: (List<VideoItem>, Int) -> Unit,
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 168.dp),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        items(videos, key = { it.id }) { video ->
-            Column(
-                Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .clickable { onOpenVideo(videos, videos.indexOf(video)) }
-            ) {
-                Thumbnail(video, state.progressOf(video), Modifier.fillMaxWidth())
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    video.title,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 2.dp),
-                )
-                Text(
-                    subtitle(video),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 2.dp, vertical = 2.dp),
-                )
-            }
-        }
-    }
+private fun SectionTitle(text: String) {
+    Text(
+        text,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+    )
 }
 
 @Composable
-private fun VideoList(
-    videos: List<VideoItem>,
-    state: LibraryState,
-    onOpenVideo: (List<VideoItem>, Int) -> Unit,
-) {
-    LazyColumn(
-        contentPadding = PaddingValues(vertical = 8.dp),
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        items(videos, key = { it.id }) { video ->
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clickable { onOpenVideo(videos, videos.indexOf(video)) }
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Thumbnail(video, state.progressOf(video), Modifier.width(136.dp))
-                Spacer(Modifier.width(14.dp))
-                Column(Modifier.weight(1f)) {
+private fun ContinueRow(cards: List<CardModel>, onClick: (Int) -> Unit) {
+    Column {
+        SectionTitle("Continue watching")
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            itemsIndexed(cards, key = { _, c -> c.key }) { index, card ->
+                Column(
+                    Modifier
+                        .width(220.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .clickable { onClick(index) }
+                ) {
+                    Thumbnail(card, Modifier.fillMaxWidth())
+                    Spacer(Modifier.height(8.dp))
                     Text(
-                        video.title,
-                        style = MaterialTheme.typography.bodyLarge,
-                        maxLines = 2,
+                        card.title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(horizontal = 2.dp),
                     )
-                    Spacer(Modifier.height(4.dp))
+                    val left = (card.durationMs * (1f - card.progress)).toLong()
                     Text(
-                        subtitle(video),
+                        if (card.durationMs > 0) "${formatDuration(left)} left" else "In progress",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
+                        modifier = Modifier.padding(horizontal = 2.dp, vertical = 2.dp),
                     )
                 }
             }
@@ -408,8 +781,172 @@ private fun VideoList(
     }
 }
 
+/** Grid or list of video cards with an optional header (chips, continue watching…) on top. */
 @Composable
-private fun Thumbnail(video: VideoItem, progress: Float, modifier: Modifier = Modifier) {
+private fun VideoCollection(
+    cards: List<CardModel>,
+    grid: Boolean,
+    onClick: (Int) -> Unit,
+    actionsFor: (Int) -> List<CardAction>,
+    header: @Composable () -> Unit,
+) {
+    if (grid) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 168.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            item(key = "header", span = { GridItemSpan(maxLineSpan) }) {
+                // The header is full width; undo the grid's side padding for edge-to-edge rows.
+                Box(Modifier.padding(top = 4.dp)) { Box(Modifier.layoutEdgeToEdge()) { header() } }
+            }
+            itemsIndexed(cards, key = { _, c -> c.key }) { index, card ->
+                GridCard(card, onClick = { onClick(index) }, actions = { actionsFor(index) })
+            }
+        }
+    } else {
+        LazyColumn(
+            contentPadding = PaddingValues(bottom = 24.dp),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            item(key = "header") { header() }
+            itemsIndexed(cards, key = { _, c -> c.key }) { index, card ->
+                ListCard(card, onClick = { onClick(index) }, actions = { actionsFor(index) })
+            }
+        }
+    }
+}
+
+/** Lets a full-span grid header reach the screen edges despite the grid's 16dp content padding. */
+private fun Modifier.layoutEdgeToEdge(): Modifier = this.then(
+    Modifier.layout { measurable, constraints ->
+        val extra = 32.dp.roundToPx()
+        val placeable = measurable.measure(
+            constraints.copy(
+                minWidth = constraints.minWidth + extra,
+                maxWidth = constraints.maxWidth + extra,
+            )
+        )
+        layout(placeable.width - extra, placeable.height) {
+            placeable.place(-extra / 2, 0)
+        }
+    }
+)
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun GridCard(card: CardModel, onClick: () -> Unit, actions: () -> List<CardAction>) {
+    var menu by remember { mutableStateOf(false) }
+    Column(
+        Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .combinedClickable(onClick = onClick, onLongClick = { menu = true })
+    ) {
+        Thumbnail(card, Modifier.fillMaxWidth())
+        Row(verticalAlignment = Alignment.Top) {
+            Column(
+                Modifier
+                    .weight(1f)
+                    .padding(start = 2.dp, top = 8.dp)
+            ) {
+                Text(
+                    card.title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    card.subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(vertical = 2.dp),
+                )
+            }
+            CardMenu(menu, onOpen = { menu = true }, onClose = { menu = false }, actions = actions)
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ListCard(card: CardModel, onClick: () -> Unit, actions: () -> List<CardAction>) {
+    var menu by remember { mutableStateOf(false) }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = { menu = true })
+            .padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Thumbnail(card, Modifier.width(136.dp))
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Text(card.title, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(4.dp))
+            Text(
+                card.subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+        CardMenu(menu, onOpen = { menu = true }, onClose = { menu = false }, actions = actions)
+    }
+}
+
+@Composable
+private fun CardMenu(open: Boolean, onOpen: () -> Unit, onClose: () -> Unit, actions: () -> List<CardAction>) {
+    val items = if (open) actions() else emptyList()
+    Box {
+        IconButton(onClick = onOpen) {
+            Icon(
+                Icons.Filled.MoreVert,
+                contentDescription = "Options",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        DropdownMenu(expanded = open, onDismissRequest = onClose) {
+            if (items.isEmpty()) {
+                DropdownMenuItem(
+                    text = { Text("Connect a server to upload", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    onClick = onClose,
+                    enabled = false,
+                )
+            }
+            items.forEach { action ->
+                val color = if (action.danger) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+                DropdownMenuItem(
+                    text = { Text(action.label, color = color) },
+                    leadingIcon = { Icon(action.icon, contentDescription = null, tint = color) },
+                    onClick = {
+                        onClose()
+                        action.onClick()
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun Thumbnail(card: CardModel, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val model = remember(card.thumb) {
+        when (val t = card.thumb) {
+            is ServerThumb -> ImageRequest.Builder(context)
+                .data(t.url)
+                .apply { t.auth?.let { addHeader("Authorization", it) } }
+                .memoryCacheKey(t.url)
+                .diskCacheKey(t.url)
+                .build()
+            else -> t
+        }
+    }
     Box(
         modifier
             .aspectRatio(16f / 9f)
@@ -424,28 +961,19 @@ private fun Thumbnail(video: VideoItem, progress: Float, modifier: Modifier = Mo
                 .align(Alignment.Center)
                 .size(28.dp),
         )
-        AsyncImage(
-            model = video.thumbnail,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize(),
-        )
-        if (video.durationMs > 0) {
-            Text(
-                formatDuration(video.durationMs),
-                color = Color.White,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(6.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(Color.Black.copy(alpha = 0.65f))
-                    .padding(horizontal = 5.dp, vertical = 1.dp),
+        if (model != null) {
+            AsyncImage(
+                model = model,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
             )
         }
-        AnimatedVisibility(progress > 0f, modifier = Modifier.align(Alignment.BottomCenter)) {
+        card.badge?.let { Badge(it, Modifier.align(Alignment.BottomStart)) }
+        if (card.durationMs > 0) Badge(formatDuration(card.durationMs), Modifier.align(Alignment.BottomEnd))
+        AnimatedVisibility(card.progress > 0f, modifier = Modifier.align(Alignment.BottomCenter)) {
             LinearProgressIndicator(
-                progress = { progress },
+                progress = { card.progress },
                 color = MaterialTheme.colorScheme.primary,
                 trackColor = Color.White.copy(alpha = 0.35f),
                 strokeCap = StrokeCap.Butt,
@@ -459,14 +987,39 @@ private fun Thumbnail(video: VideoItem, progress: Float, modifier: Modifier = Mo
     }
 }
 
-private fun subtitle(video: VideoItem): String = listOfNotNull(
-    resolutionLabel(video.width, video.height),
-    formatSize(video.sizeBytes).ifEmpty { null },
-    video.folder,
-).joinToString(" · ")
+@Composable
+private fun Badge(text: String, modifier: Modifier) {
+    Text(
+        text,
+        color = Color.White,
+        style = MaterialTheme.typography.labelSmall,
+        modifier = modifier
+            .padding(6.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(Color.Black.copy(alpha = 0.65f))
+            .padding(horizontal = 5.dp, vertical = 1.dp),
+    )
+}
 
 @Composable
 private fun PermissionPrompt(onRequestPermission: () -> Unit, onOpenFile: () -> Unit) {
+    MessageState(
+        icon = Icons.Outlined.VideoLibrary,
+        title = "See all your videos",
+        message = "Allow access to videos on this device to browse and play them.",
+        primary = "Allow access" to onRequestPermission,
+        secondary = "Open a single file instead" to onOpenFile,
+    )
+}
+
+@Composable
+private fun MessageState(
+    icon: ImageVector,
+    title: String,
+    message: String,
+    primary: Pair<String, () -> Unit>,
+    secondary: Pair<String, () -> Unit>? = null,
+) {
     Column(
         Modifier
             .fillMaxSize()
@@ -474,46 +1027,36 @@ private fun PermissionPrompt(onRequestPermission: () -> Unit, onOpenFile: () -> 
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            Icons.Outlined.VideoLibrary,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.size(72.dp),
-        )
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(72.dp))
         Spacer(Modifier.height(24.dp))
-        Text(
-            "See all your videos",
-            style = MaterialTheme.typography.headlineSmall,
-            textAlign = TextAlign.Center,
-        )
+        Text(title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Allow access to videos on this device to browse and play them.",
+            message,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onRequestPermission) { Text("Allow access") }
-        TextButton(onClick = onOpenFile) { Text("Open a single file instead") }
+        Button(onClick = primary.second) { Text(primary.first) }
+        secondary?.let { (label, action) ->
+            Spacer(Modifier.height(4.dp))
+            OutlinedButton(onClick = action) { Text(label) }
+        }
     }
 }
 
 @Composable
 private fun EmptyState(message: String) {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .padding(32.dp),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    }
+    Text(
+        message,
+        style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp, vertical = 64.dp),
+    )
 }
 
 @Composable
@@ -542,3 +1085,5 @@ private fun StreamDialog(onDismiss: () -> Unit, onPlay: (String) -> Unit) {
         },
     )
 }
+
+// endregion

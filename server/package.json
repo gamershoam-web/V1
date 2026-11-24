@@ -1,0 +1,13 @@
+{
+  "name": "v1-player-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Self-hosted video server and website for V1 Player",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

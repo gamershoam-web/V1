@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#121118">
+  <title>V1 Player</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <!-- Sign in -->
+  <div id="login" class="login" hidden>
+    <form id="login-form" class="login-card">
+      <img src="/icon.svg" alt="" class="login-logo" width="56" height="56">
+      <h1>V1 Player</h1>
+      <p class="muted">Sign in to watch and upload your videos.</p>
+      <input id="password" type="password" autocomplete="current-password" placeholder="Password" required>
+      <button type="submit" class="btn primary wide">Sign in</button>
+      <p id="login-error" class="error" role="alert"></p>
+    </form>
+  </div>
+
+  <div id="app" hidden>
+    <header class="topbar">
+      <a href="#/" class="brand"><img src="/icon.svg" alt="" width="28" height="28"><span>V1 Player</span></a>
+      <label class="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9"/></svg>
+        <input id="search" type="search" placeholder="Search videos" autocomplete="off">
+      </label>
+      <button id="upload-btn" class="btn primary">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14v-2H5zm0-10h4v6h6v-6h4l-7-7z"/></svg>
+        <span>Upload</span>
+      </button>
+      <button id="logout-btn" class="icon-btn" title="Sign out" aria-label="Sign out">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m17 7-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8v-2H4z"/></svg>
+      </button>
+    </header>
+
+    <!-- Library -->
+    <main id="library" class="page">
+      <section id="continue" hidden>
+        <h2>Continue watching</h2>
+        <div id="continue-row" class="row"></div>
+      </section>
+      <section>
+        <div class="section-head">
+          <h2>All videos <span id="count" class="muted"></span></h2>
+          <select id="sort" aria-label="Sort">
+            <option value="date">Newest first</option>
+            <option value="name">Name</option>
+            <option value="length">Longest first</option>
+            <option value="size">Largest first</option>
+          </select>
+        </div>
+        <div id="grid" class="grid"></div>
+        <div id="empty" class="empty" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 4l2 4h-3l-2-4h-2l2 4h-3l-2-4H8l2 4H7L5 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V4z"/></svg>
+          <h3 id="empty-title">No videos yet</h3>
+          <p class="muted" id="empty-text">Drag videos here or press Upload. You can also upload from the Android app.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Watch -->
+    <main id="watch" class="page watch" hidden>
+      <div class="watch-main">
+        <div class="player">
+          <video id="video" controls playsinline preload="metadata"></video>
+          <div id="resume-toast" class="toast" hidden>
+            <span>Resumed from <b id="resume-time"></b></span>
+            <button id="start-over" class="link-btn">Start over</button>
+          </div>
+          <div id="next-overlay" class="next-overlay" hidden>
+            <p class="muted">Up next</p>
+            <h3 id="next-title"></h3>
+            <div class="next-actions">
+              <button id="next-cancel" class="btn">Cancel</button>
+              <button id="next-play" class="btn primary">Play now <span id="next-count"></span></button>
+            </div>
+          </div>
+        </div>
+        <p id="web-warning" class="warning" hidden>
+          This file's format may not play in some browsers. If it doesn't, download it or watch it in the V1 Player Android app.
+        </p>
+        <div class="watch-info">
+          <h1 id="watch-title"></h1>
+          <p id="watch-meta" class="muted"></p>
+          <div class="watch-actions">
+            <a id="download-link" class="btn" download>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14v-2H5zM19 9h-4V3H9v6H5l7 7z"/></svg> Download
+            </a>
+            <button id="rename-btn" class="btn">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75z"/></svg> Rename
+            </button>
+            <button id="delete-btn" class="btn danger">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6zM19 4h-3.5l-1-1h-5l-1 1H5v2h14z"/></svg> Delete
+            </button>
+          </div>
+        </div>
+      </div>
+      <aside class="up-next">
+        <h2>Up next</h2>
+        <div id="up-next"></div>
+      </aside>
+    </main>
+
+    <!-- Uploads -->
+    <div id="uploads" class="uploads" hidden>
+      <div class="uploads-head">
+        <strong id="uploads-title">Uploading</strong>
+        <button id="uploads-close" class="icon-btn small" aria-label="Hide">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <ul id="uploads-list"></ul>
+    </div>
+
+    <div id="drop" class="drop" hidden><div>Drop videos to upload</div></div>
+    <input id="file-input" type="file" accept="video/*,.mkv,.avi,.mov,.m4v,.ts,.webm" multiple hidden>
+    <div id="menu" class="menu" hidden role="menu"></div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -21,6 +21,9 @@ jobs:
       - name: Build debug and release APKs
         run: ./gradlew assembleDebug assembleRelease lintDebug
 
+      - name: Check the server code
+        run: node --check server/server.js && node --check server/public/app.js
+
       - uses: actions/upload-artifact@v4
         with:
           name: v1-player-apk

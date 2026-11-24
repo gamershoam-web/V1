@@ -6,6 +6,8 @@ data class VideoItem(
     val id: Long,
     val uri: Uri,
     val title: String,
+    /** File name including extension, e.g. "Holiday.mp4". */
+    val fileName: String,
     val durationMs: Long,
     val sizeBytes: Long,
     val dateAddedSec: Long,
@@ -16,5 +18,15 @@ data class VideoItem(
     val thumbnail get() = VideoThumbnail(uri, id)
 }
 
-/** Lightweight description of something the player should play. */
-data class PlayItem(val uri: Uri, val title: String)
+/**
+ * Lightweight description of something the player should play.
+ * [serverId] is set for videos streamed from your V1 server; [resumeMs] overrides the locally saved position.
+ */
+data class PlayItem(
+    val uri: Uri,
+    val title: String,
+    val serverId: String? = null,
+    val resumeMs: Long? = null,
+) {
+    val mediaId: String get() = if (serverId != null) "server:$serverId" else uri.toString()
+}

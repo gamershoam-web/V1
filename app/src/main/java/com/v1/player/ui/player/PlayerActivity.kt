@@ -30,11 +30,18 @@ import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.common.VideoSize
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.ResolvingDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
 import com.v1.player.data.PlayItem
 import com.v1.player.data.PlaybackStore
 import com.v1.player.data.Playlist
+import com.v1.player.data.ServerSettings
+import com.v1.player.data.ServerSync
 import com.v1.player.data.VideoRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -50,6 +57,9 @@ class PlayerActivity : ComponentActivity(), PlayerActions {
     private lateinit var audioManager: AudioManager
 
     private val inPip = mutableStateOf(false)
+    private val resumeNotice = mutableStateOf<ResumeNotice?>(null)
+    /** Resume positions handed over with the playlist (e.g. from the server), by media id. */
+    private val resumeOverrides = mutableMapOf<String, Long>()
     private var lastMediaId: String? = null
     /** True once the user picked an orientation by hand; stops auto-rotation. */
     private var orientationLocked = false
@@ -72,6 +82,7 @@ class PlayerActivity : ComponentActivity(), PlayerActions {
         hideSystemUi()
 
         player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(DefaultMediaSourceFactory(serverAwareDataSource()))
             .setSeekBackIncrementMs(SEEK_STEP_MS)
             .setSeekForwardIncrementMs(SEEK_STEP_MS)
             .setAudioAttributes(
@@ -92,7 +103,12 @@ class PlayerActivity : ComponentActivity(), PlayerActions {
         if (!load(intent)) return
 
         setContent {
-            PlayerScreen(player = player, actions = this, inPip = inPip.value)
+            PlayerScreen(
+                player = player,
+                actions = this,
+                inPip = inPip.value,
+                resumeNotice = resumeNotice.value,
+            )
         }
 
         // Save progress regularly so it survives crashes and playlist hops.
@@ -122,19 +138,49 @@ class PlayerActivity : ComponentActivity(), PlayerActions {
         val (items, start) = Playlist.take(uri)
             ?: (listOf(PlayItem(uri, VideoRepository.displayName(this, uri))) to 0)
 
-        val mediaItems = items.map { it.toMediaItem() }
-        val startPosition = store.position(uri.toString())
-        player.setMediaItems(mediaItems, start, startPosition)
+        resumeOverrides.clear()
+        items.forEach { item -> item.resumeMs?.let { resumeOverrides[item.mediaId] = it } }
+        val first = items[start]
+        val startPosition = resumePositionFor(first.mediaId)
+        player.setMediaItems(items.map { it.toMediaItem() }, start, startPosition)
         player.prepare()
         player.playWhenReady = true
-        lastMediaId = uri.toString()
+        lastMediaId = first.mediaId
+        announceResume(startPosition)
         return true
+    }
+
+    /** Server-provided position if we have one (it may come from another device), else the local one. */
+    private fun resumePositionFor(mediaId: String): Long =
+        resumeOverrides[mediaId] ?: store.position(mediaId)
+
+    private fun announceResume(positionMs: Long) {
+        resumeNotice.value = if (positionMs > 0) ResumeNotice(positionMs) else null
+    }
+
+    /** Adds the server's sign-in token to requests for the server only, never to other hosts. */
+    private fun serverAwareDataSource(): DataSource.Factory {
+        val settings = ServerSettings(this)
+        val server = settings.url?.let(Uri::parse)
+        val auth = if (settings.connected) settings.api().authHeader else null
+        val http = DefaultHttpDataSource.Factory()
+            .setAllowCrossProtocolRedirects(true)
+            .setUserAgent("V1Player")
+        val withAuth = ResolvingDataSource.Factory(http) { spec ->
+            val u = spec.uri
+            if (auth != null && server != null && u.scheme == server.scheme && u.host == server.host && u.port == server.port) {
+                spec.withAdditionalHeaders(mapOf("Authorization" to auth))
+            } else {
+                spec
+            }
+        }
+        return DefaultDataSource.Factory(this, withAuth)
     }
 
     private fun PlayItem.toMediaItem(): MediaItem {
         val builder = MediaItem.Builder()
             .setUri(uri)
-            .setMediaId(uri.toString())
+            .setMediaId(mediaId)
             .setMediaMetadata(MediaMetadata.Builder().setTitle(title).build())
         val path = uri.lastPathSegment.orEmpty()
         if (path.endsWith(".m3u8", ignoreCase = true)) {
@@ -147,20 +193,21 @@ class PlayerActivity : ComponentActivity(), PlayerActions {
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
             val previous = lastMediaId
             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && previous != null) {
-                store.clear(previous) // watched to the end
+                markFinished(previous) // watched to the end
             }
             lastMediaId = mediaItem?.mediaId
             if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_SEEK ||
                 reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO
             ) {
-                val resume = mediaItem?.mediaId?.let(store::position) ?: 0L
+                val resume = mediaItem?.mediaId?.let(::resumePositionFor) ?: 0L
                 if (resume > 0) player.seekTo(resume)
+                announceResume(resume)
             }
         }
 
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == Player.STATE_ENDED) {
-                player.currentMediaItem?.mediaId?.let(store::clear)
+                player.currentMediaItem?.mediaId?.let(::markFinished)
             }
         }
 
@@ -243,6 +290,13 @@ class PlayerActivity : ComponentActivity(), PlayerActions {
         }
     }
 
+    override fun startOver() {
+        resumeNotice.value = null
+        player.seekTo(0)
+        player.play()
+        saveProgress()
+    }
+
     override fun pickSubtitleFile() {
         runCatching { subtitlePicker.launch(arrayOf("*/*")) }
     }
@@ -291,12 +345,24 @@ class PlayerActivity : ComponentActivity(), PlayerActions {
         if (!::player.isInitialized) return
         val id = player.currentMediaItem?.mediaId ?: return
         if (player.playbackState == Player.STATE_ENDED) {
-            store.clear(id)
+            markFinished(id)
             return
         }
         val duration = player.duration.takeIf { it != C.TIME_UNSET } ?: 0L
-        store.save(id, player.currentPosition, duration)
+        val position = player.currentPosition
+        store.save(id, position, duration)
+        resumeOverrides.remove(id) // our own, newer position now lives in the store
+        serverIdOf(id)?.let { ServerSync.pushProgress(this, it, position, duration) }
     }
+
+    private fun markFinished(mediaId: String) {
+        store.clear(mediaId)
+        resumeOverrides.remove(mediaId)
+        val duration = player.duration.takeIf { it != C.TIME_UNSET } ?: 0L
+        serverIdOf(mediaId)?.let { ServerSync.pushProgress(this, it, duration, duration) }
+    }
+
+    private fun serverIdOf(mediaId: String): String? = mediaId.removePrefix("server:").takeIf { mediaId.startsWith("server:") }
 
     private fun isInPipMode() = isInPictureInPictureMode
 
@@ -387,4 +453,8 @@ interface PlayerActions {
     fun getVolume(): Float
     fun setVolume(value: Float)
     fun pickSubtitleFile()
+    fun startOver()
 }
+
+/** Shown briefly when a video picks up where you left off. */
+data class ResumeNotice(val positionMs: Long, val stamp: Long = System.nanoTime())

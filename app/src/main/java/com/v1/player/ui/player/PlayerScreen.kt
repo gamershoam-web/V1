@@ -137,7 +137,7 @@ private val PlayerColors = darkColorScheme(
 
 @OptIn(UnstableApi::class)
 @Composable
-fun PlayerScreen(player: ExoPlayer, actions: PlayerActions, inPip: Boolean) {
+fun PlayerScreen(player: ExoPlayer, actions: PlayerActions, inPip: Boolean, resumeNotice: ResumeNotice?) {
     MaterialTheme(colorScheme = PlayerColors) {
         val ui = rememberPlayerUiState(player)
         var controlsVisible by remember { mutableStateOf(true) }
@@ -149,6 +149,7 @@ fun PlayerScreen(player: ExoPlayer, actions: PlayerActions, inPip: Boolean) {
         var flash by remember { mutableStateOf<String?>(null) }
         var dragFeedback by remember { mutableStateOf<DragFeedback?>(null) }
         var seekBurst by remember { mutableStateOf<SeekBurst?>(null) }
+        var showResume by remember { mutableStateOf(false) }
 
         BackHandler(enabled = tracksOpen) { tracksOpen = false }
 
@@ -166,6 +167,13 @@ fun PlayerScreen(player: ExoPlayer, actions: PlayerActions, inPip: Boolean) {
             if (flash != null) {
                 delay(900)
                 flash = null
+            }
+        }
+        LaunchedEffect(resumeNotice) {
+            showResume = resumeNotice != null
+            if (resumeNotice != null) {
+                delay(7_000)
+                showResume = false
             }
         }
         LaunchedEffect(seekBurst) {
@@ -370,6 +378,36 @@ fun PlayerScreen(player: ExoPlayer, actions: PlayerActions, inPip: Boolean) {
                 }
 
                 DragIndicator(dragFeedback)
+
+                AnimatedVisibility(
+                    visible = showResume && resumeNotice != null && ui.error == null,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .windowInsetsPadding(WindowInsets.safeDrawing)
+                        .padding(bottom = 132.dp),
+                ) {
+                    Row(
+                        Modifier
+                            .clip(RoundedCornerShape(50))
+                            .background(Color(0xE6141319))
+                            .padding(start = 18.dp, end = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            "Resumed from ${formatDuration(resumeNotice?.positionMs ?: 0L)}",
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        TextButton(onClick = {
+                            showResume = false
+                            actions.startOver()
+                        }) {
+                            Text("Start over", fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
 
                 flash?.let { message ->
                     Text(

@@ -1,0 +1,37 @@
+# Settings come from the .env file next to this one (install.sh writes it for you):
+#   V1_PASSWORD       password for the website and the app
+#   DOMAIN            e.g. videos.example.com (enables automatic HTTPS through Caddy)
+#   COMPOSE_PROFILES  "https" when DOMAIN is set, empty otherwise
+#   BIND_ADDR         127.0.0.1 behind Caddy, 0.0.0.0 to expose port 8080 directly
+
+services:
+  v1player:
+    build: .
+    restart: unless-stopped
+    environment:
+      V1_PASSWORD: ${V1_PASSWORD:?Set V1_PASSWORD in .env}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+    volumes:
+      - ./data:/data
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:8080:8080"
+
+  caddy:
+    image: caddy:2
+    profiles: ["https"]
+    restart: unless-stopped
+    depends_on: [v1player]
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:
