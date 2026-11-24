@@ -14,80 +14,88 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-/** Colours for the liquid glass look: the backdrop and the frosted panels that float on it. */
+/** Colours for the floating glass chrome (top bar, tab switcher) and the ambient backdrop. */
 @Immutable
 data class GlassColors(
     val dark: Boolean,
     /** Solid colour under everything. */
     val base: Color,
-    /** Soft glows drifting in the backdrop. */
-    val glows: List<Color>,
-    /** Panel fill, top to bottom (light catches the top more). */
+    /** How strongly the blurred featured thumbnail shows through. */
+    val ambientAlpha: Float,
+    /** Panel fill, top to bottom. */
     val fillTop: Color,
     val fillBottom: Color,
-    /** Rim highlight: bright where light hits, dim on the far side. */
+    /** Hairline edge. */
     val rimBright: Color,
     val rimDim: Color,
-    /** Tint laid over the blurred backdrop for bars that float above content. */
+    /** Tint laid over the blurred content behind floating bars. */
     val blurTint: Color,
 )
 
 private val DarkGlass = GlassColors(
     dark = true,
-    base = Color(0xFF0B0A14),
-    glows = listOf(Color(0xCC6D4BFF), Color(0xB32C8CFF), Color(0x99E24BC5), Color(0x8022C7E6)),
-    fillTop = Color(0x2EFFFFFF),
-    fillBottom = Color(0x12FFFFFF),
-    rimBright = Color(0x73FFFFFF),
-    rimDim = Color(0x14FFFFFF),
-    blurTint = Color(0x8C14121F),
+    base = Color(0xFF0E0E10),
+    ambientAlpha = 0.75f,
+    fillTop = Color(0x1AFFFFFF),
+    fillBottom = Color(0x0AFFFFFF),
+    rimBright = Color(0x26FFFFFF),
+    rimDim = Color(0x0FFFFFFF),
+    blurTint = Color(0xA60E0E10),
 )
 
 private val LightGlass = GlassColors(
     dark = false,
-    base = Color(0xFFF1EFF9),
-    glows = listOf(Color(0x997B5CFF), Color(0x804F9BFF), Color(0x80FF7AD5), Color(0x6622C7E6)),
+    base = Color(0xFFF6F5F2),
+    ambientAlpha = 0.55f,
     fillTop = Color(0xB3FFFFFF),
-    fillBottom = Color(0x73FFFFFF),
-    rimBright = Color(0xF2FFFFFF),
-    rimDim = Color(0x4DFFFFFF),
-    blurTint = Color(0x99F7F5FF),
+    fillBottom = Color(0x80FFFFFF),
+    rimBright = Color(0x1F000000),
+    rimDim = Color(0x0D000000),
+    blurTint = Color(0xB3F6F5F2),
 )
 
 val LocalGlass = staticCompositionLocalOf { DarkGlass }
 
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF5B45F0),
+    primary = Color(0xFFB86B00),
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFE3DEFF),
-    onPrimaryContainer = Color(0xFF1A0B6B),
-    secondaryContainer = Color(0xFFE6E1FF),
-    onSecondaryContainer = Color(0xFF1F1747),
-    background = Color(0xFFF1EFF9),
-    surface = Color(0xFFF8F6FF),
-    surfaceVariant = Color(0xFFE5E1F2),
-    onSurfaceVariant = Color(0xFF5B5770),
-    surfaceContainer = Color(0xFFF3F0FC),
-    surfaceContainerHigh = Color(0xFFEDEAF8),
-    surfaceContainerHighest = Color(0xFFE7E3F4),
-    outlineVariant = Color(0xFFD3CEE4),
+    primaryContainer = Color(0xFFFFE2B8),
+    onPrimaryContainer = Color(0xFF2E1A00),
+    secondaryContainer = Color(0xFFEBEAE6),
+    onSecondaryContainer = Color(0xFF151517),
+    background = Color(0xFFF6F5F2),
+    onBackground = Color(0xFF151517),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF151517),
+    surfaceVariant = Color(0xFFEBEAE6),
+    onSurfaceVariant = Color(0xFF6B6A72),
+    surfaceContainer = Color(0xFFF1F0EC),
+    surfaceContainerHigh = Color(0xFFEBEAE6),
+    surfaceContainerHighest = Color(0xFFE4E3DF),
+    outlineVariant = Color(0xFFDAD9D4),
+    inverseSurface = Color(0xFF151517),
+    inverseOnSurface = Color.White,
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFFB0A4FF),
-    onPrimary = Color(0xFF1E0F7A),
-    primaryContainer = Color(0xFF3D2EB8),
-    onPrimaryContainer = Color(0xFFE3DEFF),
-    secondaryContainer = Color(0xFF2B2652),
-    onSecondaryContainer = Color(0xFFE3DEFF),
-    background = Color(0xFF0B0A14),
-    surface = Color(0xFF16141F),
-    surfaceVariant = Color(0xFF2A2738),
-    onSurfaceVariant = Color(0xFFBAB5CC),
-    surfaceContainer = Color(0xFF1C1A27),
-    surfaceContainerHigh = Color(0xFF23212F),
-    surfaceContainerHighest = Color(0xFF2B2938),
-    outlineVariant = Color(0xFF3A3649),
+    primary = Color(0xFFF5A524),
+    onPrimary = Color(0xFF1A1200),
+    primaryContainer = Color(0xFF3A2A0A),
+    onPrimaryContainer = Color(0xFFFFD99A),
+    secondaryContainer = Color(0xFF2A2A2F),
+    onSecondaryContainer = Color(0xFFF3F3F4),
+    background = Color(0xFF0E0E10),
+    onBackground = Color(0xFFF3F3F4),
+    surface = Color(0xFF18181B),
+    onSurface = Color(0xFFF3F3F4),
+    surfaceVariant = Color(0xFF26262A),
+    onSurfaceVariant = Color(0xFF9A9AA3),
+    surfaceContainer = Color(0xFF1C1C1F),
+    surfaceContainerHigh = Color(0xFF232327),
+    surfaceContainerHighest = Color(0xFF2A2A2F),
+    outlineVariant = Color(0xFF2E2E33),
+    inverseSurface = Color(0xFFF3F3F4),
+    inverseOnSurface = Color(0xFF111113),
 )
 
 private val LumenShapes = Shapes(

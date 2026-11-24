@@ -85,16 +85,21 @@ class MainActivity : ComponentActivity() {
                         override fun setSort(sort: SortOrder) = viewModel.setSort(sort)
                         override fun toggleGrid() = viewModel.toggleGrid()
 
-                        override fun openLocal(list: List<VideoItem>, index: Int) {
+                        override fun openLocal(list: List<VideoItem>, index: Int, fromStart: Boolean) {
+                            if (fromStart) viewModel.clearLocalProgress(list[index])
                             Playlist.set(list.map { PlayItem(it.uri, it.title) }, index)
                             play(list[index].uri)
                         }
 
-                        override fun openServer(list: List<ServerVideo>, index: Int) {
+                        override fun openServer(list: List<ServerVideo>, index: Int, fromStart: Boolean) {
                             val api = viewModel.serverApi() ?: return
+                            if (fromStart) viewModel.clearServerProgress(list[index])
                             // The server's position wins: it may have been watched on another device.
                             Playlist.set(
-                                list.map { PlayItem(api.streamUri(it.id), it.title, serverId = it.id, resumeMs = it.progressMs) },
+                                list.mapIndexed { i, v ->
+                                    val resume = if (fromStart && i == index) 0L else v.progressMs
+                                    PlayItem(api.streamUri(v.id), v.title, serverId = v.id, resumeMs = resume)
+                                },
                                 index,
                             )
                             play(api.streamUri(list[index].id))

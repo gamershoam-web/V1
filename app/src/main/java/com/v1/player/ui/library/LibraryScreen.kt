@@ -65,6 +65,7 @@ import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Smartphone
@@ -73,6 +74,7 @@ import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.VideoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -106,6 +108,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -123,12 +126,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.work.WorkInfo
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.v1.player.data.ServerVideo
 import com.v1.player.data.VideoItem
-import com.v1.player.ui.theme.GlassBackdrop
 import com.v1.player.ui.theme.LocalGlass
 import com.v1.player.ui.theme.glass
 import com.v1.player.ui.theme.pressScale
@@ -163,8 +166,8 @@ interface LibraryActions {
     fun selectFolder(folder: String?)
     fun setSort(sort: SortOrder)
     fun toggleGrid()
-    fun openLocal(list: List<VideoItem>, index: Int)
-    fun openServer(list: List<ServerVideo>, index: Int)
+    fun openLocal(list: List<VideoItem>, index: Int, fromStart: Boolean = false)
+    fun openServer(list: List<ServerVideo>, index: Int, fromStart: Boolean = false)
     fun openFile()
     fun openStream(url: String)
     fun uploadToServer(video: VideoItem)
@@ -178,8 +181,8 @@ interface LibraryActions {
     fun serverThumb(video: ServerVideo): ServerThumb?
 }
 
-private val CardShape = RoundedCornerShape(22.dp)
-private val ThumbShape = RoundedCornerShape(16.dp)
+private val CardShape = RoundedCornerShape(16.dp)
+private val ThumbShape = RoundedCornerShape(14.dp)
 private const val TAB_BAR_HEIGHT = 60
 
 @Composable
@@ -202,6 +205,11 @@ fun LibraryScreen(
         bottom = navBottom + TAB_BAR_HEIGHT.dp + 32.dp,
     )
 
+    val ambientThumb: Any? = when (state.tab) {
+        LibraryTab.PHONE -> if (hasPermission) heroLocal(state)?.thumbnail else null
+        LibraryTab.SERVER -> heroServer(state)?.takeIf { it.hasThumb }?.let { actions.serverThumb(it) }
+    }
+
     Box(Modifier.fillMaxSize()) {
         // Everything in here can be seen, blurred, through the glass bars on top.
         Box(
@@ -209,7 +217,7 @@ fun LibraryScreen(
                 .fillMaxSize()
                 .haze(hazeState)
         ) {
-            GlassBackdrop()
+            AmbientBackdrop(ambientThumb)
             AnimatedContent(
                 targetState = state.tab,
                 transitionSpec = {
@@ -245,7 +253,7 @@ fun LibraryScreen(
             onOpenServer = { showServerDialog = true },
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .glass(RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp), haze = hazeState)
+                .glass(RectangleShape, haze = hazeState)
                 .onSizeChanged { topBarHeight = with(density) { it.height.toDp() } },
         )
 
@@ -331,12 +339,12 @@ private fun GlassTabBar(
                 .offset { IntOffset(offset.roundToPx(), 0) }
                 .width(tabWidth)
                 .fillMaxHeight()
-                .glass(pill, tint = MaterialTheme.colorScheme.primary.copy(alpha = if (glass.dark) 0.32f else 0.18f))
+                .glass(pill, tint = MaterialTheme.colorScheme.onSurface.copy(alpha = if (glass.dark) 0.14f else 0.07f))
         )
         Row(Modifier.fillMaxSize()) {
             tabs.forEachIndexed { index, (label, icon) ->
                 val color by animateColorAsState(
-                    if (index == selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    if (index == selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                     label = "tabColor",
                 )
                 Row(
@@ -371,9 +379,15 @@ private fun PhoneContent(
         state.loading -> Box(Modifier.fillMaxSize()) { CircularProgressIndicator(Modifier.align(Alignment.Center)) }
         else -> RefreshBox(state.refreshing, actions::refresh, contentPadding) {
             val visible = state.visible
-            val continueList = if (state.query.isBlank()) state.continueLocal else emptyList()
+            val hero = if (state.query.isBlank()) heroLocal(state) else null
+            val continueList = if (state.query.isBlank()) state.continueLocal.filter { it.id != hero?.id } else emptyList()
             val cards = remember(visible, state.positions) { visible.map { it.toCard(state) } }
             val continueCards = remember(continueList, state.positions) { continueList.map { it.toCard(state) } }
+            val openHero: (Boolean) -> Unit = { fromStart ->
+                val h = hero!!
+                val i = visible.indexOfFirst { it.id == h.id }
+                if (i >= 0) actions.openLocal(visible, i, fromStart) else actions.openLocal(listOf(h), 0, fromStart)
+            }
 
             VideoCollection(
                 cards = cards,
@@ -383,11 +397,19 @@ private fun PhoneContent(
                 actionsFor = { index -> localActions(visible[index], state, actions) },
                 header = {
                     Column {
-                        if (state.folders.size > 1) FolderChips(state, actions::selectFolder)
+                        hero?.let { h ->
+                            HeroCard(
+                                card = h.toCard(state),
+                                resuming = state.progressOf(h) > 0f,
+                                onPlay = { openHero(false) },
+                                onStartOver = { openHero(true) },
+                            )
+                        }
                         if (continueCards.isNotEmpty()) {
                             ContinueRow(continueCards) { i -> actions.openLocal(continueList, i) }
-                            SectionTitle("All videos")
                         }
+                        if (hero != null) SectionTitle("All videos")
+                        if (state.folders.size > 1) FolderChips(state, actions::selectFolder)
                         if (visible.isEmpty()) {
                             EmptyState(
                                 if (state.query.isNotBlank()) "No videos match \"${state.query}\""
@@ -450,9 +472,15 @@ private fun ServerContent(
         )
         else -> RefreshBox(server.refreshing, actions::refresh, contentPadding) {
             val visible = state.visibleServer
-            val continueList = if (state.query.isBlank()) state.continueServer else emptyList()
+            val hero = if (state.query.isBlank()) heroServer(state) else null
+            val continueList = if (state.query.isBlank()) state.continueServer.filter { it.id != hero?.id } else emptyList()
             val cards = remember(visible) { visible.map { it.toCard(actions) } }
             val continueCards = remember(continueList) { continueList.map { it.toCard(actions) } }
+            val openHero: (Boolean) -> Unit = { fromStart ->
+                val h = hero!!
+                val i = visible.indexOfFirst { it.id == h.id }
+                if (i >= 0) actions.openServer(visible, i, fromStart) else actions.openServer(listOf(h), 0, fromStart)
+            }
 
             VideoCollection(
                 cards = cards,
@@ -472,10 +500,18 @@ private fun ServerContent(
                     Column {
                         if (server.error != null) ErrorBanner(server.error)
                         if (state.uploads.isNotEmpty()) UploadsCard(state.uploads, actions::clearFailedUploads)
+                        hero?.let { h ->
+                            HeroCard(
+                                card = h.toCard(actions),
+                                resuming = h.progressMs > 0,
+                                onPlay = { openHero(false) },
+                                onStartOver = { openHero(true) },
+                            )
+                        }
                         if (continueCards.isNotEmpty()) {
                             ContinueRow(continueCards) { i -> actions.openServer(continueList, i) }
-                            SectionTitle("All videos")
                         }
+                        if (hero != null) SectionTitle("All videos")
                         if (visible.isEmpty()) {
                             EmptyState(
                                 if (state.query.isNotBlank()) "No videos match \"${state.query}\""
@@ -519,7 +555,8 @@ private fun UploadsCard(uploads: List<UploadStatus>, onClearFailed: () -> Unit) 
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .glass(RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.92f))
             .padding(16.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -564,12 +601,13 @@ private fun UploadsCard(uploads: List<UploadStatus>, onClearFailed: () -> Unit) 
 private fun ErrorBanner(message: String) {
     Text(
         message,
-        color = MaterialTheme.colorScheme.error,
+        color = MaterialTheme.colorScheme.onErrorContainer,
         style = MaterialTheme.typography.bodyMedium,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .glass(RoundedCornerShape(18.dp), tint = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.55f))
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.9f))
             .padding(14.dp),
     )
 }
@@ -634,13 +672,13 @@ private fun ServerDialog(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Password") },
+                    label = { Text("Password (only if you set one)") },
                     singleLine = true,
                     enabled = !working,
                     visualTransformation = PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Go),
                     keyboardActions = KeyboardActions(onGo = {
-                        if (address.isNotBlank() && password.isNotBlank()) actions.connect(address, password)
+                        if (address.isNotBlank()) actions.connect(address, password)
                     }),
                 )
                 when (connectState) {
@@ -661,7 +699,7 @@ private fun ServerDialog(
         confirmButton = {
             TextButton(
                 onClick = { actions.connect(address, password) },
-                enabled = !working && address.isNotBlank() && password.isNotBlank(),
+                enabled = !working && address.isNotBlank(),
             ) { Text("Connect") }
         },
         dismissButton = { TextButton(onClick = onDismiss, enabled = !working) { Text("Cancel") } },
@@ -866,22 +904,20 @@ private fun FolderChips(state: LibraryState, onFolderSelect: (String?) -> Unit) 
 
 @Composable
 private fun GlassChip(text: String, selected: Boolean, onClick: () -> Unit) {
-    val glass = LocalGlass.current
-    val tint by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.primary.copy(alpha = if (glass.dark) 0.45f else 0.22f) else glass.fillTop,
+    val colors = MaterialTheme.colorScheme
+    val background by animateColorAsState(
+        if (selected) colors.onSurface else colors.surfaceVariant.copy(alpha = 0.7f),
         label = "chip",
     )
-    val textColor by animateColorAsState(
-        if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-        label = "chipText",
-    )
+    val textColor by animateColorAsState(if (selected) colors.surface else colors.onSurface, label = "chipText")
     Text(
         text,
         color = textColor,
         style = MaterialTheme.typography.labelLarge,
-        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+        fontWeight = FontWeight.Medium,
         modifier = Modifier
-            .glass(CircleShape, tint = tint)
+            .clip(CircleShape)
+            .background(background)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 9.dp),
     )
@@ -910,11 +946,10 @@ private fun ContinueRow(cards: List<CardModel>, onClick: (Int) -> Unit) {
                 Column(
                     Modifier
                         .animateItem()
-                        .width(236.dp)
+                        .width(232.dp)
                         .pressScale(interaction)
-                        .glass(CardShape)
+                        .clip(CardShape)
                         .clickable(interactionSource = interaction, indication = LocalIndication.current) { onClick(index) }
-                        .padding(6.dp)
                 ) {
                     Thumbnail(card, Modifier.fillMaxWidth())
                     Text(
@@ -923,14 +958,14 @@ private fun ContinueRow(cards: List<CardModel>, onClick: (Int) -> Unit) {
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(start = 6.dp, end = 6.dp, top = 8.dp),
+                        modifier = Modifier.padding(start = 2.dp, end = 2.dp, top = 8.dp),
                     )
                     val left = (card.durationMs * (1f - card.progress)).toLong()
                     Text(
                         if (card.durationMs > 0) "${formatDuration(left)} left" else "In progress",
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(start = 6.dp, end = 6.dp, top = 2.dp, bottom = 6.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = 2.dp, end = 2.dp, top = 2.dp, bottom = 4.dp),
                     )
                 }
             }
@@ -1018,21 +1053,20 @@ private fun GridCard(
     Column(
         modifier
             .pressScale(interaction)
-            .glass(CardShape)
+            .clip(CardShape)
             .combinedClickable(
                 interactionSource = interaction,
                 indication = LocalIndication.current,
                 onClick = onClick,
                 onLongClick = { menu = true },
             )
-            .padding(6.dp)
     ) {
         Thumbnail(card, Modifier.fillMaxWidth())
         Row(verticalAlignment = Alignment.Top) {
             Column(
                 Modifier
                     .weight(1f)
-                    .padding(start = 6.dp, top = 8.dp, bottom = 6.dp)
+                    .padding(start = 2.dp, top = 8.dp, bottom = 4.dp)
             ) {
                 Text(
                     card.title,
@@ -1068,16 +1102,14 @@ private fun ListCard(
     Row(
         modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 5.dp)
             .pressScale(interaction, pressedScale = 0.98f)
-            .glass(CardShape)
             .combinedClickable(
                 interactionSource = interaction,
                 indication = LocalIndication.current,
                 onClick = onClick,
                 onLongClick = { menu = true },
             )
-            .padding(6.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Thumbnail(card, Modifier.width(132.dp))
@@ -1136,21 +1168,34 @@ private fun CardMenu(open: Boolean, onOpen: () -> Unit, onClose: () -> Unit, act
     }
 }
 
+/** Loads a thumbnail model (local MediaStore frame or server image with its sign-in header). */
 @Composable
-private fun Thumbnail(card: CardModel, modifier: Modifier = Modifier) {
+private fun ThumbImage(thumb: Any?, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val model = remember(card.thumb) {
-        when (val t = card.thumb) {
+    val model = remember(thumb) {
+        when (thumb) {
             is ServerThumb -> ImageRequest.Builder(context)
-                .data(t.url)
-                .apply { t.auth?.let { addHeader("Authorization", it) } }
-                .memoryCacheKey(t.url)
-                .diskCacheKey(t.url)
+                .data(thumb.url)
+                .apply { thumb.auth?.let { addHeader("Authorization", it) } }
+                .memoryCacheKey(thumb.url)
+                .diskCacheKey(thumb.url)
                 .crossfade(true)
                 .build()
-            else -> t
+            else -> thumb
         }
     }
+    if (model != null) {
+        AsyncImage(
+            model = model,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = modifier,
+        )
+    }
+}
+
+@Composable
+private fun Thumbnail(card: CardModel, modifier: Modifier = Modifier) {
     Box(
         modifier
             .aspectRatio(16f / 9f)
@@ -1165,14 +1210,7 @@ private fun Thumbnail(card: CardModel, modifier: Modifier = Modifier) {
                 .align(Alignment.Center)
                 .size(28.dp),
         )
-        if (model != null) {
-            AsyncImage(
-                model = model,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+        ThumbImage(card.thumb, Modifier.fillMaxSize())
         card.badge?.let { Badge(it, Modifier.align(Alignment.BottomStart)) }
         if (card.durationMs > 0) Badge(formatDuration(card.durationMs), Modifier.align(Alignment.BottomEnd))
         AnimatedVisibility(card.progress > 0f, modifier = Modifier.align(Alignment.BottomCenter)) {
@@ -1237,19 +1275,17 @@ private fun MessageState(
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            Modifier
-                .widthIn(max = 420.dp)
-                .glass(RoundedCornerShape(32.dp))
-                .padding(horizontal = 24.dp, vertical = 32.dp),
+            Modifier.widthIn(max = 420.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(
                 Modifier
-                    .size(88.dp)
-                    .glass(CircleShape, tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(44.dp))
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(38.dp))
             }
             Spacer(Modifier.height(20.dp))
             Text(title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
@@ -1261,7 +1297,13 @@ private fun MessageState(
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(24.dp))
-            Button(onClick = primary.second) { Text(primary.first) }
+            Button(
+                onClick = primary.second,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.onSurface,
+                    contentColor = MaterialTheme.colorScheme.surface,
+                ),
+            ) { Text(primary.first, fontWeight = FontWeight.SemiBold) }
             secondary?.let { (label, action) ->
                 Spacer(Modifier.height(6.dp))
                 OutlinedButton(onClick = action) { Text(label) }
@@ -1311,3 +1353,120 @@ private fun StreamDialog(onDismiss: () -> Unit, onPlay: (String) -> Unit) {
 }
 
 // endregion
+
+/** The featured video on the phone tab: the one you were last watching, otherwise the newest. */
+private fun heroLocal(state: LibraryState): VideoItem? =
+    state.continueLocal.firstOrNull() ?: state.videos.maxByOrNull { it.dateAddedSec }
+
+/** The featured video on the server tab. */
+private fun heroServer(state: LibraryState): ServerVideo? =
+    state.continueServer.firstOrNull() ?: state.server.videos.maxByOrNull { it.created }
+
+/** Big featured card at the top of the library: resume where you left off, or play the newest. */
+@Composable
+private fun HeroCard(card: CardModel, resuming: Boolean, onPlay: () -> Unit, onStartOver: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    BoxWithConstraints(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        val ratio = if (maxWidth < 600.dp) 4f / 3.6f else 21f / 9f
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .aspectRatio(ratio)
+                .pressScale(interaction, pressedScale = 0.985f)
+                .clip(RoundedCornerShape(24.dp))
+                .background(Color.Black)
+                .clickable(interactionSource = interaction, indication = LocalIndication.current, onClick = onPlay)
+        ) {
+            ThumbImage(card.thumb, Modifier.fillMaxSize())
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            0f to Color.Transparent,
+                            0.35f to Color.Transparent,
+                            1f to Color.Black.copy(alpha = 0.88f),
+                        )
+                    )
+            )
+            Column(
+                Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(20.dp)
+            ) {
+                Text(
+                    if (resuming) "CONTINUE WATCHING" else "LATEST",
+                    color = Color.White.copy(alpha = 0.72f),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.2.sp,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    card.title,
+                    color = Color.White,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (resuming) {
+                        Box(
+                            Modifier
+                                .width(88.dp)
+                                .height(4.dp)
+                                .clip(RoundedCornerShape(2.dp))
+                                .background(Color.White.copy(alpha = 0.28f))
+                        ) {
+                            Box(
+                                Modifier
+                                    .fillMaxHeight()
+                                    .fillMaxWidth(card.progress)
+                                    .background(MaterialTheme.colorScheme.primary)
+                            )
+                        }
+                        Spacer(Modifier.width(10.dp))
+                    }
+                    val left = (card.durationMs * (1f - card.progress)).toLong()
+                    Text(
+                        when {
+                            resuming && card.durationMs > 0 -> "${formatDuration(left)} left"
+                            card.durationMs > 0 -> "${formatDuration(card.durationMs)} · ${card.subtitle}"
+                            else -> card.subtitle
+                        },
+                        color = Color.White.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Spacer(Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Button(
+                        onClick = onPlay,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color(0xFF111113)),
+                    ) {
+                        Icon(Icons.Filled.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(if (resuming) "Resume" else "Play", fontWeight = FontWeight.SemiBold)
+                    }
+                    if (resuming) {
+                        Button(
+                            onClick = onStartOver,
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color.White.copy(alpha = 0.18f),
+                                contentColor = Color.White,
+                            ),
+                        ) { Text("Start over", fontWeight = FontWeight.SemiBold) }
+                    }
+                }
+            }
+        }
+    }
+}

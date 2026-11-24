@@ -200,15 +200,20 @@ class ServerApi(val baseUrl: String, private val token: String?) {
             return s
         }
 
-        /** Checks the address and password; returns a session token. */
+        /**
+         * Checks the address and password; returns a session token. Servers set up without a
+         * password don't need one at all.
+         */
         suspend fun login(baseUrl: String, password: String): String = withContext(Dispatchers.IO) {
             val api = ServerApi(baseUrl, null)
-            try {
-                val health = api.request("GET", "/api/health")
-                if (!health.optBoolean("ok")) throw IOException("That address isn't a Lumen server")
+            val health = try {
+                api.request("GET", "/api/health")
             } catch (e: ServerException) {
                 throw IOException("That address isn't a Lumen server")
             }
+            if (!health.optBoolean("ok")) throw IOException("That address isn't a Lumen server")
+            if (!health.optBoolean("auth", true)) return@withContext "open"
+            if (password.isBlank()) throw IOException("This server needs a password")
             try {
                 api.request("POST", "/api/login", JSONObject().put("password", password)).getString("token")
             } catch (e: ServerAuthException) {

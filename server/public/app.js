@@ -215,10 +215,75 @@ function card(v, { continueRow = false, index = 0 } = {}) {
   return el;
 }
 
+// ---------------------------------------------------------------------------
+// Ambient backdrop: a blurred frame of the featured video, cross-faded on change
+// ---------------------------------------------------------------------------
+
+const ambientLayers = [$('#amb-a'), $('#amb-b')];
+let ambientFront = 0;
+let ambientUrl = null;
+
+function setAmbient(url) {
+  if (url === ambientUrl) return;
+  ambientUrl = url;
+  if (!url) {
+    ambientLayers.forEach((img) => img.classList.remove('on'));
+    return;
+  }
+  const back = ambientLayers[1 - ambientFront];
+  back.onload = () => {
+    if (ambientUrl !== url) return;
+    back.classList.add('on');
+    ambientLayers[ambientFront].classList.remove('on');
+    ambientFront = 1 - ambientFront;
+  };
+  back.src = url;
+}
+
+const thumbUrl = (v) => (v && v.thumb ? `/api/videos/${v.id}/thumb` : null);
+
+/** The featured video: the one you were last watching, otherwise the newest. */
+function heroVideo() {
+  return inProgress()[0] || [...state.videos].sort((a, b) => b.created - a.created)[0] || null;
+}
+
+function renderHero(hero) {
+  $('#hero').hidden = !hero;
+  if (!hero) return;
+  const resuming = hero.progress && hero.progress.position > 0 && hero.duration;
+  $('#hero-eyebrow').textContent = resuming ? 'Continue watching' : 'Latest';
+  $('#hero-title').textContent = hero.title;
+  $('#hero-meta').textContent = resuming
+    ? `${formatTime(hero.duration - hero.progress.position)} left · ${formatTime(hero.duration)}`
+    : [hero.duration ? formatTime(hero.duration) : null, resolution(hero), `Added ${formatAgo(hero.created)}`].filter(Boolean).join(' · ');
+  $('#hero-play-label').textContent = resuming ? 'Resume' : 'Play';
+  $('#hero-restart').hidden = !resuming;
+  $('#hero-restart').dataset.id = hero.id;
+  $('#hero-media').href = $('#hero-play').href = `#/watch/${hero.id}`;
+  $('#hero-bar').hidden = !resuming;
+  $('#hero-progress').style.width = resuming ? `${Math.min(100, (hero.progress.position / hero.duration) * 100)}%` : '0';
+  const img = $('#hero-img');
+  const url = thumbUrl(hero);
+  if (url && img.getAttribute('src') !== url) img.src = url;
+  if (!url) img.removeAttribute('src');
+}
+
+$('#hero-restart').addEventListener('click', async () => {
+  const id = $('#hero-restart').dataset.id;
+  await api(`/api/videos/${id}/progress`, { method: 'DELETE' }).catch(() => {});
+  const v = state.videos.find((x) => x.id === id);
+  if (v) v.progress = null;
+  location.hash = `#/watch/${id}`;
+});
+
 function render() {
   const list = sortedVideos();
-  const resume = state.query ? [] : inProgress();
+  const hero = state.query ? null : heroVideo();
+  // The hero already shows the most recent in-progress video, so the row holds the rest.
+  const resume = state.query ? [] : inProgress().filter((v) => v.id !== hero?.id);
 
+  renderHero(hero);
+  if (!state.current) setAmbient(thumbUrl(hero));
   $('#continue').hidden = resume.length === 0;
   $('#continue-row').replaceChildren(...resume.map((v, index) => card(v, { continueRow: true, index })));
   $('#grid').replaceChildren(...list.map((v, index) => card(v, { index })));
@@ -353,6 +418,7 @@ async function openWatch(id) {
   $('#resume-toast').hidden = true;
   showWatchInfo(v);
   renderUpNext();
+  setAmbient(thumbUrl(v));
   scrollTo(0, 0);
 
   // Always use the latest progress from the server (it may have been watched on the phone).
@@ -681,6 +747,11 @@ addEventListener('hashchange', route);
 
 let refreshTimer = null;
 async function start() {
+  // Servers without a password skip sign-in entirely, so there's nothing to sign out of.
+  try {
+    const health = await (await fetch('/api/health')).json();
+    $('#logout-btn').hidden = health.auth === false;
+  } catch { /* offline: carry on, loadVideos will report */ }
   try {
     await loadVideos();
   } catch {

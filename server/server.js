@@ -10,7 +10,8 @@
  *  - watch progress stored per video, shared by the website and the app
  *
  * Configuration (environment variables):
- *   V1_PASSWORD   required, at least 8 characters
+ *   V1_PASSWORD   optional; leave empty for no sign-in (anyone with the address has full access),
+ *                 or set at least 8 characters to require a password
  *   PORT          default 8080
  *   DATA_DIR      default ./data   (videos/, thumbs/, uploads/, db.json)
  *   TRUST_PROXY   set to 1 when running behind a reverse proxy such as Caddy
@@ -29,8 +30,10 @@ const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(__dirname, 'data
 const PASSWORD = process.env.V1_PASSWORD || '';
 const TRUST_PROXY = process.env.TRUST_PROXY === '1';
 
-if (PASSWORD.length < 8) {
-  console.error('V1_PASSWORD must be set to at least 8 characters.');
+/** No password configured: no sign-in at all. */
+const OPEN = PASSWORD === '';
+if (!OPEN && PASSWORD.length < 8) {
+  console.error('V1_PASSWORD must be empty (no sign-in) or at least 8 characters.');
   process.exit(1);
 }
 
@@ -124,6 +127,7 @@ function tokenFrom(req) {
 }
 
 function sessionKey(req) {
+  if (OPEN) return 'open';
   const token = tokenFrom(req);
   if (!token) return null;
   const key = sha256(token).toString('hex');
@@ -575,10 +579,12 @@ async function handleApi(req, res, url) {
   const method = req.method;
 
   if (pathname === '/api/health') {
-    return sendJson(res, 200, { ok: true, name: 'Lumen', version: 1 });
+    return sendJson(res, 200, { ok: true, name: 'Lumen', version: 1, auth: !OPEN });
   }
 
   if (pathname === '/api/login' && method === 'POST') {
+    // Older app versions still "sign in"; on an open server any password works.
+    if (OPEN) return sendJson(res, 200, { token: 'open' });
     const ip = clientIp(req);
     if (loginBlocked(ip)) throw new HttpError(429, 'Too many attempts. Try again in 15 minutes.');
     const body = await readJson(req);
@@ -596,6 +602,7 @@ async function handleApi(req, res, url) {
   if (!session) throw new HttpError(401, 'Not signed in');
 
   if (pathname === '/api/logout' && method === 'POST') {
+    if (OPEN) return sendJson(res, 200, { ok: true });
     delete db.sessions[session];
     save();
     return sendJson(res, 200, { ok: true }, { 'Set-Cookie': sessionCookie(req, '', 0) });
@@ -721,6 +728,7 @@ server.headersTimeout = 60_000;
 scanLibrary().then(() => {
   server.listen(PORT, () => {
     console.log(`Lumen server running on http://localhost:${PORT}  (data: ${DATA_DIR})`);
+    if (OPEN) console.log('No password set: anyone who can reach this address can watch, upload and delete videos.');
   });
 });
 setInterval(scanLibrary, 60_000).unref();

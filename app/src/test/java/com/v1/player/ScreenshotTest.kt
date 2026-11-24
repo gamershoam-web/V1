@@ -20,6 +20,9 @@ import com.v1.player.ui.player.PlayerActions
 import com.v1.player.ui.player.PlayerScreen
 import com.v1.player.ui.player.ResumeNotice
 import com.v1.player.ui.theme.LumenTheme
+import coil.imageLoader
+import kotlinx.coroutines.runBlocking
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,8 +52,8 @@ class ScreenshotTest {
 
     private val now = System.currentTimeMillis()
     private val titles = listOf(
-        "Northern lights over Tromsø", "Summer in Lisbon", "Studio session #4",
-        "Sunset drive", "Old film test", "Deep zoom",
+        "Kelp forest dive", "Golden hour at the pier", "Morning in the Dolomites",
+        "Tokyo after midnight", "First snow", "Dune crossing",
     )
     private val serverVideos = titles.mapIndexed { i, title ->
         ServerVideo(
@@ -70,8 +73,8 @@ class ScreenshotTest {
         override fun selectFolder(folder: String?) = Unit
         override fun setSort(sort: SortOrder) = Unit
         override fun toggleGrid() = Unit
-        override fun openLocal(list: List<VideoItem>, index: Int) = Unit
-        override fun openServer(list: List<ServerVideo>, index: Int) = Unit
+        override fun openLocal(list: List<VideoItem>, index: Int, fromStart: Boolean) = Unit
+        override fun openServer(list: List<ServerVideo>, index: Int, fromStart: Boolean) = Unit
         override fun openFile() = Unit
         override fun openStream(url: String) = Unit
         override fun uploadToServer(video: VideoItem) = Unit
@@ -91,9 +94,20 @@ class ScreenshotTest {
         server = ServerState(connected = true, url = "https://videos.example.com", loaded = true, videos = serverVideos),
     )
 
+    /** Load every thumbnail once up front so the first screenshot isn't missing images. */
+    @Before
+    fun warmUpImages() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        runBlocking {
+            (1..6).forEach { n ->
+                context.imageLoader.execute(coil.request.ImageRequest.Builder(context).data(thumb(n)).build())
+            }
+        }
+    }
+
     private fun capture(name: String) {
         // Compose tests pause endless animations (the drifting backdrop); just let images load.
-        repeat(8) {
+        repeat(14) {
             Thread.sleep(200)
             rule.waitForIdle()
         }

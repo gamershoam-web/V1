@@ -142,8 +142,8 @@ private sealed interface DragFeedback {
 private data class SeekBurst(val forward: Boolean, val seconds: Int, val stamp: Long = System.nanoTime())
 
 private val PlayerColors = darkColorScheme(
-    primary = Color(0xFF8F84FF),
-    onPrimary = Color.White,
+    primary = Color(0xFFF5A524),
+    onPrimary = Color(0xFF1A1200),
     surface = Color(0xFF1C1B22),
     onSurface = Color.White,
 )

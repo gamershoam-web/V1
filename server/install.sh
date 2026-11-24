@@ -63,24 +63,30 @@ fi
 # --- Password -----------------------------------------------------------------
 CURRENT_PASS=$(grep -s '^V1_PASSWORD=' .env | cut -d= -f2- | sed "s/^'//; s/'\$//" || true)
 GENERATED=0
-while :; do
-  if [ -n "$CURRENT_PASS" ]; then
-    PASS=$(ask_secret "Website/app password (Enter keeps the current one): ")
-    [ -z "$PASS" ] && { PASS="$CURRENT_PASS"; break; }
-  else
-    PASS=$(ask_secret "Choose a website/app password (Enter to generate one): ")
-    if [ -z "$PASS" ]; then
-      PASS=$(head -c 600 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | cut -c1-16)
-      GENERATED=1
-      break
+PASS=""
+echo
+echo "Without a password, anyone who knows the address can watch, upload and delete your videos."
+WANT=$(ask "Require a password? [y/N]: ")
+if [[ "$WANT" =~ ^[Yy] ]]; then
+  while :; do
+    if [ -n "$CURRENT_PASS" ]; then
+      PASS=$(ask_secret "Password (Enter keeps the current one): ")
+      [ -z "$PASS" ] && { PASS="$CURRENT_PASS"; break; }
+    else
+      PASS=$(ask_secret "Choose a password (Enter to generate one): ")
+      if [ -z "$PASS" ]; then
+        PASS=$(head -c 600 /dev/urandom | LC_ALL=C tr -dc 'A-Za-z0-9' | cut -c1-16)
+        GENERATED=1
+        break
+      fi
     fi
-  fi
-  if [ "${#PASS}" -lt 8 ]; then echo "Use at least 8 characters."; continue; fi
-  if [[ "$PASS" == *"'"* ]]; then echo "Please don't use the ' character."; continue; fi
-  PASS2=$(ask_secret "Repeat the password: ")
-  [ "$PASS" = "$PASS2" ] && break
-  echo "Passwords didn't match."
-done
+    if [ "${#PASS}" -lt 8 ]; then echo "Use at least 8 characters."; continue; fi
+    if [[ "$PASS" == *"'"* ]]; then echo "Please don't use the ' character."; continue; fi
+    PASS2=$(ask_secret "Repeat the password: ")
+    [ "$PASS" = "$PASS2" ] && break
+    echo "Passwords didn't match."
+  done
+fi
 
 # --- Config and start ---------------------------------------------------------
 umask 077
@@ -134,10 +140,12 @@ echo
 echo "   Address : $URL"
 if [ "$GENERATED" = 1 ]; then
 echo "   Password: $PASS   (write this down)"
+elif [ -z "$PASS" ]; then
+echo "   Password: none - open to anyone with the address"
 fi
 echo
 echo " Open the address in a browser, or in the Lumen app:"
-echo " Server tab → Connect server → same address and password."
+echo " Server tab → Connect server → enter the address."
 if [ -n "$DOMAIN" ]; then
 echo " (The HTTPS certificate is issued on the first visit; give it a minute.)"
 else

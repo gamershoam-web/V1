@@ -4,13 +4,16 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="dark light">
-  <meta name="theme-color" content="#121118">
+  <meta name="theme-color" content="#0e0e10">
   <title>Lumen</title>
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="stylesheet" href="/app.css">
 </head>
 <body>
+  <!-- Ambient backdrop: a heavily blurred frame of the featured video -->
+  <div class="ambient" aria-hidden="true"><img id="amb-a" alt=""><img id="amb-b" alt=""></div>
+
   <!-- Sign in -->
   <div id="login" class="login" hidden>
     <form id="login-form" class="login-card">
@@ -41,6 +44,26 @@
 
     <!-- Library -->
     <main id="library" class="page">
+      <section id="hero" class="hero" hidden>
+        <a id="hero-media" class="hero-media" href="#/">
+          <img id="hero-img" alt="">
+        </a>
+        <div class="hero-body">
+          <p id="hero-eyebrow" class="eyebrow"></p>
+          <h1 id="hero-title"></h1>
+          <div class="hero-meta-row">
+            <div id="hero-bar" class="hero-bar"><i id="hero-progress"></i></div>
+            <p id="hero-meta" class="hero-meta"></p>
+          </div>
+          <div class="hero-actions">
+            <a id="hero-play" class="btn primary" href="#/">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14z"/></svg>
+              <span id="hero-play-label">Play</span>
+            </a>
+            <button id="hero-restart" class="btn" hidden>Start over</button>
+          </div>
+        </div>
+      </section>
       <section id="continue" hidden>
         <h2>Continue watching</h2>
         <div id="continue-row" class="row"></div>

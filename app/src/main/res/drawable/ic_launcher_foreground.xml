@@ -4,41 +4,20 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Frosted glass disc -->
-    <path android:pathData="M54,54m-24,0a24,24 0,1 1,48 0a24,24 0,1 1,-48 0">
+    <!-- Warm light behind the play mark -->
+    <path android:pathData="M54,55m-30,0a30,30 0,1 1,60 0a30,30 0,1 1,-60 0">
         <aapt:attr name="android:fillColor">
             <gradient
-                android:type="linear"
-                android:startX="34" android:startY="32"
-                android:endX="74" android:endY="78">
-                <item android:offset="0" android:color="#66FFFFFF" />
-                <item android:offset="1" android:color="#1FFFFFFF" />
+                android:type="radial"
+                android:centerX="54" android:centerY="55"
+                android:gradientRadius="30">
+                <item android:offset="0" android:color="#8CF5A524" />
+                <item android:offset="1" android:color="#00F5A524" />
             </gradient>
         </aapt:attr>
     </path>
-    <!-- Bright rim, strongest at the top left like light catching the edge -->
-    <path
-        android:pathData="M54,54m-23.25,0a23.25,23.25 0,1 1,46.5 0a23.25,23.25 0,1 1,-46.5 0"
-        android:strokeWidth="1.5">
-        <aapt:attr name="android:strokeColor">
-            <gradient
-                android:type="linear"
-                android:startX="34" android:startY="32"
-                android:endX="74" android:endY="78">
-                <item android:offset="0" android:color="#E6FFFFFF" />
-                <item android:offset="0.5" android:color="#33FFFFFF" />
-                <item android:offset="1" android:color="#80FFFFFF" />
-            </gradient>
-        </aapt:attr>
-    </path>
-    <!-- Specular highlight -->
-    <path
-        android:pathData="M38.5,44.5 A18,18 0 0 1 52,36.4"
-        android:strokeWidth="2.4"
-        android:strokeLineCap="round"
-        android:strokeColor="#B3FFFFFF" />
     <!-- Play -->
     <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M49,43.6v20.8a1.9,1.9 0,0 0,2.9 1.6l16.3,-10.4a1.9,1.9 0,0 0,0 -3.2l-16.3,-10.4a1.9,1.9 0,0 0,-2.9 1.6z" />
+        android:fillColor="#FFFBF7EF"
+        android:pathData="M46,41.2v27.6a2.3,2.3 0,0 0,3.5 1.9l21.6,-13.8a2.3,2.3 0,0 0,0 -3.8l-21.6,-13.8a2.3,2.3 0,0 0,-3.5 1.9z" />
 </vector>
