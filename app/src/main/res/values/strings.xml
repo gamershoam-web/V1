@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">V1 Voice Changer</string>
+    <string name="tagline">Change your voice in Discord and other call apps.</string>
+    <string name="xposed_description">Real-time voice changer for the microphone of Discord, WhatsApp, Telegram and other call apps.</string>
+
+    <string name="call_title">Voice in calls</string>
+    <string name="status_active">● In-call mode active (LSPosed)</string>
+    <string name="status_inactive">● In-call mode not active</string>
+    <string name="status_active_desc">Apps you enabled in LSPosed hear your changed voice. Voice and slider changes apply instantly, even during a call.</string>
+    <string name="status_inactive_desc">Changing your voice inside another app\'s call needs a rooted phone with LSPosed. Without it you can still test voices and record clips below. See \"How to use\".</string>
+    <string name="enable_in_calls">Change my voice in calls</string>
+
+    <string name="voices_title">Voices</string>
+    <string name="tune_title">Fine-tune</string>
+    <string name="s_pitch">Pitch</string>
+    <string name="s_treble">Brightness</string>
+    <string name="s_robot">Robot</string>
+    <string name="s_wobble">Wobble</string>
+    <string name="s_echo">Echo</string>
+    <string name="s_drive">Distortion</string>
+    <string name="s_volume">Volume</string>
+
+    <string name="try_title">Test and record</string>
+    <string name="try_desc">Use headphones to hear yourself without feedback. Record a clip and share it to Discord as a voice message or file. Works without root.</string>
+    <string name="monitor_start">🎧 Hear myself</string>
+    <string name="monitor_stop">■ Stop listening</string>
+    <string name="record_start">● Record clip</string>
+    <string name="record_stop">■ Stop recording</string>
+    <string name="play_clip">▶ Play clip</string>
+    <string name="share_clip">Share clip</string>
+    <string name="recording_now">Recording with the current voice…</string>
+    <string name="last_clip">Last clip: %1$s (%2$d KB)</string>
+
+    <string name="help_title">How to use in Discord calls</string>
+    <string name="help_body">Android doesn\'t let normal apps change the microphone of other apps, so live voice changing in calls needs root:\n\n1. Root your phone with Magisk (or KernelSU / APatch).\n2. Install LSPosed (Zygisk version).\n3. Open LSPosed → Modules → enable \"V1 Voice Changer\".\n4. In its scope, tick Discord (and any other call apps).\n5. Force-stop Discord (or reboot), then open this app.\n6. Turn on \"Change my voice in calls\" and pick a voice.\n7. Join a Discord call. Your friends hear the changed voice. You can switch voices during the call.\n\nWorks with apps that capture the mic through Android\'s AudioRecord: Discord, WhatsApp, Telegram, Messenger and most other VoIP apps. Normal phone-network (SIM) calls are handled by the modem, so they can\'t be changed this way.\n\nNo root? Use \"Record clip\" and share the clip to Discord as a file or voice message.</string>
+
+    <string name="notif_channel">Live voice changer</string>
+    <string name="notif_text">Voice changer is using the microphone</string>
+
+    <string name="toast_needs_lsposed">Saved. To work in calls, enable this module in LSPosed first.</string>
+    <string name="toast_headphones">Use headphones to avoid feedback.</string>
+    <string name="toast_mic_denied">The app needs microphone access to test and record.</string>
+    <string name="toast_play_failed">Couldn\'t play the clip.</string>
+    <string name="toast_no_share">No app can receive the clip.</string>
+</resources>

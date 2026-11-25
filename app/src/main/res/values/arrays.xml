@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Apps LSPosed suggests when you enable the module. You can add any other app in LSPosed. -->
+    <string-array name="xposed_scope">
+        <item>com.discord</item>
+        <item>com.whatsapp</item>
+        <item>com.whatsapp.w4b</item>
+        <item>org.telegram.messenger</item>
+        <item>org.thunderdog.challegram</item>
+        <item>com.facebook.orca</item>
+        <item>com.instagram.android</item>
+        <item>com.snapchat.android</item>
+        <item>com.skype.raider</item>
+        <item>com.microsoft.teams</item>
+        <item>us.zoom.videomeetings</item>
+        <item>com.google.android.apps.tachyon</item>
+        <item>org.thoughtcrime.securesms</item>
+        <item>jp.naver.line.android</item>
+        <item>com.viber.voip</item>
+        <item>com.v1.voicechanger</item>
+    </string-array>
+</resources>

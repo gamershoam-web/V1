@@ -1,0 +1,9 @@
+// Compile-only stubs of the Xposed API (de.robv.android.xposed).
+// They are NOT packaged into the APK - LSPosed provides the real classes at runtime.
+plugins {
+    id 'java-library'
+}
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
