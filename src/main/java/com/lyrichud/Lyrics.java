@@ -44,7 +44,10 @@ public final class Lyrics {
     /** Handles "enhanced LRC" word timestamps like <00:12.30>word. Returns the plain text. */
     private static String parseWords(String rest, List<Word> words) {
         Matcher m = WORD_TIME.matcher(rest);
-        if (!m.find()) return rest.trim();
+        if (!m.find()) {
+            addWords(rest, -1, words, new StringBuilder());
+            return rest.trim().replaceAll("\\s+", " ");
+        }
         m.reset();
         StringBuilder plain = new StringBuilder();
         long curStart = -1;

@@ -98,6 +98,9 @@ public final class LyricHudClient implements ClientModInitializer {
 
         ClientLifecycleEvents.CLIENT_STOPPING.register(c -> bridge.stop());
 
+        // -Dlyrichud.demo=true starts the demo song right away (handy for testing the look)
+        if (Boolean.getBoolean("lyrichud.demo")) demo.setActive(true);
+
         if (MediaBridge.supported()) {
             bridge.start();
         } else {
