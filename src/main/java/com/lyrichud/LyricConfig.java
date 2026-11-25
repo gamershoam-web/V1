@@ -19,7 +19,7 @@ public final class LyricConfig {
     /** Shift lyrics in time. Positive = lyrics appear later, negative = earlier. */
     public int offsetMs = 0;
     /** Overall size of the lyrics. */
-    public float scale = 1.6f;
+    public float scale = 1.3f;
     /** 3D turn: how far the left side leans away from you (degrees). */
     public float yawDeg = 26f;
     /** 3D tilt forward/back (degrees). */

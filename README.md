@@ -44,7 +44,7 @@ Edit `.minecraft/config/lyrichud.json`, then run `/lyrichud reload`:
 
 | Setting | Default | Meaning |
 |---------|---------|---------|
-| `scale` | `1.6` | Text size |
+| `scale` | `1.3` | Text size |
 | `yawDeg` | `26` | How much the panel turns in 3D (0 = flat) |
 | `pitchDeg` | `8` | Tilt forward/back |
 | `rollDeg` | `-3` | Slant of the text line |

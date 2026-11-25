@@ -26,3 +26,11 @@ java {
 }
 
 jar { from('LICENSE') { rename { "${it}_${project.base.archivesName.get()}" } } }
+
+loom {
+    runs {
+        client {
+            programArgs "--width", "1280", "--height", "720"
+        }
+    }
+}

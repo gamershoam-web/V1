@@ -29,10 +29,6 @@ public final class LyricHudRenderer implements HudElement {
     private Lyrics.Line shownLine, previousLine;
     private long changedAt;
 
-    private static final boolean DEBUG = Boolean.getBoolean("lyrichud.debug");
-    private long lastDbg;
-    private int dbgGlyphs;
-
     // ---- projection ----
     private final Matrix3f rot = new Matrix3f();
     private final Vector3f tmp = new Vector3f();
@@ -43,10 +39,6 @@ public final class LyricHudRenderer implements HudElement {
     public void render(DrawContext ctx, RenderTickCounter tickCounter) {
         MinecraftClient mc = MinecraftClient.getInstance();
         LyricHudClient hud = LyricHudClient.get();
-        if (DEBUG && System.currentTimeMillis() - lastDbg > 2000) {
-            lastDbg = System.currentTimeMillis();
-            LyricHudClient.LOG.info("DBG render hud={} hidden={} np={}", hud != null, mc.options.hudHidden, hud == null ? null : hud.nowPlaying());
-        }
         if (hud == null || mc.options.hudHidden || mc.getDebugHud().shouldShowDebugHud()) return;
         LyricConfig cfg = hud.config();
         if (!cfg.enabled) return;
@@ -327,7 +319,6 @@ public final class LyricHudRenderer implements HudElement {
         float cu = u + w * layoutScale / 2f, cv = v + 4.5f * layoutScale;
         if (!project(cu, cv)) return;
         float x0 = px, y0 = py;
-        if (DEBUG && dbgGlyphs++ % 2000 == 0) LyricHudClient.LOG.info("DBG glyph '{}' at {},{} color {}", ch, x0, y0, Integer.toHexString(argb));
         if (!project(cu + 1, cv)) return;
         float ax = px - x0, ay = py - y0;
         if (!project(cu, cv + 1)) return;
