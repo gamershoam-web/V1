@@ -34,3 +34,15 @@ loom {
         }
     }
 }
+
+// Automated in-game test: creates a world, plays the demo song and takes screenshots.
+// Run with: ./gradlew runClientGameTest
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "lyrichud-test"
+        enableGameTests = false
+        enableClientGameTests = true
+        eula = false
+    }
+}

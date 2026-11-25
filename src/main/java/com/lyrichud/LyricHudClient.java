@@ -10,6 +10,9 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import net.minecraft.command.CommandSource;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
@@ -33,6 +36,11 @@ public final class LyricHudClient implements ClientModInitializer {
     private final MediaBridge bridge = new MediaBridge();
     private final DemoSource demo = new DemoSource();
     private final LyricsService lyrics = new LyricsService();
+
+    private final WorldLyricRenderer worldRenderer = new WorldLyricRenderer();
+
+    /** Turn the demo song on or off (also used by the automated tests). */
+    public void setDemo(boolean on) { demo.setActive(on); worldRenderer.clear(); }
 
     private KeyBinding toggleKey, playPauseKey, nextKey, prevKey;
 
@@ -65,6 +73,7 @@ public final class LyricHudClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onTick);
         LyricHudRenderer renderer = new LyricHudRenderer();
+        WorldRenderEvents.AFTER_ENTITIES.register(worldRenderer::render);
         HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Identifier.of(MOD_ID, "lyrics"), renderer);
         // -Dlyrichud.preview=true also draws the lyrics on menu screens (for testing the look)
         if (Boolean.getBoolean("lyrichud.preview")) {
@@ -75,8 +84,24 @@ public final class LyricHudClient implements ClientModInitializer {
                 literal("lyrichud")
                         .executes(c -> status(c.getSource()))
                         .then(literal("toggle").executes(c -> { toggle(); return 1; }))
+                        .then(literal("mode")
+                                .executes(c -> { msg(c.getSource(), "Mode is '" + config.mode + "' (world or corner)"); return 1; })
+                                .then(argument("mode", StringArgumentType.word())
+                                        .suggests((c, b) -> CommandSource.suggestMatching(new String[]{"world", "corner"}, b))
+                                        .executes(c -> {
+                                            String m = StringArgumentType.getString(c, "mode");
+                                            if (!m.equals("world") && !m.equals("corner")) {
+                                                msg(c.getSource(), "Use /lyrichud mode world or /lyrichud mode corner");
+                                                return 0;
+                                            }
+                                            config.mode = m;
+                                            config.save();
+                                            worldRenderer.clear();
+                                            msg(c.getSource(), m.equals("world") ? "Lyrics now appear in the world in front of you" : "Lyrics now sit in the top-right corner");
+                                            return 1;
+                                        })))
                         .then(literal("demo").executes(c -> {
-                            demo.setActive(!demo.active());
+                            setDemo(!demo.active());
                             msg(c.getSource(), demo.active() ? "Demo song ON (run /lyrichud demo again to stop)" : "Demo song OFF");
                             return 1;
                         }))
@@ -90,6 +115,7 @@ public final class LyricHudClient implements ClientModInitializer {
                                 })))
                         .then(literal("reload").executes(c -> {
                             config = LyricConfig.load();
+                            worldRenderer.clear();
                             lyrics.clearFailures();
                             msg(c.getSource(), "Reloaded config and retrying lyric searches");
                             return 1;
@@ -137,7 +163,7 @@ public final class LyricHudClient implements ClientModInitializer {
             LyricsService.Result r = lyricsFor(np);
             msg(src, "Playing: " + np.title() + " - " + np.artist() + " [" + np.app() + "]  lyrics: " + r.status());
         }
-        msg(src, "Commands: /lyrichud toggle | demo | offset <ms> | reload");
+        msg(src, "Commands: /lyrichud toggle | mode <world|corner> | demo | offset <ms> | reload");
         return 1;
     }
 

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "id": "lyrichud-test",
+  "version": "1.0.0",
+  "name": "Lyric HUD tests",
+  "environment": "*",
+  "entrypoints": {
+    "fabric-client-gametest": ["com.lyrichud.test.LyricHudClientGameTest"]
+  },
+  "depends": { "lyrichud": "*" }
+}

@@ -41,7 +41,7 @@ public final class LyricHudRenderer implements HudElement {
         LyricHudClient hud = LyricHudClient.get();
         if (hud == null || mc.options.hudHidden || mc.getDebugHud().shouldShowDebugHud()) return;
         LyricConfig cfg = hud.config();
-        if (!cfg.enabled) return;
+        if (!cfg.enabled || cfg.worldMode()) return;
 
         NowPlaying np = hud.nowPlaying();
         if (np == null) { songKey = ""; return; }

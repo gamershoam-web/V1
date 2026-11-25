@@ -16,6 +16,12 @@ public final class LyricConfig {
 
     /** Show the lyrics at all (K key toggles this). */
     public boolean enabled = true;
+    /**
+     * "world": each line appears in the world in front of you, stays where it appeared,
+     *          turns to face you, then fades away (V2 default).
+     * "corner": lyrics pinned to the top-right corner of the screen (V1 style).
+     */
+    public String mode = "world";
     /** Shift lyrics in time. Positive = lyrics appear later, negative = earlier. */
     public int offsetMs = 0;
     /** Overall size of the lyrics. */
@@ -40,6 +46,20 @@ public final class LyricConfig {
     public boolean showNextLine = true;
     /** Show the small "song · artist  time" row above the lyrics. */
     public boolean showSongInfo = true;
+
+    // ---- world mode ----
+    /** How far in front of you a new line appears (blocks). */
+    public float worldDistance = 9f;
+    /** How high above your eyes a new line appears (blocks). */
+    public float worldHeight = 1.4f;
+    /** Size of the lyrics in the world. */
+    public float worldScale = 0.05f;
+    /** How many seconds a finished line takes to fade away. */
+    public float fadeSeconds = 1.6f;
+    /** Lines stay visible through blocks (hills, trees, walls). */
+    public boolean seeThroughBlocks = true;
+
+    public boolean worldMode() { return !"corner".equalsIgnoreCase(mode); }
 
     public static Path path() {
         return FabricLoader.getInstance().getConfigDir().resolve("lyrichud.json");
