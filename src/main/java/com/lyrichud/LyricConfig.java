@@ -53,7 +53,9 @@ public final class LyricConfig {
     /** How high above your eyes a new line appears (blocks). */
     public float worldHeight = 1.4f;
     /** Size of the lyrics in the world. */
-    public float worldScale = 0.05f;
+    public float worldScale = 0.065f;
+    /** Longest row in world mode before it wraps (Minecraft font pixels). */
+    public int worldMaxLineWidth = 260;
     /** How many seconds a finished line takes to fade away. */
     public float fadeSeconds = 1.6f;
     /** Lines stay visible through blocks (hills, trees, walls). */

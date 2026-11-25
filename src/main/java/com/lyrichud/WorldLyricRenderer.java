@@ -165,8 +165,9 @@ public final class WorldLyricRenderer {
         double side = 0, up = 0;
         if (!infoCard) {
             int slot = spawnCount++ % 4;
-            side = switch (slot) { case 1 -> -1.6; case 3 -> 1.6; default -> 0; };
-            up = switch (slot) { case 1 -> 0.35; case 2 -> -0.3; case 3 -> 0.2; default -> 0; };
+            // each new line sits at least ~1 block above/below the one that is fading out
+            side = switch (slot) { case 1 -> -1.6; case 2 -> 1.5; case 3 -> -0.5; default -> 0; };
+            up = switch (slot) { case 1, 3 -> 1.0; default -> 0; };
         } else {
             up = -1.1;
         }
@@ -223,7 +224,7 @@ public final class WorldLyricRenderer {
         float w = 0;
         for (int i = 0; i < f.runs.size(); i++) {
             float rw = tr.getWidth(f.runs.get(i).text());
-            if (!row.isEmpty() && w + rw > cfg.maxLineWidth) { rows.add(row); row = new ArrayList<>(); w = 0; }
+            if (!row.isEmpty() && w + rw > cfg.worldMaxLineWidth) { rows.add(row); row = new ArrayList<>(); w = 0; }
             row.add(i);
             w += rw;
         }

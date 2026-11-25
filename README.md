@@ -57,7 +57,8 @@ Edit `.minecraft/config/lyrichud.json`, then run `/lyrichud reload`:
 | `mode` | `world` | `world` (V2) or `corner` (V1) |
 | `worldDistance` | `9` | How far in front of you lines appear (blocks) |
 | `worldHeight` | `1.4` | How high above your eyes lines appear (blocks) |
-| `worldScale` | `0.05` | Size of lines in the world |
+| `worldScale` | `0.065` | Size of lines in the world |
+| `worldMaxLineWidth` | `260` | When long lines wrap in world mode |
 | `fadeSeconds` | `1.6` | How long a finished line takes to fade |
 | `seeThroughBlocks` | `true` | Lines show through hills, trees and walls |
 | `scale` | `1.3` | Text size (corner mode) |
