@@ -44,5 +44,6 @@ fabricApi {
         enableGameTests = false
         enableClientGameTests = true
         eula = false
+        clearRunDirectory = false
     }
 }
