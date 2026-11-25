@@ -124,6 +124,8 @@ class MainActivity : ComponentActivity() {
                         override fun clearLocalProgress(video: VideoItem) = viewModel.clearLocalProgress(video)
                         override fun clearServerProgress(video: ServerVideo) = viewModel.clearServerProgress(video)
                         override fun deleteServerVideo(video: ServerVideo) = viewModel.deleteServerVideo(video)
+                        override fun renameLocal(video: VideoItem, title: String) = viewModel.renameLocal(video, title)
+                        override fun renameServerVideo(video: ServerVideo, title: String) = viewModel.renameServerVideo(video, title)
                         override fun connect(address: String, password: String) = viewModel.connect(address, password)
                         override fun resetConnect() = viewModel.resetConnectState()
                         override fun disconnect() = viewModel.disconnect()

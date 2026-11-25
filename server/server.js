@@ -829,7 +829,7 @@ async function handleApi(req, res, url) {
     const action = m[2];
     if (!action) {
       if (method === 'GET') return sendJson(res, 200, publicVideo(video));
-      if (method === 'PATCH') {
+      if (method === 'PATCH' || method === 'PUT') {
         const body = await readJson(req);
         const title = String(body.title || '').trim().slice(0, 200);
         if (!title) throw new HttpError(400, 'Title is required');

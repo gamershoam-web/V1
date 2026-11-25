@@ -135,6 +135,8 @@ data class LibraryState(
 class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = VideoRepository(app)
     private val store = PlaybackStore(app)
+    /** Names given to phone videos inside Lumen (the files themselves aren't touched). */
+    private val localTitles = app.getSharedPreferences("local_titles", Context.MODE_PRIVATE)
     private val settings = ServerSettings(app)
     private val prefs = app.getSharedPreferences("library_settings", Context.MODE_PRIVATE)
     private val seenFinishedUploads = mutableSetOf<UUID>()
@@ -182,7 +184,7 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
     fun load(userInitiated: Boolean = false) {
         if (userInitiated) _state.update { it.copy(refreshing = true) }
         viewModelScope.launch {
-            val videos = repo.loadVideos()
+            val videos = repo.loadVideos().map { v -> localTitles.getString(v.uri.toString(), null)?.let { v.copy(title = it) } ?: v }
             _state.update { s ->
                 val folder = s.folder?.takeIf { f -> videos.any { it.folder == f } }
                 s.copy(
@@ -196,6 +198,13 @@ class LibraryViewModel(app: Application) : AndroidViewModel(app) {
             }
         }
     }
+
+    fun renameLocal(video: VideoItem, title: String) {
+        localTitles.edit().putString(video.uri.toString(), title).apply()
+        _state.update { st -> st.copy(videos = st.videos.map { if (it.id == video.id) it.copy(title = title) else it }) }
+    }
+
+    fun renameServerVideo(video: ServerVideo, title: String) = serverAction { api -> api.renameVideo(video.id, title) }
 
     fun clearLocalProgress(video: VideoItem) {
         store.clear(video.uri.toString())

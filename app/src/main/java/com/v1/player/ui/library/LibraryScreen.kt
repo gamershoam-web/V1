@@ -62,6 +62,7 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Dns
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Link
@@ -197,6 +198,8 @@ interface LibraryActions {
     fun moveEpisode(series: SeriesInfo, seasonId: String, from: Int, to: Int) {}
     fun addToSeries(video: ServerVideo, series: SeriesInfo, seasonId: String) {}
     fun playSeries(series: SeriesInfo, videoId: String) {}
+    fun renameLocal(video: VideoItem, title: String) {}
+    fun renameServerVideo(video: ServerVideo, title: String) {}
 }
 
 private val CardShape = RoundedCornerShape(16.dp)
@@ -215,6 +218,8 @@ fun LibraryScreen(
     var showServerDialog by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf<ServerVideo?>(null) }
     var addToSeriesFor by remember { mutableStateOf<ServerVideo?>(null) }
+    var renaming by remember { mutableStateOf<Any?>(null) }
+    RenameTarget.request = { renaming = it }
     var newSeries by rememberSaveable { mutableStateOf(false) }
     val serverVideos = remember(state.server.videos) { state.server.videos.associateBy { it.id } }
     val hazeState = remember { HazeState() }
@@ -321,6 +326,16 @@ fun LibraryScreen(
                 actions.createSeries(title, video)
             },
         )
+    }
+    renaming?.let { target ->
+        val current = when (target) { is VideoItem -> target.title; is ServerVideo -> target.title; else -> "" }
+        TextPromptDialog("Rename video", current, "Save", onDismiss = { renaming = null }) { title ->
+            renaming = null
+            when (target) {
+                is VideoItem -> actions.renameLocal(target, title)
+                is ServerVideo -> actions.renameServerVideo(target, title)
+            }
+        }
     }
     if (newSeries) {
         TextPromptDialog("New series", "", "Create", placeholder = "e.g. Holiday 2026", onDismiss = { newSeries = false }) {
@@ -496,10 +511,16 @@ private fun VideoItem.toCard(state: LibraryState) = CardModel(
     thumb = thumbnail,
 )
 
+/** Lets card menus open the rename dialog owned by the screen. */
+private object RenameTarget {
+    var request: (Any) -> Unit = {}
+}
+
 private fun localActions(video: VideoItem, state: LibraryState, actions: LibraryActions): List<CardAction> = buildList {
     if (state.progressOf(video) > 0f) {
         add(CardAction("Start from beginning", Icons.Filled.Replay) { actions.clearLocalProgress(video) })
     }
+    add(CardAction("Rename", Icons.Filled.Edit) { RenameTarget.request(video) })
     if (state.server.connected) {
         add(CardAction("Upload to server", Icons.Filled.CloudUpload) { actions.uploadToServer(video) })
     }
@@ -556,6 +577,7 @@ private fun ServerContent(
                         if (video.progressMs > 0) {
                             add(CardAction("Start from beginning", Icons.Filled.Replay) { actions.clearServerProgress(video) })
                         }
+                        add(CardAction("Rename", Icons.Filled.Edit) { RenameTarget.request(video) })
                         add(CardAction("Add to series…", Icons.Filled.VideoLibrary) { onAddToSeries(video) })
                         add(CardAction("Delete from server", Icons.Filled.Delete, danger = true) { onDelete(video) })
                     }

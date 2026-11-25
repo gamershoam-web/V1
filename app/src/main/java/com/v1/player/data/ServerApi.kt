@@ -108,6 +108,11 @@ class ServerApi(val baseUrl: String, private val token: String?) {
         Unit
     }
 
+    suspend fun renameVideo(id: String, title: String) = withContext(Dispatchers.IO) {
+        request("PUT", "/api/videos/$id", JSONObject().put("title", title))
+        Unit
+    }
+
     suspend fun deleteVideo(id: String) = withContext(Dispatchers.IO) {
         request("DELETE", "/api/videos/$id")
         Unit
