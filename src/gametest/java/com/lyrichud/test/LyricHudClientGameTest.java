@@ -17,9 +17,11 @@ public class LyricHudClientGameTest implements FabricClientGameTest {
         ctx.runOnClient(mc -> {
             mc.options.getViewDistance().setValue(4);
             mc.options.getSimulationDistance().setValue(5);
+            mc.options.getMaxFps().setValue(10); // leave CPU for world generation
         });
         try (TestSingleplayerContext sp = ctx.worldBuilder().create()) {
             sp.getClientWorld().waitForChunksRender();
+            ctx.runOnClient(mc -> mc.options.getMaxFps().setValue(60));
             sp.getServer().runCommand("time set 1000");
             sp.getServer().runCommand("weather clear");
             ctx.runOnClient(mc -> {
