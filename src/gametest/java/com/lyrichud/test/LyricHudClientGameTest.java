@@ -13,6 +13,11 @@ public class LyricHudClientGameTest implements FabricClientGameTest {
     @Override
     public void runTest(ClientGameTestContext ctx) {
         ctx.getInput().resizeWindow(1280, 720);
+        // small view distance so the world loads quickly on slow test machines
+        ctx.runOnClient(mc -> {
+            mc.options.getViewDistance().setValue(4);
+            mc.options.getSimulationDistance().setValue(5);
+        });
         try (TestSingleplayerContext sp = ctx.worldBuilder().create()) {
             sp.getClientWorld().waitForChunksRender();
             sp.getServer().runCommand("time set 1000");
