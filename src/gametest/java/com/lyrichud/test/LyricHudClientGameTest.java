@@ -12,16 +12,16 @@ import net.fabricmc.fabric.api.client.gametest.v1.context.TestSingleplayerContex
 public class LyricHudClientGameTest implements FabricClientGameTest {
     @Override
     public void runTest(ClientGameTestContext ctx) {
-        ctx.getInput().resizeWindow(1280, 720);
+        // tiny window while the world loads (software rendering is slow), full size for screenshots
+        ctx.getInput().resizeWindow(320, 180);
         // small view distance so the world loads quickly on slow test machines
         ctx.runOnClient(mc -> {
             mc.options.getViewDistance().setValue(4);
             mc.options.getSimulationDistance().setValue(5);
-            mc.options.getMaxFps().setValue(10); // leave CPU for world generation
         });
         try (TestSingleplayerContext sp = ctx.worldBuilder().create()) {
             sp.getClientWorld().waitForChunksRender();
-            ctx.runOnClient(mc -> mc.options.getMaxFps().setValue(60));
+            ctx.getInput().resizeWindow(1280, 720);
             sp.getServer().runCommand("time set 1000");
             sp.getServer().runCommand("weather clear");
             ctx.runOnClient(mc -> {
